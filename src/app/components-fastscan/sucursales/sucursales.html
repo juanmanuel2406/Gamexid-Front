@@ -1,0 +1,75 @@
+<div class="sucursales fade-in">
+  <div class="page-head">
+    <div>
+      <h2 class="page-title">Sucursales</h2>
+      <p class="page-sub">{{ sucursales.length }} sucursales registradas</p>
+    </div>
+    <button class="btn-nuevo-page" (click)="abrirAlta()"><i class="bi bi-plus-lg"></i> Nueva sucursal</button>
+  </div>
+
+  <div class="card-fastscan">
+    <div class="tabla-wrap">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Dirección</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="suc-row" *ngFor="let s of sucursales">
+            <td><span class="chip-sku">{{ s.code }}</span></td>
+            <td class="nombre">{{ s.name }}</td>
+            <td class="text-muted-c">{{ s.address || '—' }}</td>
+            <td>
+              <span class="badge" [class.badge-active]="s.isActive" [class.badge-inactive]="!s.isActive">
+                {{ s.isActive ? 'Activa' : 'Inactiva' }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="sucursales.length === 0">
+            <td colspan="4" class="sin-resultados">No hay sucursales registradas.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" *ngIf="mostrarAlta" (click.self)="cerrarAlta()">
+  <div class="modal card-fastscan">
+    <div class="modal-head">
+      <h3><i class="bi bi-building"></i> Nueva sucursal</h3>
+      <button class="btn-icon" (click)="cerrarAlta()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group mb-3">
+        <label class="form-label">Código *</label>
+        <input type="text" class="form-control" [(ngModel)]="nuevoCodigo" placeholder="Ej: SUC04">
+      </div>
+      <div class="form-group mb-3">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-control" [(ngModel)]="nuevoNombre" placeholder="Ej: Sucursal Oeste">
+      </div>
+      <div class="form-group mb-3">
+        <label class="form-label">Dirección</label>
+        <input type="text" class="form-control" [(ngModel)]="nuevaDireccion" placeholder="Ej: Av. Siempre Viva 742">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secundario" (click)="cerrarAlta()">Cancelar</button>
+      <button class="btn-primario" (click)="guardarSucursal()" [disabled]="guardando">
+        <span *ngIf="!guardando">Guardar</span>
+        <span *ngIf="guardando" class="spinner-border spinner-border-sm"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-fs" [class.toast-error]="tipoMensaje === 'error'" [class.toast-ok]="tipoMensaje === 'ok'" *ngIf="mensaje">
+  <i class="bi" [ngClass]="tipoMensaje === 'ok' ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i> {{ mensaje }}
+</div>

@@ -1,0 +1,129 @@
+.shell { display: flex; height: 100vh; overflow: hidden; }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 232px;
+  background: var(--bg-soft);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s ease;
+  flex-shrink: 0;
+}
+
+.menu-cerrado .sidebar { width: 68px; }
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 14px;
+  border-bottom: 1px solid var(--border);
+  min-height: 60px;
+}
+
+.logo-badge {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), #2563eb);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.logo-texto { display: flex; flex-direction: column; line-height: 1.1; white-space: nowrap; }
+.logo-nombre { font-weight: 800; font-size: 16px; }
+.logo-lema { font-size: 11px; color: var(--text-muted); }
+
+.sidebar-nav { flex: 1; padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.sidebar-item i { font-size: 17px; width: 20px; text-align: center; }
+.sidebar-item:hover { background: var(--bg-hover); color: var(--text); }
+.sidebar-item.activo { background: rgba(59, 130, 246, 0.12); color: var(--accent-soft); }
+
+.sidebar-footer { padding: 12px 10px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+
+.usuario-chip { display: flex; align-items: center; gap: 10px; padding: 6px 4px; }
+.avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #2563eb);
+  color: #fff; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.usuario-datos { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.usuario-nombre { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.usuario-rol { font-size: 11px; color: var(--text-muted); }
+
+.btn-cerrar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px; border-radius: 9px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-muted); cursor: pointer; font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+.btn-cerrar:hover { background: rgba(239, 68, 68, 0.1); color: var(--red); }
+.btn-cerrar i { font-size: 16px; }
+
+/* ===== MAIN / TOPBAR ===== */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
+
+.topbar {
+  height: 60px;
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 20px;
+  background: var(--bg-soft);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.btn-toggle {
+  background: transparent; border: none; color: var(--text-muted);
+  font-size: 20px; cursor: pointer; padding: 4px;
+  transition: color 0.15s ease;
+}
+.btn-toggle:hover { color: var(--text); }
+
+.topbar-titulo { flex: 1; }
+.titulo-pagina { font-size: 17px; font-weight: 700; }
+
+.topbar-acciones { display: flex; align-items: center; gap: 10px; }
+.badge-version {
+  background: var(--bg-hover); color: var(--text-muted);
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 4px 12px; font-size: 11px; font-weight: 600;
+}
+
+.btn-nuevo {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 9px; padding: 8px 14px;
+  font-weight: 600; font-size: 13px; cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.btn-nuevo:hover { background: #2563eb; color: #fff; transform: translateY(-1px); }
+
+/* ===== CONTENIDO ===== */
+.contenido { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .sidebar { position: absolute; z-index: 50; height: 100vh; }
+  .menu-cerrado .sidebar { width: 68px; }
+  .contenido { padding: 16px; }
+}

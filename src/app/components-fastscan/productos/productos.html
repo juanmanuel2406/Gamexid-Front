@@ -1,0 +1,135 @@
+<div class="productos fade-in">
+  <div class="page-head">
+    <div>
+      <h2 class="page-title">Productos</h2>
+      <p class="page-sub">{{ productos.length }} productos registrados</p>
+    </div>
+    <button class="btn-nuevo-page" (click)="abrirAlta()"><i class="bi bi-plus-lg"></i> Nuevo producto</button>
+  </div>
+
+  <div class="card-fastscan">
+    <div class="toolbar">
+      <div class="buscador">
+        <i class="bi bi-search"></i>
+        <input type="text" class="form-control" [(ngModel)]="filtro"
+               placeholder="Buscar por nombre, SKU o EAN...">
+      </div>
+    </div>
+
+    <div class="tabla-wrap">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Nombre</th>
+            <th>EAN</th>
+            <th>Serial</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="prod-row" *ngFor="let p of productosFiltrados">
+            <td><span class="chip-sku">{{ p.sku }}</span></td>
+            <td class="nombre"> {{ p.name }}</td>
+            <td class="mono">{{ p.ean }}</td>
+            <td>
+              <span class="badge" [class.badge-piloto]="p.requiresSerialNumber"
+                    [class.badge-none]="!p.requiresSerialNumber">
+                {{ p.requiresSerialNumber ? 'Con serial' : 'Sin serial' }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [class.badge-active]="p.isActive" [class.badge-inactive]="!p.isActive">
+                {{ p.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="acciones">
+              <button class="btn-icon" title="Ver seriales" (click)="verSeriales(p)">
+                <i class="bi bi-qr-code"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="productosFiltrados.length === 0">
+            <td colspan="6" class="sin-resultados">No se encontraron productos.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ALTA -->
+<div class="modal-overlay" *ngIf="mostrarAlta" (click.self)="cerrarAlta()">
+  <div class="modal card-fastscan">
+    <div class="modal-head">
+      <h3><i class="bi bi-box-seam"></i> Nuevo producto</h3>
+      <button class="btn-icon" (click)="cerrarAlta()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group mb-3">
+        <label class="form-label">SKU *</label>
+        <input type="text" class="form-control" [(ngModel)]="nuevoSku" placeholder="Ej: NOTE-002">
+      </div>
+      <div class="form-group mb-3">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-control" [(ngModel)]="nuevoNombre" placeholder="Ej: Notebook 15&quot;">
+      </div>
+      <div class="form-group mb-3">
+        <label class="form-label">EAN *</label>
+        <input type="text" class="form-control" [(ngModel)]="nuevoEan" placeholder="Ej: 7790000000066">
+      </div>
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" id="reqSerial" [(ngModel)]="nuevoSerial">
+        <label class="form-check-label" for="reqSerial">Requiere número de serie</label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secundario" (click)="cerrarAlta()">Cancelar</button>
+      <button class="btn-primario" (click)="guardarProducto()" [disabled]="guardando">
+        <span *ngIf="!guardando">Guardar</span>
+        <span *ngIf="guardando" class="spinner-border spinner-border-sm"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE SERIALES -->
+<div class="modal-overlay" *ngIf="detalleProducto" (click.self)="cerrarDetalle()">
+  <div class="modal modal-lg card-fastscan">
+    <div class="modal-head">
+      <h3><i class="bi bi-qr-code"></i> Seriales de {{ detalleProducto.name }}</h3>
+      <button class="btn-icon" (click)="cerrarDetalle()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="tabla-wrap" *ngIf="detalleUnidades.length; else sinSeriales">
+        <table class="tabla">
+          <thead>
+            <tr><th>N° de serie</th><th>Estado</th><th>Sucursal</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of detalleUnidades">
+              <td class="mono">{{ s.serialNumber }}</td>
+              <td><span class="badge badge-active">{{ serialLabel(s) }}</span></td>
+              <td>{{ s.currentBranchId ?? '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #sinSeriales>
+        <div class="vacio-chico">
+          <i class="bi bi-qr-code"></i>
+          <p>Este producto no tiene unidades serializadas registradas.</p>
+        </div>
+      </ng-template>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secundario" (click)="cerrarDetalle()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-fs" [class.toast-error]="tipoMensaje === 'error'" [class.toast-ok]="tipoMensaje === 'ok'" *ngIf="mensaje">
+  <i class="bi" [ngClass]="tipoMensaje === 'ok' ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i> {{ mensaje }}
+</div>

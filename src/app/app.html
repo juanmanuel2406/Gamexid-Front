@@ -1,0 +1,62 @@
+<div class="shell" [ngClass]="{ 'menu-cerrado': !menuAbierto }">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-badge"><i class="bi bi-upc-scan"></i></div>
+      <div class="logo-texto" *ngIf="menuAbierto">
+        <span class="logo-nombre">FastScan</span>
+        <span class="logo-lema">{{ lema }}</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="sidebar-item" [class.activo]="esActivo('dashboard')" (click)="ir('dashboard')">
+        <i class="bi bi-grid-1x2"></i><span *ngIf="menuAbierto">Dashboard</span>
+      </a>
+      <a class="sidebar-item" [class.activo]="esActivo('productos')" (click)="ir('productos')">
+        <i class="bi bi-box-seam"></i><span *ngIf="menuAbierto">Productos</span>
+      </a>
+      <a class="sidebar-item" [class.activo]="esActivo('sucursales')" (click)="ir('sucursales')">
+        <i class="bi bi-building"></i><span *ngIf="menuAbierto">Sucursales</span>
+      </a>
+      <a class="sidebar-item" [class.activo]="esActivo('ingresos')" (click)="ir('ingresos')">
+        <i class="bi bi-arrow-down-left-circle"></i><span *ngIf="menuAbierto">Ingresos</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="usuario-chip" *ngIf="menuAbierto">
+        <div class="avatar">{{ inicial }}</div>
+        <div class="usuario-datos">
+          <span class="usuario-nombre">{{ usuario }}</span>
+          <span class="usuario-rol">{{ rol }}</span>
+        </div>
+      </div>
+      <button class="btn-cerrar" (click)="cerrarSesion()">
+        <i class="bi bi-box-arrow-left"></i><span *ngIf="menuAbierto">Salir</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <button class="btn-toggle" (click)="toggleMenu()">
+        <i class="bi" [ngClass]="menuAbierto ? 'bi-layout-sidebar-inset' : 'bi-layout-sidebar-inset-reverse'"></i>
+      </button>
+      <div class="topbar-titulo">
+        <span class="titulo-pagina">{{ paginaActual }}</span>
+      </div>
+      <div class="topbar-acciones">
+        <span class="badge-version">Prototipo</span>
+        <a class="btn-nuevo" [routerLink]="['/ingresos']">
+          <i class="bi bi-plus-lg"></i> Nuevo ingreso
+        </a>
+      </div>
+    </header>
+
+    <main class="contenido">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

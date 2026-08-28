@@ -1,0 +1,227 @@
+<div class="ingresos fade-in">
+  <!-- ===== LISTADO ===== -->
+  <ng-container *ngIf="!modoCrear">
+    <div class="page-head">
+      <div>
+        <h2 class="page-title">Ingresos de mercadería</h2>
+        <p class="page-sub">Registrá ingresos con control de EAN y seriales</p>
+      </div>
+      <button class="btn-nuevo-page" (click)="iniciarIngreso()"><i class="bi bi-arrow-down-left-circle"></i> Nuevo ingreso</button>
+    </div>
+
+    <div class="card-fastscan">
+      <div class="tabla-wrap" *ngIf="ingresos.length; else vacio">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Fecha</th>
+              <th>Destino</th>
+              <th>ítems</th>
+              <th>Notas</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let i of ingresos">
+              <td><span class="chip-sku">#{{ i.id }}</span></td>
+              <td>{{ fechaLegible(i.createdAtUtc) }}</td>
+              <td>{{ sucursalNombre(i.destinationBranchId || 0) }}</td>
+              <td>{{ totalItems(i) }}</td>
+              <td class="text-muted-c">{{ i.notes || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #vacio>
+        <div class="vacio">
+          <i class="bi bi-inbox"></i>
+          <p>Todavía no hay ingresos. Tocá "Nuevo ingreso" para empezar.</p>
+        </div>
+      </ng-template>
+    </div>
+  </ng-container>
+
+  <!-- ===== CREAR INGRESO ===== -->
+  <div *ngIf="modoCrear" class="crear">
+    <div class="page-head">
+      <div>
+        <button class="btn-volver" (click)="cancelarIngreso()"><i class="bi bi-arrow-left"></i> Volver</button>
+        <h2 class="page-title">Nuevo ingreso</h2>
+      </div>
+      <div class="progreso-wrap">
+        <div class="progreso-barra">
+          <div class="progreso-lleno" [style.width.%]="progreso"></div>
+        </div>
+        <span class="progreso-texto">{{ progreso }}%</span>
+      </div>
+    </div>
+
+    <!-- Paso 1: datos básicos -->
+    <div class="card-fastscan paso-datos">
+      <div class="form-group mb-3">
+        <label class="form-label">Sucursal de destino *</label>
+        <select class="form-select" [(ngModel)]="sucursalDestinoId">
+          <option *ngFor="let s of sucursales" [ngValue]="s.id">{{ s.name }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas (opcional)</label>
+        <textarea class="form-control" rows="2" [(ngModel)]="notas"
+                  placeholder="Ej: Proveedor ABC, nota de crédito NC-001"></textarea>
+      </div>
+    </div>
+
+    <!-- Paso 2: cargar EAN -->
+    <div class="card-fastscan paso-ean">
+      <h3 class="paso-titulo"><i class="bi bi-upc-scan"></i> Cargar producto por EAN</h3>
+      <div class="ean-input-row">
+        <div class="buscador-ean">
+          <i class="bi bi-upc"></i>
+          <input type="text" class="form-control" [(ngModel)]="eanIngresado"
+                 placeholder="Escanéá o escribí el código EAN..." (keyup.enter)="validarEan()"
+                 (keyup)="eanEstado=null">
+        </div>
+        <button class="btn-agregar" (click)="validarEan()" [disabled]="validando">
+          <span *ngIf="!validando"><i class="bi bi-plus-lg"></i> Agregar</span>
+          <span *ngIf="validando" class="spinner-border spinner-border-sm"></span>
+        </button>
+      </div>
+
+      <div class="ean-feedback" *ngIf="eanEstado === 'ok'">
+        <i class="bi bi-check-circle"></i> Producto válido
+      </div>
+      <div class="ean-feedback ean-invalido" *ngIf="eanEstado === 'invalido'">
+        <i class="bi bi-exclamation-triangle"></i> {{ eanMensaje }}
+        <button class="btn-enlace" (click)="abrirAltaProducto()">Crear producto</button>
+      </div>
+      <div class="ean-feedback ean-duplicado" *ngIf="eanEstado === 'duplicado'">
+        <i class="bi bi-slash-circle"></i> {{ eanMensaje }}
+      </div>
+    </div>
+
+    <!-- Paso 3: items del ingreso -->
+    <div class="card-fastscan paso-items">
+      <h3 class="paso-titulo"><i class="bi bi-list-check"></i> Ítems del ingreso ({{ items.length }})</h3>
+
+      <div class="items-wrap" *ngIf="items.length; else sinItems">
+        <div class="item-row" *ngFor="let item of items; let idx = index">
+          <div class="item-info">
+            <span class="item-estado" [class.ok]="item.estado === 'validado'"><i class="bi bi-check2"></i></span>
+            <div class="item-datos">
+              <span class="item-nombre">{{ item.product.name }}</span>
+              <span class="item-meta mono">{{ item.product.sku }} · {{ item.product.ean }}</span>
+            </div>
+            <span class="badge badge-serial" [class.badge-none]="!item.product.requiresSerialNumber">
+              {{ item.product.requiresSerialNumber ? 'Serial' : 'Sin serial' }}
+            </span>
+            <button class="btn-icon-remove" (click)="quitarItem(idx)"><i class="bi bi-trash"></i></button>
+          </div>
+
+          <div class="item-detalle" *ngIf="item.product.requiresSerialNumber">
+            <label class="form-label-chico">Números de serie (uno por línea, o separados por coma)</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="item.serialTexto"
+                      (ngModelChange)="onSerialTexto(item)"
+                      placeholder="NB-20001&#10;NB-20002&#10;NB-20003"></textarea>
+            <span class="serial-count" *ngIf="item.seriales.length">
+              <i class="bi bi-qr-code"></i> {{ item.seriales.length }} serial(es) capturados
+            </span>
+          </div>
+          <div class="item-detalle" *ngIf="!item.product.requiresSerialNumber">
+            <div class="cantidad-chico">
+              <label class="form-label-chico">Cantidad</label>
+              <input type="number" class="form-control" min="1" [(ngModel)]="item.cantidad" (ngModelChange)="actualizarProgreso()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #sinItems>
+        <div class="vacio-chico">
+          <i class="bi bi-cart-plus"></i>
+          <p>Todavía no cargaste productos a este ingreso.</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Cerrar -->
+    <div class="cerrar-row">
+      <button class="btn-cerrar-ingreso" (click)="abrirResumen()" [disabled]="!puedeCerrar || guardando">
+        <i class="bi bi-check2-circle"></i> Cerrar ingreso
+      </button>
+      <span class="cerrar-hint" *ngIf="!puedeCerrar">
+        Completá todos los ítems y elegí una sucursal para cerrar.
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ALTA RÁPIDA PRODUCTO -->
+<div class="modal-overlay" *ngIf="mostrarAltaProducto" (click.self)="cerrarAltaProducto()">
+  <div class="modal card-fastscan">
+    <div class="modal-head">
+      <h3><i class="bi bi-box-seam"></i> Crear producto</h3>
+      <button class="btn-icon" (click)="cerrarAltaProducto()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-info">El EAN <b class="mono">{{ eanIngresado }}</b> no está registrado. Completá los datos para crearlo.</p>
+      <div class="form-group mb-3">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-control" [(ngModel)]="altaNombre" placeholder="Ej: Impresora láser">
+      </div>
+      <div class="form-group mb-3">
+        <label class="form-label">SKU (opcional)</label>
+        <input type="text" class="form-control" [(ngModel)]="altaSku" placeholder="Ej: IMP-001">
+      </div>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="altaSerial" [(ngModel)]="altaSerial">
+        <label class="form-check-label" for="altaSerial">Requiere número de serie</label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secundario" (click)="cerrarAltaProducto()">Cancelar</button>
+      <button class="btn-primario" (click)="guardarProductoRapido()">Crear y agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESUMEN / CIERRE -->
+<div class="modal-overlay" *ngIf="mostrandoResumen" (click.self)="guardando ? null : cerrarResumen()">
+  <div class="modal modal-lg card-fastscan">
+    <div class="modal-head">
+      <h3><i class="bi bi-clipboard-check"></i> Confirmar ingreso</h3>
+      <button class="btn-icon" (click)="guardando ? null : cerrarResumen()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="resumen-grid">
+        <div><span class="resumen-label">Sucursal destino</span><span class="resumen-valor">{{ sucursalNombre(sucursalDestinoId) }}</span></div>
+        <div><span class="resumen-label">Total ítems</span><span class="resumen-valor">{{ items.length }}</span></div>
+        <div><span class="resumen-label">Unidades</span><span class="resumen-valor">{{ totalUnidades() }}</span></div>
+        <div><span class="resumen-label">Notas</span><span class="resumen-valor">{{ notas || '—' }}</span></div>
+      </div>
+
+      <div class="resumen-items" *ngIf="!guardando">
+        <div class="resumen-item" *ngFor="let i of items">
+          <span>{{ i.product.name }}</span>
+          <span class="mono">{{ i.product.requiresSerialNumber ? i.seriales.length + ' serial(es)' : i.cantidad + ' u.' }}</span>
+        </div>
+      </div>
+
+      <div class="cierre-loading" *ngIf="guardando">
+        <div class="spinner"></div>
+        <span>Procesando ingreso...</span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secundario" (click)="cerrarResumen()" [disabled]="guardando">Cancelar</button>
+      <button class="btn-primario" (click)="guardarIngreso()" [disabled]="guardando">
+        <span *ngIf="!guardando"><i class="bi bi-check2-circle"></i> Confirmar</span>
+        <span *ngIf="guardando">Guardando...</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-fs" [class.toast-error]="tipoMensaje === 'error'" [class.toast-ok]="tipoMensaje === 'ok'" *ngIf="mensaje">
+  <i class="bi" [ngClass]="tipoMensaje === 'ok' ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i> {{ mensaje }}
+</div>

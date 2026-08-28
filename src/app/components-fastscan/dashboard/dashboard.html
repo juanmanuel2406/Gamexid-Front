@@ -1,0 +1,70 @@
+<div class="dashboard">
+  <div class="dash-head fade-in">
+    <div>
+      <h2 class="dash-hola">Hola, {{ nombreUsuario }}</h2>
+      <p class="dash-sub">Resumen del estado de tu inventario FastScan</p>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-blue"><i class="bi bi-box-seam"></i></div>
+      <div>
+        <div class="kpi-valor">{{ productosActivos }}</div>
+        <div class="kpi-label">Productos activos</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-green"><i class="bi bi-building"></i></div>
+      <div>
+        <div class="kpi-valor">{{ sucursalesActivas }}</div>
+        <div class="kpi-label">Sucursales activas</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-violet"><i class="bi bi-qr-code"></i></div>
+      <div>
+        <div class="kpi-valor">{{ unidadesActivas }}</div>
+        <div class="kpi-label">Unidades serializadas</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-amber"><i class="bi bi-arrow-down-left-circle"></i></div>
+      <div>
+        <div class="kpi-valor">{{ ingresosHoy }}</div>
+        <div class="kpi-label">Ingresos hoy</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Últimos ingresos -->
+  <div class="card-fastscan moves-card">
+    <div class="moves-header">
+      <h3 class="moves-title"><i class="bi bi-clock-history"></i> Últimos ingresos</h3>
+      <button class="btn-link" [routerLink]="['/ingresos']">Ver todos <i class="bi bi-arrow-right"></i></button>
+    </div>
+
+    <div class="moves-table" *ngIf="ingresos.length; else vacio">
+      <div class="moves-row moves-cabecera">
+        <span>Fecha</span>
+        <span>N°</span>
+        <span>Destino</span>
+        <span>ítems</span>
+      </div>
+      <div class="moves-row" *ngFor="let i of ingresos">
+        <span>{{ fechaLegible(i.createdAtUtc) }}</span>
+        <span class="badge-num">#{{ i.id }}</span>
+        <span>{{ i.destinationBranchId }}</span>
+        <span>{{ totalItems(i) }}</span>
+      </div>
+    </div>
+
+    <ng-template #vacio>
+      <div class="vacio">
+        <i class="bi bi-inbox"></i>
+        <p>Todavía no hay ingresos registrados.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>
