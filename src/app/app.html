@@ -1,4 +1,6 @@
 <div class="shell" [ngClass]="{ 'menu-cerrado': !menuAbierto }">
+  <div class="ambient ambient-uno"></div>
+  <div class="ambient ambient-dos"></div>
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
@@ -48,7 +50,7 @@
         <span class="titulo-pagina">{{ paginaActual }}</span>
       </div>
       <div class="topbar-acciones">
-        <span class="badge-version">Prototipo</span>
+        <span class="badge-version"><span class="status-dot"></span> En línea</span>
         <a class="btn-nuevo" [routerLink]="['/ingresos']">
           <i class="bi bi-plus-lg"></i> Nuevo ingreso
         </a>

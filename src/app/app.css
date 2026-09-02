@@ -1,13 +1,17 @@
-.shell { display: flex; height: 100vh; overflow: hidden; }
+.shell { display: flex; height: 100vh; overflow: hidden; position: relative; isolation: isolate; }
+.ambient { position: fixed; z-index: -1; width: 34rem; height: 34rem; filter: blur(80px); pointer-events: none; opacity: .25; animation: aurora 13s ease-in-out infinite; }
+.ambient-uno { background: #5667ff; top: -18rem; left: -12rem; }
+.ambient-dos { background: #11b89d; bottom: -24rem; right: -12rem; animation-delay: -6s; }
 
 /* ===== SIDEBAR ===== */
 .sidebar {
   width: 232px;
-  background: var(--bg-soft);
+  background: linear-gradient(180deg, rgba(16, 23, 39, .93), rgba(10, 15, 26, .78));
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  transition: width 0.25s ease;
+  transition: width .32s cubic-bezier(.2,.8,.2,1);
+  backdrop-filter: blur(22px);
   flex-shrink: 0;
 }
 
@@ -25,7 +29,8 @@
 .logo-badge {
   width: 36px; height: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), #2563eb);
+  background: linear-gradient(135deg, #7c8bff, #4b5cf0 55%, #3cd4bf);
+  box-shadow: 0 8px 28px rgba(95, 112, 255, .35);
   color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-size: 18px;
@@ -54,7 +59,8 @@
 
 .sidebar-item i { font-size: 17px; width: 20px; text-align: center; }
 .sidebar-item:hover { background: var(--bg-hover); color: var(--text); }
-.sidebar-item.activo { background: rgba(59, 130, 246, 0.12); color: var(--accent-soft); }
+.sidebar-item:hover { transform: translateX(3px); }
+.sidebar-item.activo { background: linear-gradient(90deg, rgba(108, 124, 255, .23), rgba(108, 124, 255, .04)); color: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
 
 .sidebar-footer { padding: 12px 10px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
 
@@ -81,13 +87,14 @@
 .btn-cerrar i { font-size: 16px; }
 
 /* ===== MAIN / TOPBAR ===== */
-.main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: transparent; }
 
 .topbar {
   height: 60px;
   display: flex; align-items: center; gap: 16px;
   padding: 0 20px;
-  background: var(--bg-soft);
+  background: rgba(10, 15, 26, .58);
+  backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -104,26 +111,34 @@
 
 .topbar-acciones { display: flex; align-items: center; gap: 10px; }
 .badge-version {
-  background: var(--bg-hover); color: var(--text-muted);
+  background: rgba(41, 203, 163, .09); color: #8ef2d8;
   border: 1px solid var(--border); border-radius: 20px;
   padding: 4px 12px; font-size: 11px; font-weight: 600;
 }
+.status-dot { display: inline-block; height: 7px; width: 7px; margin-right: 5px; border-radius: 50%; background: #40e0b9; animation: pulseGlow 2s infinite; }
 
 .btn-nuevo {
   display: inline-flex; align-items: center; gap: 6px;
-  background: var(--accent); color: #fff;
+  background: linear-gradient(135deg, #7786ff, #5667ed); color: #fff;
   border: none; border-radius: 9px; padding: 8px 14px;
   font-weight: 600; font-size: 13px; cursor: pointer;
   transition: background 0.15s ease, transform 0.15s ease;
 }
-.btn-nuevo:hover { background: #2563eb; color: #fff; transform: translateY(-1px); }
+.btn-nuevo:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 10px 28px rgba(91, 108, 255, .3); }
 
 /* ===== CONTENIDO ===== */
 .contenido { flex: 1; overflow-y: auto; padding: 24px; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .sidebar { position: absolute; z-index: 50; height: 100vh; }
-  .menu-cerrado .sidebar { width: 68px; }
-  .contenido { padding: 16px; }
+  .shell { height: 100dvh; }
+  .sidebar { position: fixed; z-index: 50; height: 100dvh; width: min(78vw, 280px); box-shadow: 22px 0 50px rgba(0,0,0,.36); transform: translateX(0); }
+  .menu-cerrado .sidebar { width: min(78vw, 280px); transform: translateX(-100%); }
+  .main { width: 100%; }
+  .topbar { height: 58px; padding: 0 14px; gap: 10px; }
+  .titulo-pagina { font-size: 15px; }
+  .badge-version { display: none; }
+  .btn-nuevo { width: 36px; height: 36px; padding: 0; justify-content: center; font-size: 0; border-radius: 11px; }
+  .btn-nuevo i { font-size: 16px; }
+  .contenido { padding: 16px 14px 28px; }
 }
