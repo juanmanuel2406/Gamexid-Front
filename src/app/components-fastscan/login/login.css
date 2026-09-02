@@ -77,8 +77,12 @@
 .login-nota b { color: var(--text); }
 
 @media (max-width: 640px) {
-  .login-row { gap: 32px; }
+  .login-wrap { align-items: flex-start; padding: 28px 16px; overflow-y: auto; }
+  .login-row { gap: 26px; }
   .login-brand { max-width: 300px; align-items: center; text-align: center; }
   .brand-tags { justify-content: center; }
   .brand-name { font-size: 34px; }
+  .brand-logo { width: 54px; height: 54px; font-size: 25px; margin-bottom: 12px; }
+  .brand-lema { margin-bottom: 14px; }
+  .login-card { width: 100%; max-width: 390px; padding: 20px; }
 }

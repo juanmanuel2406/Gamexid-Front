@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { Login } from './components-fastscan/login/login';
-import { App } from './app';
 import { Dashboard } from './components-fastscan/dashboard/dashboard';
 import { Productos } from './components-fastscan/productos/productos';
 import { Sucursales } from './components-fastscan/sucursales/sucursales';
@@ -13,7 +12,6 @@ const routes: Routes = [
   { path: 'login', component: Login },
   {
     path: '',
-    component: App,
     canActivate: [AuthGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },

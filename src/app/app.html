@@ -1,3 +1,4 @@
+<ng-container *ngIf="!esLogin; else loginView">
 <div class="shell" [ngClass]="{ 'menu-cerrado': !menuAbierto }">
   <div class="ambient ambient-uno"></div>
   <div class="ambient ambient-dos"></div>
@@ -62,3 +63,5 @@
     </main>
   </div>
 </div>
+</ng-container>
+<ng-template #loginView><router-outlet></router-outlet></ng-template>

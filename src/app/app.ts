@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs';
 import { gsap } from 'gsap';
 
 import { rolLabel } from './services-fastscan/fastscan-service';
@@ -11,7 +12,8 @@ import { rolLabel } from './services-fastscan/fastscan-service';
   standalone: false,
 })
 export class App implements OnInit, OnDestroy {
-  menuAbierto = true;
+  menuAbierto = window.innerWidth > 768;
+  esLogin = false;
   usuario = '';
   rol = '';
   inicial = '';
@@ -32,6 +34,11 @@ export class App implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.esLogin = this.router.url.startsWith('/login');
+    this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => {
+      this.esLogin = event.urlAfterRedirects.startsWith('/login');
+      if (!this.esLogin && window.innerWidth <= 768) this.menuAbierto = false;
+    });
     const name = sessionStorage.getItem('usuario') || '';
     const data = sessionStorage.getItem('userData');
     let role = 'Operator';
