@@ -77,8 +77,8 @@
       <div class="ean-input-row">
         <div class="buscador-ean">
           <i class="bi bi-upc"></i>
-          <input type="text" class="form-control" [(ngModel)]="eanIngresado"
-                 placeholder="Escanéá o escribí el código EAN..." (keyup.enter)="validarEan()"
+          <input id="ean-scanner-input" type="text" class="form-control" [(ngModel)]="eanIngresado"
+                 inputmode="numeric" autocomplete="off" placeholder="Escaneá o escribí el código EAN..." (keyup.enter)="validarEan()"
                  (keyup)="eanEstado=null">
         </div>
         <button class="btn-agregar" (click)="validarEan()" [disabled]="validando">
@@ -119,8 +119,8 @@
 
           <div class="item-detalle" *ngIf="item.product.requiresSerialNumber">
             <label class="form-label-chico">Números de serie (uno por línea, o separados por coma)</label>
-            <textarea class="form-control" rows="2" [(ngModel)]="item.serialTexto"
-                      (ngModelChange)="onSerialTexto(item)"
+            <textarea [id]="'serial-' + item.product.id" class="form-control" rows="2" [(ngModel)]="item.serialTexto"
+                      (ngModelChange)="onSerialTexto(item)" (keyup.enter)="onSerialTexto(item)"
                       placeholder="NB-20001&#10;NB-20002&#10;NB-20003"></textarea>
             <span class="serial-count" *ngIf="item.seriales.length">
               <i class="bi bi-qr-code"></i> {{ item.seriales.length }} serial(es) capturados

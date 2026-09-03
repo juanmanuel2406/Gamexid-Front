@@ -71,6 +71,7 @@ export class Ingresos implements OnInit {
     this.sucursalDestinoId = this.sucursales[0]?.id || 0;
     this.progreso = 0;
     window.scrollTo(0, 0);
+    this.enfocarEan();
   }
 
   cancelarIngreso(): void {
@@ -95,19 +96,16 @@ export class Ingresos implements OnInit {
     this.eanEstado = null;
     this.cdr.detectChanges();
 
-    // pequeña pausa simulando consulta
-    setTimeout(() => {
-      this.service.buscarProductoPorEan(ean).subscribe((p) => {
-        this.validando = false;
-        if (!p) {
-          this.eanEstado = 'invalido';
-          this.eanMensaje = 'Producto no registrado. Podés crearlo al instante.';
-          this.cdr.detectChanges();
-          return;
-        }
-        this.agregarItem(p);
-      });
-    }, 600);
+    this.service.buscarProductoPorEan(ean).subscribe((p) => {
+      this.validando = false;
+      if (!p) {
+        this.eanEstado = 'invalido';
+        this.eanMensaje = 'Producto no registrado. Podés crearlo al instante.';
+        this.cdr.detectChanges();
+        return;
+      }
+      this.agregarItem(p);
+    });
   }
 
   agregarItem(p: Product): void {
@@ -123,6 +121,11 @@ export class Ingresos implements OnInit {
     this.eanEstado = null;
     this.actualizarProgreso();
     this.cdr.detectChanges();
+    if (p.requiresSerialNumber) {
+      setTimeout(() => document.getElementById(`serial-${p.id}`)?.focus());
+    } else {
+      this.enfocarEan();
+    }
   }
 
   /* ===== Seriales ===== */
@@ -132,7 +135,7 @@ export class Ingresos implements OnInit {
       .split(/[\n,;]+/)
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
-    item.seriales = partes;
+    item.seriales = [...new Set(partes)];
     item.cantidad = partes.length;
     this.actualizarProgreso();
     this.cdr.detectChanges();
@@ -275,5 +278,9 @@ export class Ingresos implements OnInit {
 
   totalUnidades(): number {
     return this.items.reduce((acc, i) => acc + i.cantidad, 0);
+  }
+
+  private enfocarEan(): void {
+    setTimeout(() => document.getElementById('ean-scanner-input')?.focus());
   }
 }
