@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ChangeDetectorRef } from '@angular/core';
-import { gsap } from 'gsap';
+import { animate } from 'animejs';
 
 import { FastScanService, rolLabel } from '../../services-fastscan/fastscan-service';
 
@@ -12,7 +12,7 @@ import { FastScanService, rolLabel } from '../../services-fastscan/fastscan-serv
   standalone: false,
 })
 export class Login implements OnInit {
-  email = 'admin@fastscan.com';
+  email = 'admin@gamexid.com';
   password = '';
   mostrarPassword = false;
   cargando = false;
@@ -26,9 +26,16 @@ export class Login implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // animación de entrada
-    gsap.from('.login-card', { opacity: 0, y: 20, duration: 0.6, ease: 'power2.out' });
-    gsap.from('.login-brand', { opacity: 0, x: -16, duration: 0.6, delay: 0.15, ease: 'power2.out' });
+    animate('.login-card', { opacity: [0, 1], translateY: [20, 0], duration: 600, ease: 'outExpo' });
+    animate('.login-brand', { opacity: [0, 1], translateX: [-16, 0], duration: 600, delay: 140, ease: 'outExpo' });
+    animate('.gamexid-logo', {
+      opacity: [0, 1],
+      scale: [0.72, 1],
+      rotate: [-5, 0],
+      duration: 850,
+      delay: 240,
+      ease: 'outElastic(1, .55)',
+    });
   }
 
   togglePassword(): void {
@@ -37,13 +44,19 @@ export class Login implements OnInit {
 
   ingresar(): void {
     this.errorMsg = '';
-    if (!this.email.trim() || this.password.length < 4) {
-      this.errorMsg = 'Completá el email y una contraseña de al menos 4 caracteres.';
+    const email = this.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.errorMsg = 'Ingresá un email válido.';
+      this.cdr.detectChanges();
+      return;
+    }
+    if (this.password.length < 8) {
+      this.errorMsg = 'La contraseña debe tener al menos 8 caracteres.';
       this.cdr.detectChanges();
       return;
     }
     this.cargando = true;
-    this.service.login(this.email, this.password).subscribe({
+    this.service.login(email, this.password).subscribe({
       next: (user) => {
         sessionStorage.setItem('logueado', 'true');
         sessionStorage.setItem('usuario', user.fullName);

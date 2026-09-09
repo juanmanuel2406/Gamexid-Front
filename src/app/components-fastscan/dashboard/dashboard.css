@@ -1,4 +1,7 @@
 .dashboard { display: flex; flex-direction: column; gap: 24px; }
+.skeleton-title { width: min(320px, 70%); height: 58px; }
+.skeleton-kpi { height: 82px; }
+.skeleton-table { height: 250px; width: 100%; }
 
 .dash-hola { font-size: 24px; font-weight: 800; margin: 0 0 2px; }
 .dash-sub { color: var(--text-muted); margin: 0; }

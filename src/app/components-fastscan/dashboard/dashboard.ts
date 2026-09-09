@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
-import { gsap } from 'gsap';
+import { animate, stagger } from 'animejs';
 
 import {
   FastScanService,
@@ -17,6 +17,7 @@ import {
   standalone: false,
 })
 export class Dashboard implements OnInit {
+  cargando = true;
   productos: Product[] = [];
   sucursales: Branch[] = [];
   unidades: SerializedUnit[] = [];
@@ -38,9 +39,32 @@ export class Dashboard implements OnInit {
     this.cdr.detectChanges();
 
     setTimeout(() => {
-      gsap.from('.kpi-card', { opacity: 0, y: 20, duration: 0.5, stagger: 0.1, ease: 'power2.out' });
-      gsap.from('.moves-row', { opacity: 0, y: 14, duration: 0.5, delay: 0.3, ease: 'power2.out' });
+      animate('.dash-head', {
+        opacity: [0, 1],
+        translateY: [-10, 0],
+        duration: 420,
+        ease: 'outExpo',
+      });
+      animate('.kpi-card', {
+        opacity: [0, 1],
+        translateY: [22, 0],
+        scale: [0.98, 1],
+        delay: stagger(85),
+        duration: 560,
+        ease: 'outExpo',
+      });
+      animate('.moves-card', {
+        opacity: [0, 1],
+        translateY: [16, 0],
+        delay: 360,
+        duration: 520,
+        ease: 'outExpo',
+      });
     }, 50);
+    setTimeout(() => {
+      this.cargando = false;
+      this.cdr.detectChanges();
+    }, 420);
   }
 
   get unidadesActivas(): number {

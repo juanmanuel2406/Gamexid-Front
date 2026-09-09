@@ -5,25 +5,25 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-badge"><i class="bi bi-upc-scan"></i></div>
+      <div class="logo-badge gamexid-mark" aria-label="Gamexid"></div>
       <div class="logo-texto" *ngIf="menuAbierto">
-        <span class="logo-nombre">FastScan</span>
+        <span class="logo-nombre">Gamexid</span>
         <span class="logo-lema">{{ lema }}</span>
       </div>
     </div>
 
     <nav class="sidebar-nav">
       <a class="sidebar-item" [class.activo]="esActivo('dashboard')" (click)="ir('dashboard')">
-        <i class="bi bi-grid-1x2"></i><span *ngIf="menuAbierto">Dashboard</span>
+        <i class="bi bi-grid-1x2"></i><span *ngIf="menuAbierto">{{ textos.dashboard }}</span>
       </a>
       <a class="sidebar-item" [class.activo]="esActivo('productos')" (click)="ir('productos')">
-        <i class="bi bi-box-seam"></i><span *ngIf="menuAbierto">Productos</span>
+        <i class="bi bi-box-seam"></i><span *ngIf="menuAbierto">{{ textos.products }}</span>
       </a>
       <a class="sidebar-item" [class.activo]="esActivo('sucursales')" (click)="ir('sucursales')">
-        <i class="bi bi-building"></i><span *ngIf="menuAbierto">Sucursales</span>
+        <i class="bi bi-building"></i><span *ngIf="menuAbierto">{{ textos.branches }}</span>
       </a>
       <a class="sidebar-item" [class.activo]="esActivo('ingresos')" (click)="ir('ingresos')">
-        <i class="bi bi-arrow-down-left-circle"></i><span *ngIf="menuAbierto">Ingresos</span>
+        <i class="bi bi-arrow-down-left-circle"></i><span *ngIf="menuAbierto">{{ textos.entries }}</span>
       </a>
     </nav>
 
@@ -44,23 +44,30 @@
   <!-- MAIN -->
   <div class="main">
     <header class="topbar">
-      <button class="btn-toggle" (click)="toggleMenu()">
+      <button class="btn-toggle" (click)="toggleMenu()" aria-label="Abrir o cerrar el menú">
         <i class="bi" [ngClass]="menuAbierto ? 'bi-layout-sidebar-inset' : 'bi-layout-sidebar-inset-reverse'"></i>
       </button>
       <div class="topbar-titulo">
         <span class="titulo-pagina">{{ paginaActual }}</span>
       </div>
       <div class="topbar-acciones">
-        <span class="badge-version"><span class="status-dot"></span> En línea</span>
+        <button class="btn-utilidad" (click)="cambiarIdioma()" [attr.aria-label]="'Cambiar idioma, actual ' + idioma.toUpperCase()">{{ idioma.toUpperCase() }}</button>
+        <button class="btn-utilidad" (click)="toggleTema()" [attr.aria-label]="tema === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'">
+          <i class="bi" [ngClass]="tema === 'dark' ? 'bi-sun' : 'bi-moon-stars'"></i>
+        </button>
+        <span class="badge-version"><span class="status-dot"></span> {{ textos.online }}</span>
         <a class="btn-nuevo" [routerLink]="['/ingresos']">
-          <i class="bi bi-plus-lg"></i> Nuevo ingreso
+          <i class="bi bi-plus-lg"></i> {{ textos.newEntry }}
         </a>
       </div>
     </header>
 
-    <main class="contenido">
+    <main class="contenido" (scroll)="onContenidoScroll($event)">
       <router-outlet></router-outlet>
     </main>
+    <button class="volver-arriba" *ngIf="mostrarVolverArriba" (click)="volverArriba()" aria-label="Volver arriba">
+      <i class="bi bi-arrow-up"></i>
+    </button>
   </div>
 </div>
 </ng-container>

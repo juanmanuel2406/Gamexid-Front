@@ -5,8 +5,8 @@
   justify-content: center;
   padding: 24px;
   background:
-    radial-gradient(1000px 600px at 10% -10%, rgba(59, 130, 246, 0.15), transparent),
-    radial-gradient(800px 500px at 100% 120%, rgba(37, 99, 235, 0.12), transparent),
+    radial-gradient(1000px 600px at 10% -10%, rgba(109, 75, 209, 0.28), transparent),
+    radial-gradient(800px 500px at 100% 120%, rgba(246, 229, 141, 0.14), transparent),
     var(--bg);
 }
 
@@ -15,12 +15,10 @@
 /* BRAND */
 .login-brand { display: flex; flex-direction: column; align-items: flex-start; max-width: 360px; }
 .brand-logo {
-  width: 64px; height: 64px; border-radius: 18px;
-  background: linear-gradient(135deg, var(--accent), #2563eb);
-  color: #fff; font-size: 32px;
-  display: flex; align-items: center; justify-content: center;
+  width: 260px; height: 210px; border-radius: 22px;
+  background: #11111f url('/gamexid-logo.png') center / 430px auto no-repeat;
   margin-bottom: 18px;
-  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 16px 42px rgba(109, 75, 209, .28), inset 0 0 0 1px rgba(188, 169, 255, .2);
 }
 .brand-name { font-size: 44px; font-weight: 800; letter-spacing: -1px; margin: 0 0 8px; }
 .brand-lema { color: var(--text-muted); font-size: 16px; margin: 0 0 20px; }
@@ -82,7 +80,7 @@
   .login-brand { max-width: 300px; align-items: center; text-align: center; }
   .brand-tags { justify-content: center; }
   .brand-name { font-size: 34px; }
-  .brand-logo { width: 54px; height: 54px; font-size: 25px; margin-bottom: 12px; }
+  .brand-logo { width: 220px; height: 178px; background-size: 370px auto; margin-bottom: 12px; }
   .brand-lema { margin-bottom: 14px; }
   .login-card { width: 100%; max-width: 390px; padding: 20px; }
 }

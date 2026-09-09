@@ -1,8 +1,9 @@
+<ng-container *ngIf="!cargando; else dashboardSkeleton">
 <div class="dashboard">
   <div class="dash-head fade-in">
     <div>
       <h2 class="dash-hola">Hola, {{ nombreUsuario }}</h2>
-      <p class="dash-sub">Resumen del estado de tu inventario FastScan</p>
+      <p class="dash-sub">Resumen del estado de tu inventario Gamexid</p>
     </div>
   </div>
 
@@ -68,3 +69,14 @@
     </ng-template>
   </div>
 </div>
+</ng-container>
+
+<ng-template #dashboardSkeleton>
+  <div class="dashboard dashboard-skeleton" aria-label="Cargando panel">
+    <div class="skeleton skeleton-title"></div>
+    <div class="kpi-grid">
+      <div class="skeleton skeleton-kpi" *ngFor="let item of [1,2,3,4]"></div>
+    </div>
+    <div class="skeleton skeleton-table"></div>
+  </div>
+</ng-template>

@@ -2,8 +2,8 @@
   <div class="login-row">
     <!-- PANEL BRAND -->
     <div class="login-brand">
-      <div class="brand-logo"><i class="bi bi-upc-scan"></i></div>
-      <h1 class="brand-name">FastScan</h1>
+      <div class="brand-logo gamexid-logo" aria-label="Gamexid"></div>
+      <h1 class="brand-name">Gamexid</h1>
       <p class="brand-lema">{{ lema }}</p>
       <div class="brand-tags">
         <span class="tag"><i class="bi bi-box-seam"></i> Inventario</span>
@@ -21,8 +21,8 @@
         <label class="form-label">Email</label>
         <div class="input-icono">
           <i class="bi bi-envelope"></i>
-          <input type="email" class="form-control" [(ngModel)]="email"
-                 placeholder="usuario@fastscan.com" autocomplete="email">
+          <input type="email" class="form-control" [(ngModel)]="email" required
+                 placeholder="usuario@gamexid.com" autocomplete="email" inputmode="email" [attr.aria-invalid]="errorMsg ? 'true' : null">
         </div>
       </div>
 
@@ -31,7 +31,7 @@
         <div class="input-icono">
           <i class="bi bi-shield-lock"></i>
           <input [type]="mostrarPassword ? 'text' : 'password'" class="form-control"
-                 [(ngModel)]="password" placeholder="••••••••" (keyup.enter)="ingresar()">
+                 [(ngModel)]="password" placeholder="••••••••" autocomplete="current-password" minlength="8" required (keyup.enter)="ingresar()" [attr.aria-invalid]="errorMsg ? 'true' : null">
           <button type="button" class="btn-ojo" (click)="togglePassword()">
             <i class="bi" [ngClass]="mostrarPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
           </button>
@@ -49,7 +49,7 @@
 
       <div class="login-nota">
         <i class="bi bi-info-circle"></i>
-        Prototipo — usá <b>admin@fastscan.com</b> con cualquier contraseña (4+ caracteres).
+        Modo demostración: usá <b>admin@gamexid.com</b> con una contraseña de 8 o más caracteres.
       </div>
     </div>
   </div>

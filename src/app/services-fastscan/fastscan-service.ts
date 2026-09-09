@@ -144,9 +144,9 @@ export class FastScanService {
 
     if (!localStorage.getItem(K_USERS)) {
       const users: User[] = [
-        { id: 1, fullName: 'Juan Manuel', email: 'admin@fastscan.com', role: 'Administrator', isActive: true },
-        { id: 2, fullName: 'María García', email: 'gerente@fastscan.com', role: 'Manager', branchId: 1, isActive: true },
-        { id: 3, fullName: 'Lucas Pérez', email: 'operador@fastscan.com', role: 'Operator', branchId: 1, isActive: true },
+        { id: 1, fullName: 'Juan Manuel', email: 'admin@gamexid.com', role: 'Administrator', isActive: true },
+        { id: 2, fullName: 'María García', email: 'gerente@gamexid.com', role: 'Manager', branchId: 1, isActive: true },
+        { id: 3, fullName: 'Lucas Pérez', email: 'operador@gamexid.com', role: 'Operator', branchId: 1, isActive: true },
       ];
       this.write(K_USERS, users);
     }

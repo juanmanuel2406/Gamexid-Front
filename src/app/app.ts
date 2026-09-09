@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
-import { gsap } from 'gsap';
+import { animate, stagger } from 'animejs';
 
 import { rolLabel } from './services-fastscan/fastscan-service';
 
@@ -18,6 +18,9 @@ export class App implements OnInit, OnDestroy {
   rol = '';
   inicial = '';
   lema = '';
+  tema: 'dark' | 'light' = 'dark';
+  idioma: 'es' | 'en' = 'es';
+  mostrarVolverArriba = false;
 
   constructor(private router: Router) {}
 
@@ -27,6 +30,12 @@ export class App implements OnInit, OnDestroy {
     if (url.includes('productos')) return 'Productos';
     if (url.includes('sucursales')) return 'Sucursales';
     return 'Dashboard';
+  }
+
+  get textos() {
+    return this.idioma === 'en'
+      ? { dashboard: 'Dashboard', products: 'Products', branches: 'Branches', entries: 'Receipts', newEntry: 'New receipt', online: 'Online' }
+      : { dashboard: 'Dashboard', products: 'Productos', branches: 'Sucursales', entries: 'Ingresos', newEntry: 'Nuevo ingreso', online: 'En línea' };
   }
 
   esActivo(ruta: string): boolean {
@@ -54,10 +63,18 @@ export class App implements OnInit, OnDestroy {
     this.rol = rolLabel(role);
     this.inicial = name.charAt(0).toUpperCase();
     this.lema = localStorage.getItem('fs_lema') || 'Gestión de inventario integral';
+    this.tema = (localStorage.getItem('fs_tema') as 'dark' | 'light') || 'dark';
+    this.idioma = (localStorage.getItem('fs_idioma') as 'es' | 'en') || 'es';
+    this.aplicarTema();
 
-    // animación de entrada de la sidebar
     setTimeout(() => {
-      gsap.from('.sidebar-item', { opacity: 0, x: -12, duration: 0.4, stagger: 0.06, ease: 'power2.out' });
+      animate('.sidebar-item', {
+        opacity: [0, 1],
+        translateX: [-14, 0],
+        delay: stagger(55),
+        duration: 420,
+        ease: 'outExpo',
+      });
     }, 50);
   }
 
@@ -67,6 +84,26 @@ export class App implements OnInit, OnDestroy {
 
   toggleMenu(): void {
     this.menuAbierto = !this.menuAbierto;
+  }
+
+  toggleTema(): void {
+    this.tema = this.tema === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('fs_tema', this.tema);
+    this.aplicarTema();
+  }
+
+  cambiarIdioma(): void {
+    this.idioma = this.idioma === 'es' ? 'en' : 'es';
+    localStorage.setItem('fs_idioma', this.idioma);
+    document.documentElement.lang = this.idioma;
+  }
+
+  onContenidoScroll(event: Event): void {
+    this.mostrarVolverArriba = (event.target as HTMLElement).scrollTop > 280;
+  }
+
+  volverArriba(): void {
+    document.querySelector('.contenido')?.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   cerrarSesion(): void {
@@ -80,5 +117,10 @@ export class App implements OnInit, OnDestroy {
     if (this.router.url !== '/' + ruta) {
       this.router.navigate([ruta]);
     }
+  }
+
+  private aplicarTema(): void {
+    document.body.dataset['theme'] = this.tema;
+    document.documentElement.lang = this.idioma;
   }
 }
