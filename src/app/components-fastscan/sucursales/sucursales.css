@@ -39,6 +39,11 @@
   animation: fadeIn 0.2s ease;
 }
 .modal { width: 100%; max-width: 440px; animation: fadeUp 0.25s ease; }
+.pedido-dialog { max-width: 840px; }
+.pedido-linea { display: grid; grid-template-columns: 1fr 2fr 90px 90px; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.pedido-linea label { min-width: 0; }
+.form-label { display: block; margin-top: 12px; }
+@media (max-width: 640px) { .pedido-linea { grid-template-columns: 1fr 1fr; } }
 .modal-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
 .modal-head h3 { margin: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .modal-head h3 i { color: var(--accent-soft); }

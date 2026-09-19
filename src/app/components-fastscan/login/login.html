@@ -2,8 +2,8 @@
   <div class="login-row">
     <!-- PANEL BRAND -->
     <div class="login-brand">
-      <div class="brand-logo gamexid-logo" aria-label="Gamexid"></div>
-      <h1 class="brand-name">Gamexid</h1>
+      <svg class="brand-logo gamexid-logo" viewBox="190 95 365 345" role="img" aria-label="Gamexid"><image href="/gamexid-logo.png" width="744" height="596"/></svg>
+      <h1 class="visually-hidden">Gamexid</h1>
       <p class="brand-lema">{{ lema }}</p>
       <div class="brand-tags">
         <span class="tag"><i class="bi bi-box-seam"></i> Inventario</span>
@@ -18,21 +18,21 @@
       <p class="login-sub">Ingresá con tu cuenta para continuar</p>
 
       <div class="form-group mb-3">
-        <label class="form-label">Email</label>
+        <label class="form-label" for="login-email">Email</label>
         <div class="input-icono">
           <i class="bi bi-envelope"></i>
-          <input type="email" class="form-control" [(ngModel)]="email" required
+          <input id="login-email" type="email" class="form-control" [(ngModel)]="email" required
                  placeholder="usuario@gamexid.com" autocomplete="email" inputmode="email" [attr.aria-invalid]="errorMsg ? 'true' : null">
         </div>
       </div>
 
       <div class="form-group mb-3">
-        <label class="form-label">Contraseña</label>
+        <label class="form-label" for="login-password">Contraseña</label>
         <div class="input-icono">
           <i class="bi bi-shield-lock"></i>
-          <input [type]="mostrarPassword ? 'text' : 'password'" class="form-control"
+          <input id="login-password" [type]="mostrarPassword ? 'text' : 'password'" class="form-control"
                  [(ngModel)]="password" placeholder="••••••••" autocomplete="current-password" minlength="8" required (keyup.enter)="ingresar()" [attr.aria-invalid]="errorMsg ? 'true' : null">
-          <button type="button" class="btn-ojo" (click)="togglePassword()">
+          <button type="button" class="btn-ojo" (click)="togglePassword()" [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
             <i class="bi" [ngClass]="mostrarPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
           </button>
         </div>
@@ -49,7 +49,7 @@
 
       <div class="login-nota">
         <i class="bi bi-info-circle"></i>
-        Modo demostración: usá <b>admin@gamexid.com</b> con una contraseña de 8 o más caracteres.
+        Acceso autorizado para Gamexid. Ingresá el correo y la contraseña de tu cuenta.
       </div>
     </div>
   </div>

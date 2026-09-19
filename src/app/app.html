@@ -3,9 +3,9 @@
   <div class="ambient ambient-uno"></div>
   <div class="ambient ambient-dos"></div>
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" (mouseenter)="abrirMenuHover()" (mouseleave)="cerrarMenuHover()" (focusin)="abrirMenuHover()" (focusout)="salirFocoMenu($event)">
     <div class="sidebar-logo">
-      <div class="logo-badge gamexid-mark" aria-label="Gamexid"></div>
+      <svg class="logo-badge gamexid-mark" viewBox="215 105 315 245" role="img" aria-label="Logo Gamexid"><image href="/gamexid-logo.png" width="744" height="596"/></svg>
       <div class="logo-texto" *ngIf="menuAbierto">
         <span class="logo-nombre">Gamexid</span>
         <span class="logo-lema">{{ lema }}</span>
@@ -51,10 +51,6 @@
         <span class="titulo-pagina">{{ paginaActual }}</span>
       </div>
       <div class="topbar-acciones">
-        <button class="btn-utilidad" (click)="cambiarIdioma()" [attr.aria-label]="'Cambiar idioma, actual ' + idioma.toUpperCase()">{{ idioma.toUpperCase() }}</button>
-        <button class="btn-utilidad" (click)="toggleTema()" [attr.aria-label]="tema === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'">
-          <i class="bi" [ngClass]="tema === 'dark' ? 'bi-sun' : 'bi-moon-stars'"></i>
-        </button>
         <span class="badge-version"><span class="status-dot"></span> {{ textos.online }}</span>
         <a class="btn-nuevo" [routerLink]="['/ingresos']">
           <i class="bi bi-plus-lg"></i> {{ textos.newEntry }}

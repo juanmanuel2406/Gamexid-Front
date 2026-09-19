@@ -1,6 +1,7 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, defer } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 /* ================================================================
    INTERFACES / MODELOS (espejan el backend FastScan)
@@ -84,7 +85,7 @@ const K_USERS = 'fs_users';
 
 @Injectable({ providedIn: 'root' })
 export class FastScanService {
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {
+  constructor(@Inject(PLATFORM_ID) private platformId: Object, private http: HttpClient) {
     if (isPlatformBrowser(this.platformId)) {
       this.seed();
     }
@@ -158,16 +159,10 @@ export class FastScanService {
 
   /* ===== LOGIN (demo sin token) ===== */
   login(email: string, password: string): Observable<User> {
-    const users = this.read<User[]>(K_USERS, []);
-    const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    // Demo: cualquier password de 4+ chars es válido
-    if (user && user.isActive && password && password.length >= 4) {
-      return of({ ...user });
-    }
-    return throwError(() => ({
-      error: { mensaje: 'Credenciales inválidas o usuario inactivo.' },
-    }));
+    return this.http.post<User>('/api/access/login', { email, password }, { headers: { 'X-Gamexid': '1' } });
   }
+  session(): Observable<User> { return this.http.get<User>('/api/access/me'); }
+  logout(): Observable<void> { return this.http.post<void>('/api/access/logout', {}, { headers: { 'X-Gamexid': '1' } }); }
 
   /* ===== PRODUCTOS ===== */
   getProductos(): Observable<Product[]> {
@@ -184,6 +179,10 @@ export class FastScanService {
   }
 
   crearProducto(dto: { sku: string; name: string; ean: string; requiresSerialNumber: boolean }): Observable<Product> {
+    return defer(() => {
+    dto = { ...dto, sku: dto.sku.trim(), name: dto.name.trim(), ean: dto.ean.trim() };
+    if (!dto.sku || !dto.name || dto.sku.length > 80 || dto.name.length > 180 || !/^(?:\d{8}|\d{12,14})$/.test(dto.ean))
+      throw { error: { mensaje: 'Completá nombre, SKU y un EAN de 8, 12, 13 o 14 dígitos.' } };
     const list = this.read<Product[]>(K_PRODUCTS, []);
     if (list.some((p) => p.sku.toLowerCase() === dto.sku.toLowerCase() || p.ean === dto.ean)) {
       return throwError(() => ({ error: { mensaje: 'El SKU o EAN ya está registrado.' } }));
@@ -192,9 +191,24 @@ export class FastScanService {
     list.push(nuevo);
     this.write(K_PRODUCTS, list);
     return of(nuevo);
+    });
   }
 
   /* ===== SUCURSALES ===== */
+  getDeposito(): Branch {
+    const list = this.read<Branch[]>(K_BRANCHES, []);
+    let deposito = list.find(b => b.code === 'DEP-CENTRAL') || list.find(b => /dep[oó]sito/i.test(b.name));
+    if (!deposito) {
+      deposito = { id: this.nextId(list), code: 'DEP-CENTRAL', name: 'Depósito', isActive: true };
+      list.push(deposito);
+    }
+    deposito.name = 'Depósito';
+    deposito.code = 'DEP-CENTRAL';
+    deposito.isActive = true;
+    this.write(K_BRANCHES, list);
+    return deposito;
+  }
+
   getSucursales(): Observable<Branch[]> {
     const list = this.read<Branch[]>(K_BRANCHES, []).sort((a, b) =>
       a.name.localeCompare(b.name)
@@ -234,6 +248,26 @@ export class FastScanService {
     notes?: string;
     items: { productId: number; quantity: number; serials: string[]; requiresSerialNumber: boolean }[];
   }): Observable<InventoryMovement> {
+    return defer(() => {
+    if (dto.destinationBranchId !== this.getDeposito().id || !dto.items.length)
+      throw { error: { mensaje: 'El ingreso debe tener productos y destino Depósito.' } };
+    const serials = new Set(this.read<SerializedUnit[]>(K_UNITS, []).map(u => u.serialNumber.trim().toUpperCase()));
+    const products = this.read<Product[]>(K_PRODUCTS, []);
+    for (const item of dto.items) {
+      const product = products.find(p => p.id === item.productId && p.isActive);
+      if (!product || product.requiresSerialNumber !== item.requiresSerialNumber ||
+          !Number.isSafeInteger(item.quantity) || item.quantity < 1)
+        throw { error: { mensaje: 'Revisá los productos y cantidades: deben ser enteros mayores a cero.' } };
+      if (product.requiresSerialNumber) {
+        if (item.quantity !== item.serials.length) throw { error: { mensaje: 'La cantidad debe coincidir con los seriales.' } };
+        for (const serial of item.serials) {
+          const key = serial.trim().toUpperCase();
+          if (!key || key.length > 120 || serials.has(key))
+            throw { error: { mensaje: 'Hay seriales vacíos, repetidos o ya registrados.' } };
+          serials.add(key);
+        }
+      }
+    }
     const movs = this.read<InventoryMovement[]>(K_MOVEMENTS, []);
     const mov: InventoryMovement = {
       id: this.nextId(movs),
@@ -268,5 +302,6 @@ export class FastScanService {
     movs.push(mov);
     this.write(K_MOVEMENTS, movs);
     return of(mov);
+    });
   }
 }

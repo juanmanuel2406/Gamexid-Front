@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { gsap } from 'gsap';
 
@@ -80,6 +80,9 @@ export class Productos implements OnInit {
   cerrarAlta(): void {
     this.mostrarAlta = false;
   }
+
+  @HostListener('document:keydown.escape')
+  cancelarDialogos(): void { if (!this.guardando) { this.cerrarAlta(); this.cerrarDetalle(); } }
 
   guardarProducto(): void {
     if (!this.nuevoSku.trim() || !this.nuevoNombre.trim() || !this.nuevoEan.trim()) {

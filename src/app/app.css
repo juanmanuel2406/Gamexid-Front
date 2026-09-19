@@ -37,12 +37,11 @@
   flex-shrink: 0;
 }
 .gamexid-mark {
-  background-color: #11111f;
-  background-image: url('/gamexid-logo.png');
-  background-repeat: no-repeat;
-  background-size: 119px 96px;
-  background-position: -77px -48px;
-  box-shadow: 0 8px 28px rgba(109, 75, 209, .42);
+  object-fit: contain;
+  background: #11111f;
+  width: 44px;
+  height: 44px;
+  box-shadow: none;
 }
 
 .logo-texto { display: flex; flex-direction: column; line-height: 1.1; white-space: nowrap; }

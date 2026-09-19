@@ -1,75 +1,34 @@
-<div class="sucursales fade-in">
-  <div class="page-head">
-    <div>
-      <h2 class="page-title">Sucursales</h2>
-      <p class="page-sub">{{ sucursales.length }} sucursales registradas</p>
-    </div>
-    <button class="btn-nuevo-page" (click)="abrirAlta()"><i class="bi bi-plus-lg"></i> Nueva sucursal</button>
+<section class="sucursales">
+  <div class="page-head"><div><h2 class="page-title">Pedidos a sucursales</h2><p class="page-sub">Controlá lo que llegó y lo que queda pendiente.</p></div>
+    <button class="btn-nuevo-page" (click)="nuevo()">Nuevo pedido</button></div>
+  <p class="text-muted-c">En esta versión los pedidos se guardan en este navegador. Conservá el PDF original hasta conectar la base compartida.</p>
+  <p role="status" *ngIf="mensaje && !draft">{{ mensaje }}</p>
+  <div class="card-fastscan" *ngFor="let pedido of pedidos">
+    <h3>{{ pedido.reference }} · {{ nombre(pedido.branchId) }}</h3><p>{{ pedido.lines.length }} productos · {{ faltantes(pedido) }} unidades pendientes</p>
+    <button class="btn-secundario" (click)="editar(pedido)">Controlar recepción</button>
   </div>
-
-  <div class="card-fastscan">
-    <div class="tabla-wrap">
-      <table class="tabla">
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Dirección</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="suc-row" *ngFor="let s of sucursales">
-            <td><span class="chip-sku">{{ s.code }}</span></td>
-            <td class="nombre">{{ s.name }}</td>
-            <td class="text-muted-c">{{ s.address || '—' }}</td>
-            <td>
-              <span class="badge" [class.badge-active]="s.isActive" [class.badge-inactive]="!s.isActive">
-                {{ s.isActive ? 'Activa' : 'Inactiva' }}
-              </span>
-            </td>
-          </tr>
-          <tr *ngIf="sucursales.length === 0">
-            <td colspan="4" class="sin-resultados">No hay sucursales registradas.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL -->
-<div class="modal-overlay" *ngIf="mostrarAlta" (click.self)="cerrarAlta()">
-  <div class="modal card-fastscan">
-    <div class="modal-head">
-      <h3><i class="bi bi-building"></i> Nueva sucursal</h3>
-      <button class="btn-icon" (click)="cerrarAlta()"><i class="bi bi-x-lg"></i></button>
-    </div>
+  <p *ngIf="!pedidos.length">Todavía no hay pedidos. Creá uno con un PDF o cargalo manualmente.</p>
+</section>
+<div *ngIf="draft" class="modal-overlay" (click)="$event.target === $event.currentTarget ? cerrar() : null">
+  <section class="modal card-fastscan pedido-dialog" role="dialog" aria-modal="true" aria-labelledby="pedido-title">
+    <div class="modal-head"><h3 id="pedido-title">Pedido a sucursal</h3><button class="btn-secundario" (click)="cerrar()" [disabled]="busy" aria-label="Cerrar pedido">Cerrar</button></div>
     <div class="modal-body">
-      <div class="form-group mb-3">
-        <label class="form-label">Código *</label>
-        <input type="text" class="form-control" [(ngModel)]="nuevoCodigo" placeholder="Ej: SUC04">
+      <label class="form-label" for="pedido-ref">Referencia del pedido</label><input id="pedido-ref" class="form-control" [(ngModel)]="draft.reference" maxlength="100">
+      <label class="form-label" for="pedido-sucursal">Sucursal de destino</label>
+      <select id="pedido-sucursal" class="form-control" [(ngModel)]="draft.branchId"><option [ngValue]="0">Seleccioná una sucursal</option><option *ngFor="let sucursal of sucursales" [ngValue]="sucursal.id">{{ sucursal.name }}</option></select>
+      <label class="form-label" for="pedido-pdf">Pedido o factura en PDF (opcional, hasta 10 MB)</label><input id="pedido-pdf" type="file" accept=".pdf,application/pdf" [disabled]="busy" (change)="importar($event)">
+      <p *ngIf="draft.fileName">{{ draft.fileName }} <button class="btn-secundario" (click)="descargar()">Descargar original</button></p>
+      <p role="status" *ngIf="busy">Procesando…</p><p role="status" *ngIf="mensaje">{{ mensaje }}</p>
+      <div class="pedido-linea" *ngFor="let linea of draft.lines; let i = index">
+        <label>EAN<input class="form-control" [(ngModel)]="linea.ean" (blur)="relacionar(linea)" inputmode="numeric" maxlength="14"></label>
+        <label>Producto<input class="form-control" [(ngModel)]="linea.name" maxlength="180"></label>
+        <label>Pedido<input class="form-control" type="number" min="1" step="1" [(ngModel)]="linea.expected"></label>
+        <label>Recibido<input class="form-control" type="number" min="0" [max]="linea.expected || 0" step="1" [(ngModel)]="linea.received"></label>
+        <label><input type="checkbox" [disabled]="!linea.expected" [checked]="!!linea.expected && linea.received === linea.expected" (change)="marcar(linea, $event)"> Llegó todo</label>
+        <span>Pendiente: {{ (linea.expected || 0) - linea.received }}</span><button class="btn-secundario" (click)="draft.lines.splice(i, 1)" [disabled]="busy">Quitar</button>
       </div>
-      <div class="form-group mb-3">
-        <label class="form-label">Nombre *</label>
-        <input type="text" class="form-control" [(ngModel)]="nuevoNombre" placeholder="Ej: Sucursal Oeste">
-      </div>
-      <div class="form-group mb-3">
-        <label class="form-label">Dirección</label>
-        <input type="text" class="form-control" [(ngModel)]="nuevaDireccion" placeholder="Ej: Av. Siempre Viva 742">
-      </div>
+      <button class="btn-secundario" (click)="agregar()" [disabled]="busy">Agregar producto manualmente</button>
     </div>
-    <div class="modal-foot">
-      <button class="btn-secundario" (click)="cerrarAlta()">Cancelar</button>
-      <button class="btn-primario" (click)="guardarSucursal()" [disabled]="guardando">
-        <span *ngIf="!guardando">Guardar</span>
-        <span *ngIf="guardando" class="spinner-border spinner-border-sm"></span>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- TOAST -->
-<div class="toast-fs" [class.toast-error]="tipoMensaje === 'error'" [class.toast-ok]="tipoMensaje === 'ok'" *ngIf="mensaje">
-  <i class="bi" [ngClass]="tipoMensaje === 'ok' ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i> {{ mensaje }}
+    <div class="modal-foot"><button class="btn-secundario" (click)="cerrar()" [disabled]="busy">Cancelar</button><button class="btn-primario" (click)="guardar()" [disabled]="busy">Guardar pedido</button></div>
+  </section>
 </div>

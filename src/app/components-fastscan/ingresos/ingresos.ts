@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { gsap } from 'gsap';
 
@@ -56,6 +56,7 @@ export class Ingresos implements OnInit {
   constructor(private service: FastScanService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
+    this.sucursalDestinoId = this.service.getDeposito().id;
     this.service.getSucursales().subscribe((r) => (this.sucursales = r.filter((s) => s.isActive)));
     this.service.getMovimientos().subscribe((r) => (this.ingresos = r));
     this.cdr.detectChanges();
@@ -68,7 +69,9 @@ export class Ingresos implements OnInit {
     this.eanIngresado = ' ';
     this.eanIngresado = '';
     this.notas = '';
-    this.sucursalDestinoId = this.sucursales[0]?.id || 0;
+    this.sucursalDestinoId = this.service.getDeposito().id;
+    this.eanEstado = null;
+    this.mensaje = '';
     this.progreso = 0;
     window.scrollTo(0, 0);
     this.enfocarEan();
@@ -82,7 +85,15 @@ export class Ingresos implements OnInit {
   /* ===== Validación EAN en vivo ===== */
   validarEan(): void {
     const ean = this.eanIngresado.trim();
-    if (!ean) return;
+    if (!ean) {
+      this.notificar('No se recibió una lectura del scanner. Podés escribir el EAN manualmente y presionar Agregar.', 'error');
+      this.enfocarEan();
+      return;
+    }
+    if (!/^(?:\d{8}|\d{12,14})$/.test(ean)) {
+      this.notificar('El EAN debe contener 8, 12, 13 o 14 dígitos.', 'error');
+      return;
+    }
 
     // duplicado en el ingreso actual
     if (this.items.some((i) => i.product.ean === ean)) {
@@ -135,14 +146,16 @@ export class Ingresos implements OnInit {
       .split(/[\n,;]+/)
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
-    item.seriales = [...new Set(partes)];
+    item.seriales = partes;
+    item.estado = new Set(partes.map(s => s.toUpperCase())).size === partes.length ? 'validado' : 'duplicado';
     item.cantidad = partes.length;
     this.actualizarProgreso();
     this.cdr.detectChanges();
   }
 
   itemSinSeriales(item: ItemIngreso): boolean {
-    return item.product.requiresSerialNumber && item.seriales.length === 0;
+    return !Number.isSafeInteger(item.cantidad) || item.cantidad < 1 ||
+      item.estado === 'duplicado' || (item.product.requiresSerialNumber && item.seriales.length === 0);
   }
 
   quitarItem(index: number): void {
@@ -177,6 +190,9 @@ export class Ingresos implements OnInit {
     this.mostrarAltaProducto = false;
   }
 
+  @HostListener('document:keydown.escape')
+  cancelarDialogos(): void { if (!this.guardando) { this.cerrarAltaProducto(); this.cerrarResumen(); } }
+
   guardarProductoRapido(): void {
     if (!this.altaNombre.trim() || !this.eanIngresado.trim()) {
       this.mensaje = 'Completá al menos el nombre y el EAN.';
@@ -207,6 +223,7 @@ export class Ingresos implements OnInit {
 
   /* ===== Cierre ===== */
   abrirResumen(): void {
+    if (!this.puedeCerrar) return;
     this.mostrandoResumen = true;
     window.scrollTo(0, 0);
   }
@@ -217,6 +234,7 @@ export class Ingresos implements OnInit {
 
   // Simula el avance de progreso/análisis al cerrar (estilo importación)
   guardarIngreso(): void {
+    if (this.guardando || !this.puedeCerrar) return;
     this.guardando = true;
     const dto = {
       destinationBranchId: this.sucursalDestinoId,
@@ -230,12 +248,12 @@ export class Ingresos implements OnInit {
     };
 
     this.service.registrarIngreso(dto).subscribe({
-      next: () => {
+      next: (movimiento) => {
         setTimeout(() => {
           this.guardando = false;
           this.mostrandoResumen = false;
           this.modoCrear = false;
-          this.notificar(`Ingreso #${this.ultimoId()} registrado correctamente.`, 'ok');
+          this.notificar(`Ingreso #${movimiento.id} registrado correctamente.`, 'ok');
           this.service.getMovimientos().subscribe((r) => (this.ingresos = r));
           this.cdr.detectChanges();
         }, 1200);

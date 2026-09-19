@@ -6,7 +6,7 @@
         <h2 class="page-title">Ingresos de mercadería</h2>
         <p class="page-sub">Registrá ingresos con control de EAN y seriales</p>
       </div>
-      <button class="btn-nuevo-page" (click)="iniciarIngreso()"><i class="bi bi-arrow-down-left-circle"></i> Nuevo ingreso</button>
+      <button class="btn-nuevo-page" (click)="iniciarIngreso()"><i aria-hidden="true" class="bi bi-arrow-down-left-circle"></i> Nuevo ingreso</button>
     </div>
 
     <div class="card-fastscan">
@@ -34,7 +34,7 @@
       </div>
       <ng-template #vacio>
         <div class="vacio">
-          <i class="bi bi-inbox"></i>
+          <i aria-hidden="true" class="bi bi-inbox"></i>
           <p>Todavía no hay ingresos. Tocá "Nuevo ingreso" para empezar.</p>
         </div>
       </ng-template>
@@ -45,7 +45,7 @@
   <div *ngIf="modoCrear" class="crear">
     <div class="page-head">
       <div>
-        <button class="btn-volver" (click)="cancelarIngreso()"><i class="bi bi-arrow-left"></i> Volver</button>
+        <button class="btn-volver" (click)="cancelarIngreso()"><i aria-hidden="true" class="bi bi-arrow-left"></i> Volver</button>
         <h2 class="page-title">Nuevo ingreso</h2>
       </div>
       <div class="progreso-wrap">
@@ -59,54 +59,53 @@
     <!-- Paso 1: datos básicos -->
     <div class="card-fastscan paso-datos">
       <div class="form-group mb-3">
-        <label class="form-label">Sucursal de destino *</label>
-        <select class="form-select" [(ngModel)]="sucursalDestinoId">
-          <option *ngFor="let s of sucursales" [ngValue]="s.id">{{ s.name }}</option>
-        </select>
+        <label class="form-label">Destino</label>
+        <input class="form-control" value="Depósito" readonly aria-label="Destino: Depósito">
       </div>
       <div class="form-group">
         <label class="form-label">Notas (opcional)</label>
-        <textarea class="form-control" rows="2" [(ngModel)]="notas"
+        <textarea class="form-control notas-compactas" rows="1" maxlength="500" [(ngModel)]="notas"
                   placeholder="Ej: Proveedor ABC, nota de crédito NC-001"></textarea>
       </div>
     </div>
 
     <!-- Paso 2: cargar EAN -->
     <div class="card-fastscan paso-ean">
-      <h3 class="paso-titulo"><i class="bi bi-upc-scan"></i> Cargar producto por EAN</h3>
+      <h3 class="paso-titulo"><i aria-hidden="true" class="bi bi-upc-scan"></i> Cargar producto por EAN y serial</h3>
+      <p class="text-muted-c">Escribí el EAN o escanealo y presioná Enter. Luego cargá los seriales del producto, a mano o con el lector.</p>
       <div class="ean-input-row">
         <div class="buscador-ean">
-          <i class="bi bi-upc"></i>
+          <i aria-hidden="true" class="bi bi-upc"></i>
           <input id="ean-scanner-input" type="text" class="form-control" [(ngModel)]="eanIngresado"
                  inputmode="numeric" autocomplete="off" placeholder="Escaneá o escribí el código EAN..." (keyup.enter)="validarEan()"
-                 (keyup)="eanEstado=null">
+                 (input)="eanEstado=null">
         </div>
         <button class="btn-agregar" (click)="validarEan()" [disabled]="validando">
-          <span *ngIf="!validando"><i class="bi bi-plus-lg"></i> Agregar</span>
+          <span *ngIf="!validando"><i aria-hidden="true" class="bi bi-plus-lg"></i> Agregar</span>
           <span *ngIf="validando" class="spinner-border spinner-border-sm"></span>
         </button>
       </div>
 
       <div class="ean-feedback" *ngIf="eanEstado === 'ok'">
-        <i class="bi bi-check-circle"></i> Producto válido
+        <i aria-hidden="true" class="bi bi-check-circle"></i> Producto válido
       </div>
       <div class="ean-feedback ean-invalido" *ngIf="eanEstado === 'invalido'">
-        <i class="bi bi-exclamation-triangle"></i> {{ eanMensaje }}
+        <i aria-hidden="true" class="bi bi-exclamation-triangle"></i> {{ eanMensaje }}
         <button class="btn-enlace" (click)="abrirAltaProducto()">Crear producto</button>
       </div>
       <div class="ean-feedback ean-duplicado" *ngIf="eanEstado === 'duplicado'">
-        <i class="bi bi-slash-circle"></i> {{ eanMensaje }}
+        <i aria-hidden="true" class="bi bi-slash-circle"></i> {{ eanMensaje }}
       </div>
     </div>
 
     <!-- Paso 3: items del ingreso -->
     <div class="card-fastscan paso-items">
-      <h3 class="paso-titulo"><i class="bi bi-list-check"></i> Ítems del ingreso ({{ items.length }})</h3>
+      <h3 class="paso-titulo"><i aria-hidden="true" class="bi bi-list-check"></i> Ítems del ingreso ({{ items.length }})</h3>
 
       <div class="items-wrap" *ngIf="items.length; else sinItems">
         <div class="item-row" *ngFor="let item of items; let idx = index">
           <div class="item-info">
-            <span class="item-estado" [class.ok]="item.estado === 'validado'"><i class="bi bi-check2"></i></span>
+            <span class="item-estado" [class.ok]="item.estado === 'validado'"><i aria-hidden="true" class="bi bi-check2"></i></span>
             <div class="item-datos">
               <span class="item-nombre">{{ item.product.name }}</span>
               <span class="item-meta mono">{{ item.product.sku }} · {{ item.product.ean }}</span>
@@ -114,7 +113,7 @@
             <span class="badge badge-serial" [class.badge-none]="!item.product.requiresSerialNumber">
               {{ item.product.requiresSerialNumber ? 'Serial' : 'Sin serial' }}
             </span>
-            <button class="btn-icon-remove" (click)="quitarItem(idx)"><i class="bi bi-trash"></i></button>
+            <button class="btn-icon-remove" (click)="quitarItem(idx)"><i aria-hidden="true" class="bi bi-trash"></i></button>
           </div>
 
           <div class="item-detalle" *ngIf="item.product.requiresSerialNumber">
@@ -123,8 +122,9 @@
                       (ngModelChange)="onSerialTexto(item)" (keyup.enter)="onSerialTexto(item)"
                       placeholder="NB-20001&#10;NB-20002&#10;NB-20003"></textarea>
             <span class="serial-count" *ngIf="item.seriales.length">
-              <i class="bi bi-qr-code"></i> {{ item.seriales.length }} serial(es) capturados
+              <i aria-hidden="true" class="bi bi-qr-code"></i> {{ item.seriales.length }} serial(es) capturados
             </span>
+            <p role="alert" *ngIf="item.estado === 'duplicado'">Hay seriales repetidos. Corregilos para continuar.</p>
           </div>
           <div class="item-detalle" *ngIf="!item.product.requiresSerialNumber">
             <div class="cantidad-chico">
@@ -137,7 +137,7 @@
 
       <ng-template #sinItems>
         <div class="vacio-chico">
-          <i class="bi bi-cart-plus"></i>
+          <i aria-hidden="true" class="bi bi-cart-plus"></i>
           <p>Todavía no cargaste productos a este ingreso.</p>
         </div>
       </ng-template>
@@ -146,21 +146,21 @@
     <!-- Cerrar -->
     <div class="cerrar-row">
       <button class="btn-cerrar-ingreso" (click)="abrirResumen()" [disabled]="!puedeCerrar || guardando">
-        <i class="bi bi-check2-circle"></i> Cerrar ingreso
+        <i aria-hidden="true" class="bi bi-check2-circle"></i> Cerrar ingreso
       </button>
       <span class="cerrar-hint" *ngIf="!puedeCerrar">
-        Completá todos los ítems y elegí una sucursal para cerrar.
+        Completá los seriales y cantidades para registrar el ingreso a Depósito.
       </span>
     </div>
   </div>
 </div>
 
 <!-- MODAL ALTA RÁPIDA PRODUCTO -->
-<div class="modal-overlay" *ngIf="mostrarAltaProducto" (click.self)="cerrarAltaProducto()">
+<div class="modal-overlay" *ngIf="mostrarAltaProducto" (click)="$event.target === $event.currentTarget ? (cerrarAltaProducto()) : null">
   <div class="modal card-fastscan">
     <div class="modal-head">
-      <h3><i class="bi bi-box-seam"></i> Crear producto</h3>
-      <button class="btn-icon" (click)="cerrarAltaProducto()"><i class="bi bi-x-lg"></i></button>
+      <h3><i aria-hidden="true" class="bi bi-box-seam"></i> Crear producto</h3>
+      <button class="btn-icon" (click)="cerrarAltaProducto()"><i aria-hidden="true" class="bi bi-x-lg"></i></button>
     </div>
     <div class="modal-body">
       <p class="modal-info">El EAN <b class="mono">{{ eanIngresado }}</b> no está registrado. Completá los datos para crearlo.</p>
@@ -185,11 +185,11 @@
 </div>
 
 <!-- MODAL RESUMEN / CIERRE -->
-<div class="modal-overlay" *ngIf="mostrandoResumen" (click.self)="guardando ? null : cerrarResumen()">
+<div class="modal-overlay" *ngIf="mostrandoResumen" (click)="$event.target === $event.currentTarget ? (guardando ? null : cerrarResumen()) : null">
   <div class="modal modal-lg card-fastscan">
     <div class="modal-head">
-      <h3><i class="bi bi-clipboard-check"></i> Confirmar ingreso</h3>
-      <button class="btn-icon" (click)="guardando ? null : cerrarResumen()"><i class="bi bi-x-lg"></i></button>
+      <h3><i aria-hidden="true" class="bi bi-clipboard-check"></i> Confirmar ingreso</h3>
+      <button class="btn-icon" (click)="guardando ? null : cerrarResumen()"><i aria-hidden="true" class="bi bi-x-lg"></i></button>
     </div>
     <div class="modal-body">
       <div class="resumen-grid">
@@ -214,7 +214,7 @@
     <div class="modal-foot">
       <button class="btn-secundario" (click)="cerrarResumen()" [disabled]="guardando">Cancelar</button>
       <button class="btn-primario" (click)="guardarIngreso()" [disabled]="guardando">
-        <span *ngIf="!guardando"><i class="bi bi-check2-circle"></i> Confirmar</span>
+        <span *ngIf="!guardando"><i aria-hidden="true" class="bi bi-check2-circle"></i> Confirmar</span>
         <span *ngIf="guardando">Guardando...</span>
       </button>
     </div>

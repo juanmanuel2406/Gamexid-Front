@@ -102,6 +102,19 @@ button, a, input, select, textarea { transition: border-color .2s ease, backgrou
 .fade-up { animation: fadeUp 0.5s ease forwards; }
 .fade-in { animation: fadeIn 0.4s ease forwards; }
 
+/* Custom dialogs must not inherit Bootstrap's hidden, full-screen .modal. */
+.modal-overlay > .modal {
+  display: block;
+  position: relative;
+  inset: auto;
+  height: auto;
+  overflow: visible;
+  flex-shrink: 0;
+  background: #231c34;
+}
+.modal-overlay { overscroll-behavior: contain; }
+.notas-compactas { min-height: 48px; max-height: 100px; resize: vertical; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
