@@ -1,102 +1,98 @@
-import { Component, OnInit } from '@angular/core';
-import { ChangeDetectorRef } from '@angular/core';
-import { animate, stagger } from 'animejs';
-
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { forkJoin, of, switchMap } from 'rxjs';
+import { SkeletonModule } from 'primeng/skeleton';
+import { TagModule } from 'primeng/tag';
 import {
   FastScanService,
   Product,
-  Branch,
   SerializedUnit,
   InventoryMovement,
 } from '../../services-fastscan/fastscan-service';
-
+import { Workspace } from '../../core/workspace';
+import { Icon } from '../../shared/icon';
 @Component({
   selector: 'app-dashboard',
+  standalone: true,
+  imports: [RouterLink, DatePipe, DecimalPipe, Icon, SkeletonModule, TagModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
-  standalone: false,
 })
 export class Dashboard implements OnInit {
-  cargando = true;
-  productos: Product[] = [];
-  sucursales: Branch[] = [];
-  unidades: SerializedUnit[] = [];
-  ingresos: InventoryMovement[] = [];
-  nombreUsuario = sessionStorage.getItem('usuario') || '';
-
-  constructor(private service: FastScanService, private cdr: ChangeDetectorRef) {}
-
-  ngOnInit(): void {
-    this.service.getProductos().subscribe((r) => (this.productos = r));
-    this.service.getSucursales().subscribe((r) => (this.sucursales = r));
-    this.service.getMovimientos().subscribe((r) => (this.ingresos = r));
-    // unidades totales
-    this.productos.forEach((p) =>
-      this.service.getUnidadesDeProducto(p.id).subscribe((u) => {
-        u.forEach((x) => this.unidades.push(x));
-      })
+  private data = inject(FastScanService);
+  readonly workspace = inject(Workspace);
+  readonly loading = signal(true);
+  readonly products = signal<Product[]>([]);
+  readonly units = signal<SerializedUnit[]>([]);
+  readonly movements = signal<InventoryMovement[]>([]);
+  readonly localMovements = computed(() =>
+    this.movements().filter((m) => m.destinationBranchId === this.workspace.branchId()),
+  );
+  readonly localUnits = computed(() =>
+    this.units().filter((u) => u.currentBranchId === this.workspace.branchId()),
+  );
+  readonly weekly = computed(() =>
+    Array.from({ length: 7 }, (_, i) => {
+      const day = new Date();
+      day.setDate(day.getDate() - 6 + i);
+      return {
+        label: day.toLocaleDateString('es-AR', { weekday: 'short' }),
+        count: this.localMovements()
+          .filter((m) => new Date(m.createdAtUtc).toDateString() === day.toDateString())
+          .reduce((n, m) => n + this.quantity(m), 0),
+      };
+    }),
+  );
+  readonly maximum = computed(() => Math.max(1, ...this.weekly().map((d) => d.count)));
+  readonly today = computed(() => this.weekly().at(-1)?.count || 0);
+  readonly delta = computed(() => {
+    const days = this.weekly();
+    const before = days[5].count;
+    return before
+      ? (((days[6].count - before) / before) * 100).toFixed(0) + '%'
+      : 'Sin base comparativa';
+  });
+  readonly spark = computed(() =>
+    this.weekly()
+      .map((d, i) => i * 40 + ',' + (50 - (d.count / this.maximum()) * 40))
+      .join(' '),
+  );
+  readonly available = computed(
+    () => this.localUnits().filter((u) => u.status === 'Available').length,
+  );
+  ngOnInit() {
+    this.data
+      .getProductos()
+      .pipe(
+        switchMap((products) => {
+          this.products.set(products);
+          return forkJoin({
+            movements: this.data.getMovimientos(),
+            units: products.length
+              ? forkJoin(products.map((p) => this.data.getUnidadesDeProducto(p.id)))
+              : of([]),
+          });
+        }),
+      )
+      .subscribe({
+        next: (r) => {
+          this.movements.set(r.movements);
+          this.units.set(r.units.flat());
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.workspace.notify('No se pudieron cargar los indicadores.', 'error');
+        },
+      });
+  }
+  quantity(m: InventoryMovement) {
+    return m.items.reduce((n, i) => n + i.quantity, 0);
+  }
+  branchName() {
+    return (
+      this.workspace.branches().find((b) => b.id === this.workspace.branchId())?.name || 'Sucursal'
     );
-    this.cdr.detectChanges();
-
-    setTimeout(() => {
-      animate('.dash-head', {
-        opacity: [0, 1],
-        translateY: [-10, 0],
-        duration: 420,
-        ease: 'outExpo',
-      });
-      animate('.kpi-card', {
-        opacity: [0, 1],
-        translateY: [22, 0],
-        scale: [0.98, 1],
-        delay: stagger(85),
-        duration: 560,
-        ease: 'outExpo',
-      });
-      animate('.moves-card', {
-        opacity: [0, 1],
-        translateY: [16, 0],
-        delay: 360,
-        duration: 520,
-        ease: 'outExpo',
-      });
-    }, 50);
-    setTimeout(() => {
-      this.cargando = false;
-      this.cdr.detectChanges();
-    }, 420);
-  }
-
-  get unidadesActivas(): number {
-    return this.unidades.filter((u) => u.status === 'Available').length;
-  }
-
-  get ingresosHoy(): number {
-    const hoy = new Date().toDateString();
-    return this.ingresos.filter((i) => new Date(i.createdAtUtc).toDateString() === hoy).length;
-  }
-
-  get productosActivos(): number {
-    return this.productos.filter((p) => p.isActive).length;
-  }
-
-  get sucursalesActivas(): number {
-    return this.sucursales.filter((s) => s.isActive).length;
-  }
-
-  fechaLegible(iso: string): string {
-    const d = new Date(iso);
-    const opciones: Intl.DateTimeFormatOptions = {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    };
-    return d.toLocaleDateString('es-AR', opciones);
-  }
-
-  totalItems(mov: InventoryMovement): number {
-    return mov.items.reduce((acc, it) => acc + (it.quantity || 0), 0);
   }
 }

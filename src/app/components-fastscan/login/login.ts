@@ -1,80 +1,66 @@
-import { Component, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, inject, signal, ElementRef } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ChangeDetectorRef } from '@angular/core';
 import { animate } from 'animejs';
-
-import { FastScanService, rolLabel } from '../../services-fastscan/fastscan-service';
-
+import { Icon } from '../../shared/icon';
+import { FastScanService } from '../../services-fastscan/fastscan-service';
 @Component({
   selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule, Icon],
   templateUrl: './login.html',
   styleUrl: './login.css',
-  standalone: false,
 })
 export class Login implements AfterViewInit, OnDestroy {
-  private animations: ReturnType<typeof animate>[] = [];
+  private data = inject(FastScanService);
+  private router = inject(Router);
+  private host = inject(ElementRef);
+  private motion?: ReturnType<typeof animate>;
   email = 'admin@gamexid.com';
   password = '';
-  mostrarPassword = false;
-  cargando = false;
-  errorMsg = '';
-  lema = 'Gestión de inventario integral';
-
-  constructor(
-    private service: FastScanService,
-    private router: Router,
-    private cdr: ChangeDetectorRef
-  ) {}
-
-  ngAfterViewInit(): void {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    this.animations.push(animate('.login-card', { opacity: [0, 1], translateY: [20, 0], duration: 600, ease: 'outExpo' }));
-    this.animations.push(animate('.gamexid-logo', {
-      opacity: [0, 1],
-      scale: [0.72, 1],
-      rotate: [-5, 0],
-      duration: 850,
-      delay: 240,
-      ease: 'outElastic(1, .55)',
-    }));
+  readonly visible = signal(false);
+  readonly busy = signal(false);
+  readonly error = signal('');
+  ngAfterViewInit() {
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches)
+      this.motion = animate(this.host.nativeElement.querySelector('.gamexid-logo'), {
+        opacity: [0, 1],
+        scale: [0.94, 1],
+        translateY: [8, 0],
+        duration: 650,
+        ease: 'outExpo',
+      });
   }
-
-  ngOnDestroy(): void { this.animations.forEach(animation => animation.revert()); }
-
-  togglePassword(): void {
-    this.mostrarPassword = !this.mostrarPassword;
+  ngOnDestroy() {
+    this.motion?.revert();
   }
-
-  ingresar(): void {
-    if (this.cargando) return;
-    this.errorMsg = '';
-    const email = this.email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      this.errorMsg = 'Ingresá un email válido.';
-      this.cdr.detectChanges();
+  ingresar() {
+    if (this.busy()) return;
+    this.error.set('');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email.trim())) {
+      this.error.set('Ingresá un email válido.');
       return;
     }
     if (this.password.length < 8) {
-      this.errorMsg = 'La contraseña debe tener al menos 8 caracteres.';
-      this.cdr.detectChanges();
+      this.error.set('La contraseña debe tener al menos 8 caracteres.');
       return;
     }
-    this.cargando = true;
-    this.service.login(email, this.password).subscribe({
-      next: (user) => {
-        sessionStorage.setItem('logueado', 'true');
-        sessionStorage.setItem('usuario', user.fullName);
-        sessionStorage.setItem(
-          'userData',
-          JSON.stringify({ role: user.role, userId: user.id })
-        );
-        this.cargando = false;
-        this.router.navigate(['/dashboard']);
+    this.busy.set(true);
+    this.data.login(this.email.trim().toLowerCase(), this.password).subscribe({
+      next: (u) => {
+        sessionStorage.setItem('usuario', u.fullName);
+        sessionStorage.setItem('userData', JSON.stringify(u));
+        this.password = '';
+        this.busy.set(false);
+        this.router.navigateByUrl('/dashboard');
       },
-      error: (err: any) => {
-        this.cargando = false;
-        this.errorMsg = err.status === 429 ? 'Demasiados intentos. Esperá un minuto y volvé a intentar.' : err.error?.mensaje || 'No se pudo iniciar sesión. Revisá la conexión e intentá nuevamente.';
-        this.cdr.detectChanges();
+      error: (e) => {
+        this.busy.set(false);
+        this.error.set(
+          e.status === 429
+            ? 'Demasiados intentos. Esperá un minuto.'
+            : e.error?.mensaje || 'No se pudo iniciar sesión. Revisá la conexión.',
+        );
       },
     });
   }

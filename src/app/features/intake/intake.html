@@ -1,0 +1,96 @@
+<div
+  class="dropzone"
+  [class.dragging]="dragging()"
+  [attr.aria-busy]="busy()"
+  (dragover)="$event.preventDefault(); dragging.set(true)"
+  (dragleave)="dragging.set(false)"
+  (drop)="onDrop($event)"
+>
+  <div #laser class="scan-laser" [class.active]="busy()"></div>
+  <gx-icon name="upload" [size]="26" /><strong>Arrastrá el remito o pedido</strong>
+  <p>PDF · Hasta 10 MB · Máximo 50 páginas</p>
+  <label class="btn-secundario" for="pedido-pdf">Seleccionar archivo</label
+  ><input
+    id="pedido-pdf"
+    type="file"
+    accept=".pdf,application/pdf"
+    class="sr-only"
+    [disabled]="busy()"
+    (change)="onInput($event)"
+  />
+</div>
+@if (message()) {
+  <p class="notice" role="status"><gx-icon name="file" />{{ message() }}</p>
+}
+@if (file()) {
+  <div class="intake-toolbar">
+    <span class="code-pill">{{ file()?.name }}</span
+    ><button
+      class="btn-primario"
+      (click)="extract(laser)"
+      [disabled]="!workspace.gemini() || busy()"
+    >
+      <gx-icon name="file" />{{ busy() ? 'Procesando…' : 'Extraer con Gemini' }}
+    </button>
+  </div>
+  <div class="prose prose-invert prose-sm max-w-none mb-4 text-slate-400">
+    <p>
+      La lectura local no envía el PDF a terceros. «Extraer con Gemini» envía este documento a
+      Google para analizarlo. Revisá los datos obtenidos antes de guardar.
+    </p>
+  </div>
+  @if (!workspace.gemini()) {
+    <p class="muted text-xs mb-4">Gemini no está configurado en el servidor.</p>
+  }
+  <div class="document-split">
+    <section class="document-pane">
+      <div class="pane-header">
+        <span>01 / DOCUMENTO ORIGINAL</span
+        ><select aria-label="Página del PDF" [ngModel]="page()" (ngModelChange)="render(+$event)">
+          @for (n of [].constructor(pageCount()); track $index) {
+            <option [value]="$index + 1">Página {{ $index + 1 }}</option>
+          }
+        </select>
+      </div>
+      @if (preview()) {
+        <img [src]="preview()" alt="Vista previa de la página del remito" class="pdf-preview" />
+      } @else {
+        <p-skeleton height="300px" />
+      }
+    </section>
+    <section class="json-pane">
+      <div class="pane-header">
+        <span>02 / DATOS ESTRUCTURADOS</span
+        ><p-tag [value]="source() === 'gemini' ? 'Gemini' : 'Lectura local'" severity="info" />
+      </div>
+      @if (busy()) {
+        <div class="p-4">
+          <p-skeleton height="18px" styleClass="mb-3" /><p-skeleton
+            height="18px"
+            width="75%"
+            styleClass="mb-3"
+          /><p-skeleton height="18px" width="60%" />
+        </div>
+      } @else {
+        <pre
+          class="scrollbar-thin scrollbar-thumb-slate-700"
+        ><code>@for(token of tokens();track $index){<span [class]="token.kind">{{token.value}}</span>}</code></pre>
+      }
+      <div class="confidence-list">
+        @for (line of lines(); track $index) {
+          <div>
+            <span class="code-pill">{{ line.ean }}</span
+            ><p-tag
+              [value]="
+                line.confidence === null
+                  ? 'Revisión manual'
+                  : 'Confianza IA: ' + (line.confidence * 100).toFixed(0) + '%'
+              "
+              [severity]="line.confidence !== null && line.confidence >= 0.9 ? 'success' : 'warn'"
+            />
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+}

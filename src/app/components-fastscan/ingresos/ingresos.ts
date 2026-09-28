@@ -1,304 +1,222 @@
-import { Component, OnInit, HostListener } from '@angular/core';
-import { ChangeDetectorRef } from '@angular/core';
-import { gsap } from 'gsap';
-
+import { Component, inject, signal, computed } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
+import { DialogModule } from 'primeng/dialog';
+import { StepperModule } from 'primeng/stepper';
+import { TagModule } from 'primeng/tag';
 import {
   FastScanService,
-  Branch,
   Product,
   InventoryMovement,
 } from '../../services-fastscan/fastscan-service';
-
-interface ItemIngreso {
+import { Workspace } from '../../core/workspace';
+import { Motion } from '../../shared/motion';
+import { Icon } from '../../shared/icon';
+interface ScanItem {
   product: Product;
-  cantidad: number;
-  seriales: string[];
-  simulando: boolean;
-  estado: 'validado' | 'pendiente' | 'duplicado';
-  serialTexto: string;
+  expected: number;
+  text: string;
+  serials: string[];
+  duplicate: boolean;
 }
-
 @Component({
   selector: 'app-ingresos',
+  standalone: true,
+  imports: [FormsModule, DatePipe, DialogModule, StepperModule, TagModule, Icon],
   templateUrl: './ingresos.html',
   styleUrl: './ingresos.css',
-  standalone: false,
 })
-export class Ingresos implements OnInit {
-  sucursales: Branch[] = [];
-  ingresos: InventoryMovement[] = [];
-
-  // modo listado vs crear
-  modoCrear = false;
-
-  // formulario ingreso
-  sucursalDestinoId = 0;
-  notas = '';
-  eanIngresado = '';
-  validando = false;
-  eanEstado: 'ok' | 'invalido' | 'duplicado' | null = null;
-  eanMensaje = '';
-  items: ItemIngreso[] = [];
-  progreso = 0;
-
-  // alta rápida de producto desconocido
-  mostrarAltaProducto = false;
-  altaSku = '';
-  altaNombre = '';
-  altaSerial = false;
-
-  // cierre
-  mostrandoResumen = false;
-  guardando = false;
-  mensaje = '';
-  tipoMensaje: 'ok' | 'error' = 'ok';
-
-  constructor(private service: FastScanService, private cdr: ChangeDetectorRef) {}
-
-  ngOnInit(): void {
-    this.sucursalDestinoId = this.service.getDeposito().id;
-    this.service.getSucursales().subscribe((r) => (this.sucursales = r.filter((s) => s.isActive)));
-    this.service.getMovimientos().subscribe((r) => (this.ingresos = r));
-    this.cdr.detectChanges();
+export class Ingresos {
+  private data = inject(FastScanService);
+  readonly workspace = inject(Workspace);
+  readonly motion = inject(Motion);
+  readonly creating = signal(false);
+  readonly items = signal<ScanItem[]>([]);
+  readonly movements = signal<InventoryMovement[]>([]);
+  readonly saving = signal(false);
+  readonly confirm = signal(false);
+  readonly newProduct = signal(false);
+  readonly unknown = signal(false);
+  readonly scanMode = signal<'ean' | 'serial'>('ean');
+  readonly activeProduct = signal<number | null>(null);
+  readonly error = signal('');
+  readonly step = computed(() => (this.confirm() ? 3 : this.items().length ? 2 : 1));
+  readonly ready = computed(
+    () =>
+      this.items().length > 0 &&
+      this.items().every(
+        (i) =>
+          Number.isSafeInteger(i.expected) &&
+          i.expected > 0 &&
+          !i.duplicate &&
+          (!i.product.requiresSerialNumber || i.serials.length === i.expected),
+      ),
+  );
+  readonly total = computed(() => this.items().reduce((n, i) => n + i.expected, 0));
+  readonly list = computed(() =>
+    this.movements().filter((m) => m.destinationBranchId === this.workspace.branchId()),
+  );
+  ean = '';
+  notes = '';
+  draft = { sku: '', name: '', requiresSerialNumber: true };
+  depot = this.data.getDeposito();
+  constructor() {
+    this.load();
   }
-
-  /* ===== Entrada ===== */
-  iniciarIngreso(): void {
-    this.modoCrear = true;
-    this.items = [];
-    this.eanIngresado = ' ';
-    this.eanIngresado = '';
-    this.notas = '';
-    this.sucursalDestinoId = this.service.getDeposito().id;
-    this.eanEstado = null;
-    this.mensaje = '';
-    this.progreso = 0;
-    window.scrollTo(0, 0);
-    this.enfocarEan();
+  load() {
+    this.data.getMovimientos().subscribe((v) => this.movements.set(v));
   }
-
-  cancelarIngreso(): void {
-    this.modoCrear = false;
-    this.items = [];
+  iniciarIngreso() {
+    this.creating.set(true);
+    this.items.set([]);
+    this.ean = '';
+    this.notes = '';
+    this.error.set('');
+    this.unknown.set(false);
+    this.scanMode.set('ean');
+    this.activeProduct.set(null);
   }
-
-  /* ===== Validación EAN en vivo ===== */
-  validarEan(): void {
-    const ean = this.eanIngresado.trim();
-    if (!ean) {
-      this.notificar('No se recibió una lectura del scanner. Podés escribir el EAN manualmente y presionar Agregar.', 'error');
-      this.enfocarEan();
+  validarEan() {
+    this.error.set('');
+    this.unknown.set(false);
+    const code = this.ean.trim();
+    if (!code) {
+      this.fail(
+        'No se recibió una lectura del scanner. Podés escribir el EAN manualmente y presionar Agregar.',
+      );
       return;
     }
-    if (!/^(?:\d{8}|\d{12,14})$/.test(ean)) {
-      this.notificar('El EAN debe contener 8, 12, 13 o 14 dígitos.', 'error');
+    if (!/^(?:\d{8}|\d{12,14})$/.test(code)) {
+      this.fail('El EAN debe contener 8, 12, 13 o 14 dígitos.');
       return;
     }
-
-    // duplicado en el ingreso actual
-    if (this.items.some((i) => i.product.ean === ean)) {
-      this.eanEstado = 'duplicado';
-      this.eanMensaje = 'Este EAN ya fue cargado en el ingreso.';
-      this.cdr.detectChanges();
+    const existing = this.items().find((i) => i.product.ean === code);
+    if (existing) {
+      this.activeProduct.set(existing.product.id);
+      this.scanMode.set('serial');
+      this.fail('Este EAN ya está cargado. Completá sus seriales o ajustá su cantidad.');
       return;
     }
-
-    this.validando = true;
-    this.eanEstado = null;
-    this.cdr.detectChanges();
-
-    this.service.buscarProductoPorEan(ean).subscribe((p) => {
-      this.validando = false;
-      if (!p) {
-        this.eanEstado = 'invalido';
-        this.eanMensaje = 'Producto no registrado. Podés crearlo al instante.';
-        this.cdr.detectChanges();
-        return;
-      }
-      this.agregarItem(p);
+    this.data.buscarProductoPorEan(code).subscribe({
+      next: (p) => {
+        if (!p) {
+          this.unknown.set(true);
+          this.fail('Producto no registrado. Podés crearlo para continuar.');
+          return;
+        }
+        this.add(p);
+      },
+      error: () => this.fail('No se pudo buscar el producto.'),
     });
   }
-
-  agregarItem(p: Product): void {
-    this.items.push({
-      product: p,
-      cantidad: p.requiresSerialNumber ? 0 : 1,
-      seriales: [],
-      simulando: false,
-      estado: 'validado',
-      serialTexto: '',
-    });
-    this.eanIngresado = '';
-    this.eanEstado = null;
-    this.actualizarProgreso();
-    this.cdr.detectChanges();
-    if (p.requiresSerialNumber) {
-      setTimeout(() => document.getElementById(`serial-${p.id}`)?.focus());
-    } else {
-      this.enfocarEan();
-    }
+  add(p: Product) {
+    this.items.update((items) => [
+      ...items,
+      { product: p, expected: 1, text: '', serials: [], duplicate: false },
+    ]);
+    this.ean = '';
+    this.unknown.set(false);
+    this.error.set('');
+    this.activeProduct.set(p.id);
+    this.scanMode.set(p.requiresSerialNumber ? 'serial' : 'ean');
+    setTimeout(() =>
+      document
+        .getElementById(p.requiresSerialNumber ? 'serial-' + p.id : 'ean-scanner-input')
+        ?.focus(),
+    );
   }
-
-  /* ===== Seriales ===== */
-  onSerialTexto(item: ItemIngreso): void {
-    // parsea seriales separados por coma o enter
-    const partes = item.serialTexto
+  edit(item: ScanItem, text: string) {
+    const serials = text
       .split(/[\n,;]+/)
       .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-    item.seriales = partes;
-    item.estado = new Set(partes.map(s => s.toUpperCase())).size === partes.length ? 'validado' : 'duplicado';
-    item.cantidad = partes.length;
-    this.actualizarProgreso();
-    this.cdr.detectChanges();
+      .filter(Boolean);
+    this.items.update((items) =>
+      items.map((i) =>
+        i === item
+          ? {
+              ...i,
+              text,
+              serials,
+              duplicate: new Set(serials.map((s) => s.toUpperCase())).size !== serials.length,
+            }
+          : i,
+      ),
+    );
   }
-
-  itemSinSeriales(item: ItemIngreso): boolean {
-    return !Number.isSafeInteger(item.cantidad) || item.cantidad < 1 ||
-      item.estado === 'duplicado' || (item.product.requiresSerialNumber && item.seriales.length === 0);
+  quantity(item: ScanItem, n: number) {
+    this.items.update((items) => items.map((i) => (i === item ? { ...i, expected: n } : i)));
   }
-
-  quitarItem(index: number): void {
-    this.items.splice(index, 1);
-    this.actualizarProgreso();
-    this.cdr.detectChanges();
-  }
-
-  /* ===== Progreso ===== */
-  actualizarProgreso(): void {
-    if (this.items.length === 0) {
-      this.progreso = 0;
-      return;
+  capture(item: ScanItem) {
+    if (!item.duplicate && item.serials.length) {
+      this.motion.accepted(document.getElementById('captures-' + item.product.id));
     }
-    const completos = this.items.filter((i) => !this.itemSinSeriales(i)).length;
-    this.progreso = Math.round((completos / this.items.length) * 100);
   }
-
-  get puedeCerrar(): boolean {
-    return this.items.length > 0 && this.progreso === 100 && this.sucursalDestinoId > 0;
-  }
-
-  /* ===== Alta rápida de producto ===== */
-  abrirAltaProducto(): void {
-    this.mostrarAltaProducto = true;
-    this.altaSku = '';
-    this.altaNombre = '';
-    this.altaSerial = false;
-  }
-
-  cerrarAltaProducto(): void {
-    this.mostrarAltaProducto = false;
-  }
-
-  @HostListener('document:keydown.escape')
-  cancelarDialogos(): void { if (!this.guardando) { this.cerrarAltaProducto(); this.cerrarResumen(); } }
-
-  guardarProductoRapido(): void {
-    if (!this.altaNombre.trim() || !this.eanIngresado.trim()) {
-      this.mensaje = 'Completá al menos el nombre y el EAN.';
-      this.tipoMensaje = 'error';
-      this.cdr.detectChanges();
-      return;
+  remove(item: ScanItem) {
+    this.items.update((v) => v.filter((i) => i !== item));
+    if (this.activeProduct() === item.product.id) {
+      this.activeProduct.set(null);
+      this.scanMode.set('ean');
     }
-    const sku = this.altaSku.trim() || 'AUTO-' + this.eanIngresado.trim();
-    this.service
+  }
+  nextEan() {
+    this.scanMode.set('ean');
+    this.activeProduct.set(null);
+    setTimeout(() => document.getElementById('ean-scanner-input')?.focus());
+  }
+  createProduct() {
+    this.data
       .crearProducto({
-        sku,
-        name: this.altaNombre.trim(),
-        ean: this.eanIngresado.trim(),
-        requiresSerialNumber: this.altaSerial,
+        sku: this.draft.sku.trim() || 'AUTO-' + this.ean.trim(),
+        name: this.draft.name,
+        ean: this.ean,
+        requiresSerialNumber: this.draft.requiresSerialNumber,
       })
       .subscribe({
         next: (p) => {
-          this.cerrarAltaProducto();
-          this.agregarItem(p);
+          this.newProduct.set(false);
+          this.add(p);
         },
-        error: (err: any) => {
-          this.mensaje = err.error?.mensaje || 'No se pudo crear el producto.';
-          this.tipoMensaje = 'error';
-          this.cdr.detectChanges();
+        error: (e) => this.fail(e.error?.mensaje || 'No se pudo crear el producto.'),
+      });
+  }
+  save() {
+    if (!this.ready() || this.saving()) return;
+    this.saving.set(true);
+    this.data
+      .registrarIngreso({
+        destinationBranchId: this.depot.id,
+        notes: this.notes,
+        items: this.items().map((i) => ({
+          productId: i.product.id,
+          quantity: i.expected,
+          serials: i.serials,
+          requiresSerialNumber: i.product.requiresSerialNumber,
+        })),
+      })
+      .subscribe({
+        next: (m) => {
+          this.saving.set(false);
+          this.confirm.set(false);
+          this.creating.set(false);
+          this.workspace.select(this.depot.id);
+          this.load();
+          this.workspace.notify('Ingreso #' + m.id + ' registrado correctamente.');
+        },
+        error: (e) => {
+          this.saving.set(false);
+          this.confirm.set(false);
+          this.fail(e.error?.mensaje || 'No se pudo registrar el ingreso.');
         },
       });
   }
-
-  /* ===== Cierre ===== */
-  abrirResumen(): void {
-    if (!this.puedeCerrar) return;
-    this.mostrandoResumen = true;
-    window.scrollTo(0, 0);
+  fail(text: string) {
+    this.error.set(text);
+    this.workspace.notify(text, 'error');
   }
-
-  cerrarResumen(): void {
-    this.mostrandoResumen = false;
+  branch(id?: number) {
+    return this.workspace.branches().find((b) => b.id === id)?.name || 'Sucursal';
   }
-
-  // Simula el avance de progreso/análisis al cerrar (estilo importación)
-  guardarIngreso(): void {
-    if (this.guardando || !this.puedeCerrar) return;
-    this.guardando = true;
-    const dto = {
-      destinationBranchId: this.sucursalDestinoId,
-      notes: this.notas.trim() || undefined,
-      items: this.items.map((i) => ({
-        productId: i.product.id,
-        quantity: i.cantidad,
-        serials: i.seriales,
-        requiresSerialNumber: i.product.requiresSerialNumber,
-      })),
-    };
-
-    this.service.registrarIngreso(dto).subscribe({
-      next: (movimiento) => {
-        setTimeout(() => {
-          this.guardando = false;
-          this.mostrandoResumen = false;
-          this.modoCrear = false;
-          this.notificar(`Ingreso #${movimiento.id} registrado correctamente.`, 'ok');
-          this.service.getMovimientos().subscribe((r) => (this.ingresos = r));
-          this.cdr.detectChanges();
-        }, 1200);
-      },
-      error: (err: any) => {
-        this.guardando = false;
-        this.notificar(err.error?.mensaje || 'No se pudo registrar el ingreso.', 'error');
-        this.cdr.detectChanges();
-      },
-    });
-  }
-
-  private ultimoId(): number {
-    return this.ingresos.reduce((m, i) => Math.max(m, i.id), 0);
-  }
-
-  notificar(m: string, t: 'ok' | 'error'): void {
-    this.mensaje = m;
-    this.tipoMensaje = t;
-    this.cdr.detectChanges();
-    setTimeout(() => {
-      this.mensaje = '';
-      this.cdr.detectChanges();
-    }, 4000);
-  }
-
-  /* ===== Helpers ===== */
-  sucursalNombre(id: number): string {
-    return this.sucursales.find((s) => s.id === id)?.name || `Sucursal #${id}`;
-  }
-
-  fechaLegible(iso: string): string {
-    const d = new Date(iso);
-    return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  }
-
-  totalItems(mov: InventoryMovement): number {
-    return mov.items.reduce((acc, it) => acc + (it.quantity || 0), 0);
-  }
-
-  totalUnidades(): number {
-    return this.items.reduce((acc, i) => acc + i.cantidad, 0);
-  }
-
-  private enfocarEan(): void {
-    setTimeout(() => document.getElementById('ean-scanner-input')?.focus());
+  count(m: InventoryMovement) {
+    return m.items.reduce((n, i) => n + i.quantity, 0);
   }
 }

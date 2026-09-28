@@ -1,0 +1,54 @@
+.fraud-alert {
+  border: 1px solid #ef444490;
+  background: #450a0a4d;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 24px;
+  color: #fca5a5;
+}
+.fraud-alert h2 {
+  font-size: 16px;
+  color: #fecaca;
+  font-weight: 600;
+}
+.fraud-alert p {
+  font-size: 12px;
+  margin-top: 6px;
+}
+.fraud-alert > .icon-button {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 11px;
+}
+.evidence code {
+  display: block;
+  margin-top: 4px;
+}
+.panel {
+  overflow: hidden;
+}
+@media (max-width: 600px) {
+  .panel-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .fraud-alert {
+    padding: 14px;
+    gap: 10px;
+  }
+  .fraud-alert > gx-icon {
+    display: none;
+  }
+  .fraud-alert h2 {
+    font-size: 14px;
+  }
+}

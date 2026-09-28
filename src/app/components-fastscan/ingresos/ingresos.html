@@ -1,227 +1,249 @@
-<div class="ingresos fade-in">
-  <!-- ===== LISTADO ===== -->
-  <ng-container *ngIf="!modoCrear">
-    <div class="page-head">
-      <div>
-        <h2 class="page-title">Ingresos de mercadería</h2>
-        <p class="page-sub">Registrá ingresos con control de EAN y seriales</p>
-      </div>
-      <button class="btn-nuevo-page" (click)="iniciarIngreso()"><i aria-hidden="true" class="bi bi-arrow-down-left-circle"></i> Nuevo ingreso</button>
+@if (!creating()) {
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">OPERACIONES / RECEPCIÓN</p>
+      <h1 class="page-title">Ingresos de mercadería</h1>
+      <p class="page-sub">Recepción verificada por producto y número de serie</p>
     </div>
-
-    <div class="card-fastscan">
-      <div class="tabla-wrap" *ngIf="ingresos.length; else vacio">
+    <button class="btn-primario" (click)="iniciarIngreso()">
+      <gx-icon name="scan" />Nuevo ingreso
+    </button>
+  </div>
+  <section class="panel">
+    @if (list().length) {
+      <div class="tabla-wrap">
         <table class="tabla">
           <thead>
             <tr>
               <th>N°</th>
               <th>Fecha</th>
               <th>Destino</th>
-              <th>ítems</th>
+              <th>Unidades</th>
               <th>Notas</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let i of ingresos">
-              <td><span class="chip-sku">#{{ i.id }}</span></td>
-              <td>{{ fechaLegible(i.createdAtUtc) }}</td>
-              <td>{{ sucursalNombre(i.destinationBranchId || 0) }}</td>
-              <td>{{ totalItems(i) }}</td>
-              <td class="text-muted-c">{{ i.notes || '—' }}</td>
-            </tr>
+            @for (m of list(); track m.id) {
+              <tr>
+                <td>
+                  <span class="code-pill">#{{ m.id }}</span>
+                </td>
+                <td>{{ m.createdAtUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ branch(m.destinationBranchId) }}</td>
+                <td class="mono">{{ count(m) }}</td>
+                <td>{{ m.notes || '—' }}</td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>
-      <ng-template #vacio>
-        <div class="vacio">
-          <i aria-hidden="true" class="bi bi-inbox"></i>
-          <p>Todavía no hay ingresos. Tocá "Nuevo ingreso" para empezar.</p>
-        </div>
-      </ng-template>
+    } @else {
+      <div class="empty">
+        <gx-icon name="scan" [size]="32" />
+        <h3>Listo para recibir mercadería</h3>
+        <p>No hay ingresos en esta sucursal. Creá uno y empezá por el EAN.</p>
+        <button class="btn-secundario" (click)="iniciarIngreso()">Abrir terminal</button>
+      </div>
+    }
+  </section>
+} @else {
+  <div class="page-head">
+    <div>
+      <button class="btn-volver" (click)="creating.set(false)">
+        <gx-icon name="back" /> Volver
+      </button>
+      <h1 class="page-title">Terminal de depósito</h1>
+      <p class="page-sub">Nuevo ingreso · EAN + número de serie</p>
     </div>
-  </ng-container>
-
-  <!-- ===== CREAR INGRESO ===== -->
-  <div *ngIf="modoCrear" class="crear">
-    <div class="page-head">
-      <div>
-        <button class="btn-volver" (click)="cancelarIngreso()"><i aria-hidden="true" class="bi bi-arrow-left"></i> Volver</button>
-        <h2 class="page-title">Nuevo ingreso</h2>
-      </div>
-      <div class="progreso-wrap">
-        <div class="progreso-barra">
-          <div class="progreso-lleno" [style.width.%]="progreso"></div>
+    <label class="feedback-toggle"
+      ><input
+        type="checkbox"
+        [ngModel]="motion.enabled"
+        (ngModelChange)="motion.enableFeedback($event)"
+      /><gx-icon name="sound" />Sonido / vibración</label
+    >
+  </div>
+  <p-stepper [value]="step()" [linear]="true"
+    ><p-step-list
+      ><p-step [value]="1">Identificar EAN</p-step><p-step [value]="2">Validar seriales</p-step
+      ><p-step [value]="3">Confirmar ingreso</p-step></p-step-list
+    ></p-stepper
+  >
+  <div class="terminal-layout">
+    <section class="terminal-main">
+      <div class="panel scan-zone" [class.awaiting]="scanMode() === 'ean'">
+        <div class="panel-header">
+          <h2 class="section-title"><gx-icon name="scan" /> Cargar producto por EAN y serial</h2>
+          <span class="badge" [class.status-ok]="scanMode() === 'ean'">{{
+            scanMode() === 'ean' ? 'ESPERANDO EAN' : 'VALIDANDO SERIAL'
+          }}</span>
         </div>
-        <span class="progreso-texto">{{ progreso }}%</span>
-      </div>
-    </div>
-
-    <!-- Paso 1: datos básicos -->
-    <div class="card-fastscan paso-datos">
-      <div class="form-group mb-3">
-        <label class="form-label">Destino</label>
-        <input class="form-control" value="Depósito" readonly aria-label="Destino: Depósito">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Notas (opcional)</label>
-        <textarea class="form-control notas-compactas" rows="1" maxlength="500" [(ngModel)]="notas"
-                  placeholder="Ej: Proveedor ABC, nota de crédito NC-001"></textarea>
-      </div>
-    </div>
-
-    <!-- Paso 2: cargar EAN -->
-    <div class="card-fastscan paso-ean">
-      <h3 class="paso-titulo"><i aria-hidden="true" class="bi bi-upc-scan"></i> Cargar producto por EAN y serial</h3>
-      <p class="text-muted-c">Escribí el EAN o escanealo y presioná Enter. Luego cargá los seriales del producto, a mano o con el lector.</p>
-      <div class="ean-input-row">
-        <div class="buscador-ean">
-          <i aria-hidden="true" class="bi bi-upc"></i>
-          <input id="ean-scanner-input" type="text" class="form-control" [(ngModel)]="eanIngresado"
-                 inputmode="numeric" autocomplete="off" placeholder="Escaneá o escribí el código EAN..." (keyup.enter)="validarEan()"
-                 (input)="eanEstado=null">
+        <label for="ean-scanner-input" class="form-label">EAN del producto</label>
+        <div class="scan-input">
+          <input
+            id="ean-scanner-input"
+            class="form-control mono"
+            [(ngModel)]="ean"
+            (keyup.enter)="validarEan()"
+            inputmode="numeric"
+            maxlength="14"
+            autocomplete="off"
+            placeholder="Escaneá o escribí el código EAN..."
+          /><button class="btn-agregar" (click)="validarEan()">
+            <gx-icon name="plus" />Agregar
+          </button>
         </div>
-        <button class="btn-agregar" (click)="validarEan()" [disabled]="validando">
-          <span *ngIf="!validando"><i aria-hidden="true" class="bi bi-plus-lg"></i> Agregar</span>
-          <span *ngIf="validando" class="spinner-border spinner-border-sm"></span>
+        <p class="muted text-xs mt-3">
+          Lector USB/Bluetooth en modo teclado o carga manual. Enter confirma la lectura.
+        </p>
+        @if (unknown()) {
+          <div class="notice status-warn">
+            <p>Producto no registrado.</p>
+            <button class="btn-enlace" (click)="newProduct.set(true)">Crear producto</button>
+          </div>
+        }
+      </div>
+      @for (item of items(); track item.product.id) {
+        <article class="panel serial-panel" [class.focused]="activeProduct() === item.product.id">
+          <div class="panel-header">
+            <div>
+              <h2 class="section-title">{{ item.product.name }}</h2>
+              <span class="code-pill mt-2">{{ item.product.ean }}</span>
+            </div>
+            <button class="icon-button" aria-label="Quitar producto" (click)="remove(item)">
+              <gx-icon name="trash" />
+            </button>
+          </div>
+          <label class="quantity-input"
+            ><span class="form-label">Cantidad esperada</span
+            ><input
+              type="number"
+              class="form-control mono"
+              min="1"
+              step="1"
+              [ngModel]="item.expected"
+              (ngModelChange)="quantity(item, +$event)"
+          /></label>
+          @if (item.product.requiresSerialNumber) {
+            <div class="capture-heading">
+              <label class="form-label" [for]="'serial-' + item.product.id"
+                >Números de serie (uno por línea)</label
+              ><span
+                class="code-pill"
+                [class.status-ok]="item.serials.length === item.expected && !item.duplicate"
+                >[ {{ item.serials.length }} / {{ item.expected }} Capturados ]</span
+              >
+            </div>
+            <textarea
+              [id]="'serial-' + item.product.id"
+              rows="3"
+              class="form-control mono"
+              [ngModel]="item.text"
+              (ngModelChange)="edit(item, $event)"
+              (keyup.enter)="capture(item)"
+              placeholder="Escaneá o escribí cada número de serie"
+            ></textarea>
+            <div class="serial-chips" [id]="'captures-' + item.product.id">
+              @for (sn of item.serials; track $index) {
+                <span
+                  class="code-pill"
+                  [class.status-ok]="!item.duplicate"
+                  [class.status-error]="item.duplicate"
+                  ><gx-icon [name]="item.duplicate ? 'alert' : 'check'" [size]="12" />
+                  {{ sn }}</span
+                >
+              }
+            </div>
+            @if (item.duplicate) {
+              <p role="alert" class="text-red-300 text-xs mt-3">
+                Hay seriales repetidos. Corregilos para continuar.
+              </p>
+            }
+            @if (item.serials.length > item.expected) {
+              <p role="alert" class="text-red-300 text-xs mt-3">
+                Hay más seriales que unidades esperadas.
+              </p>
+            }
+          } @else {
+            <p class="notice">Este producto se controla por cantidad, sin serial individual.</p>
+          }
+        </article>
+      } @empty {
+        <div class="empty">
+          <gx-icon name="serial" [size]="32" />
+          <h3>Primero, identificá el producto</h3>
+          <p>Después podrás completar sus unidades y números de serie.</p>
+        </div>
+      }
+      @if (items().length) {
+        <button class="btn-secundario" (click)="nextEan()">
+          <gx-icon name="plus" />Leer otro EAN
         </button>
+      }
+    </section>
+    <aside class="panel receipt-summary">
+      <p class="eyebrow">RESUMEN DE RECEPCIÓN</p>
+      <label class="form-label">Destino</label
+      ><input class="form-control" readonly value="Depósito" aria-label="Destino: Depósito" />
+      <div class="summary-metric">
+        <span>Productos</span><strong>{{ items().length }}</strong>
       </div>
-
-      <div class="ean-feedback" *ngIf="eanEstado === 'ok'">
-        <i aria-hidden="true" class="bi bi-check-circle"></i> Producto válido
+      <div class="summary-metric">
+        <span>Unidades esperadas</span><strong>{{ total() }}</strong>
       </div>
-      <div class="ean-feedback ean-invalido" *ngIf="eanEstado === 'invalido'">
-        <i aria-hidden="true" class="bi bi-exclamation-triangle"></i> {{ eanMensaje }}
-        <button class="btn-enlace" (click)="abrirAltaProducto()">Crear producto</button>
-      </div>
-      <div class="ean-feedback ean-duplicado" *ngIf="eanEstado === 'duplicado'">
-        <i aria-hidden="true" class="bi bi-slash-circle"></i> {{ eanMensaje }}
-      </div>
-    </div>
-
-    <!-- Paso 3: items del ingreso -->
-    <div class="card-fastscan paso-items">
-      <h3 class="paso-titulo"><i aria-hidden="true" class="bi bi-list-check"></i> Ítems del ingreso ({{ items.length }})</h3>
-
-      <div class="items-wrap" *ngIf="items.length; else sinItems">
-        <div class="item-row" *ngFor="let item of items; let idx = index">
-          <div class="item-info">
-            <span class="item-estado" [class.ok]="item.estado === 'validado'"><i aria-hidden="true" class="bi bi-check2"></i></span>
-            <div class="item-datos">
-              <span class="item-nombre">{{ item.product.name }}</span>
-              <span class="item-meta mono">{{ item.product.sku }} · {{ item.product.ean }}</span>
-            </div>
-            <span class="badge badge-serial" [class.badge-none]="!item.product.requiresSerialNumber">
-              {{ item.product.requiresSerialNumber ? 'Serial' : 'Sin serial' }}
-            </span>
-            <button class="btn-icon-remove" (click)="quitarItem(idx)"><i aria-hidden="true" class="bi bi-trash"></i></button>
-          </div>
-
-          <div class="item-detalle" *ngIf="item.product.requiresSerialNumber">
-            <label class="form-label-chico">Números de serie (uno por línea, o separados por coma)</label>
-            <textarea [id]="'serial-' + item.product.id" class="form-control" rows="2" [(ngModel)]="item.serialTexto"
-                      (ngModelChange)="onSerialTexto(item)" (keyup.enter)="onSerialTexto(item)"
-                      placeholder="NB-20001&#10;NB-20002&#10;NB-20003"></textarea>
-            <span class="serial-count" *ngIf="item.seriales.length">
-              <i aria-hidden="true" class="bi bi-qr-code"></i> {{ item.seriales.length }} serial(es) capturados
-            </span>
-            <p role="alert" *ngIf="item.estado === 'duplicado'">Hay seriales repetidos. Corregilos para continuar.</p>
-          </div>
-          <div class="item-detalle" *ngIf="!item.product.requiresSerialNumber">
-            <div class="cantidad-chico">
-              <label class="form-label-chico">Cantidad</label>
-              <input type="number" class="form-control" min="1" [(ngModel)]="item.cantidad" (ngModelChange)="actualizarProgreso()">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <ng-template #sinItems>
-        <div class="vacio-chico">
-          <i aria-hidden="true" class="bi bi-cart-plus"></i>
-          <p>Todavía no cargaste productos a este ingreso.</p>
-        </div>
-      </ng-template>
-    </div>
-
-    <!-- Cerrar -->
-    <div class="cerrar-row">
-      <button class="btn-cerrar-ingreso" (click)="abrirResumen()" [disabled]="!puedeCerrar || guardando">
-        <i aria-hidden="true" class="bi bi-check2-circle"></i> Cerrar ingreso
+      <label class="form-label" for="entry-notes">Notas (opcional)</label
+      ><textarea
+        id="entry-notes"
+        class="form-control notas-compactas"
+        [(ngModel)]="notes"
+        rows="1"
+        maxlength="500"
+        placeholder="Referencia o proveedor"
+      ></textarea
+      ><button
+        class="btn-cerrar-ingreso w-full mt-6"
+        [disabled]="!ready()"
+        (click)="confirm.set(true)"
+      >
+        Cerrar ingreso <gx-icon name="arrow" />
       </button>
-      <span class="cerrar-hint" *ngIf="!puedeCerrar">
-        Completá los seriales y cantidades para registrar el ingreso a Depósito.
-      </span>
-    </div>
+      <p class="muted text-xs mt-3">Se habilita cuando cantidades y seriales coinciden.</p>
+    </aside>
   </div>
-</div>
-
-<!-- MODAL ALTA RÁPIDA PRODUCTO -->
-<div class="modal-overlay" *ngIf="mostrarAltaProducto" (click)="$event.target === $event.currentTarget ? (cerrarAltaProducto()) : null">
-  <div class="modal card-fastscan">
-    <div class="modal-head">
-      <h3><i aria-hidden="true" class="bi bi-box-seam"></i> Crear producto</h3>
-      <button class="btn-icon" (click)="cerrarAltaProducto()"><i aria-hidden="true" class="bi bi-x-lg"></i></button>
-    </div>
-    <div class="modal-body">
-      <p class="modal-info">El EAN <b class="mono">{{ eanIngresado }}</b> no está registrado. Completá los datos para crearlo.</p>
-      <div class="form-group mb-3">
-        <label class="form-label">Nombre *</label>
-        <input type="text" class="form-control" [(ngModel)]="altaNombre" placeholder="Ej: Impresora láser">
-      </div>
-      <div class="form-group mb-3">
-        <label class="form-label">SKU (opcional)</label>
-        <input type="text" class="form-control" [(ngModel)]="altaSku" placeholder="Ej: IMP-001">
-      </div>
-      <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" id="altaSerial" [(ngModel)]="altaSerial">
-        <label class="form-check-label" for="altaSerial">Requiere número de serie</label>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn-secundario" (click)="cerrarAltaProducto()">Cancelar</button>
-      <button class="btn-primario" (click)="guardarProductoRapido()">Crear y agregar</button>
-    </div>
+}
+<p-dialog
+  header="Confirmar ingreso"
+  [visible]="confirm()"
+  (visibleChange)="confirm.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '520px' }"
+  ><p>Registrar {{ total() }} unidades de {{ items().length }} productos en Depósito.</p>
+  <div class="notice">
+    <gx-icon name="lock" />Los datos se guardan en este navegador, no en el ERP.
   </div>
-</div>
-
-<!-- MODAL RESUMEN / CIERRE -->
-<div class="modal-overlay" *ngIf="mostrandoResumen" (click)="$event.target === $event.currentTarget ? (guardando ? null : cerrarResumen()) : null">
-  <div class="modal modal-lg card-fastscan">
-    <div class="modal-head">
-      <h3><i aria-hidden="true" class="bi bi-clipboard-check"></i> Confirmar ingreso</h3>
-      <button class="btn-icon" (click)="guardando ? null : cerrarResumen()"><i aria-hidden="true" class="bi bi-x-lg"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="resumen-grid">
-        <div><span class="resumen-label">Sucursal destino</span><span class="resumen-valor">{{ sucursalNombre(sucursalDestinoId) }}</span></div>
-        <div><span class="resumen-label">Total ítems</span><span class="resumen-valor">{{ items.length }}</span></div>
-        <div><span class="resumen-label">Unidades</span><span class="resumen-valor">{{ totalUnidades() }}</span></div>
-        <div><span class="resumen-label">Notas</span><span class="resumen-valor">{{ notas || '—' }}</span></div>
-      </div>
-
-      <div class="resumen-items" *ngIf="!guardando">
-        <div class="resumen-item" *ngFor="let i of items">
-          <span>{{ i.product.name }}</span>
-          <span class="mono">{{ i.product.requiresSerialNumber ? i.seriales.length + ' serial(es)' : i.cantidad + ' u.' }}</span>
-        </div>
-      </div>
-
-      <div class="cierre-loading" *ngIf="guardando">
-        <div class="spinner"></div>
-        <span>Procesando ingreso...</span>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn-secundario" (click)="cerrarResumen()" [disabled]="guardando">Cancelar</button>
-      <button class="btn-primario" (click)="guardarIngreso()" [disabled]="guardando">
-        <span *ngIf="!guardando"><i aria-hidden="true" class="bi bi-check2-circle"></i> Confirmar</span>
-        <span *ngIf="guardando">Guardando...</span>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- TOAST -->
-<div class="toast-fs" [class.toast-error]="tipoMensaje === 'error'" [class.toast-ok]="tipoMensaje === 'ok'" *ngIf="mensaje">
-  <i class="bi" [ngClass]="tipoMensaje === 'ok' ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i> {{ mensaje }}
-</div>
+  <div class="modal-foot">
+    <button class="btn-secundario" (click)="confirm.set(false)" [disabled]="saving()">
+      Cancelar</button
+    ><button class="btn-primario" (click)="save()" [disabled]="saving()">
+      {{ saving() ? 'Guardando…' : 'Confirmar' }}
+    </button>
+  </div></p-dialog
+>
+<p-dialog
+  header="Crear producto"
+  [visible]="newProduct()"
+  (visibleChange)="newProduct.set($event)"
+  [modal]="true"
+  [style]="{ width: '520px' }"
+  ><p class="code-pill mb-4">{{ ean }}</p>
+  <label class="form-group"
+    ><span class="form-label">Nombre</span
+    ><input class="form-control" [(ngModel)]="draft.name" maxlength="180" /></label
+  ><label class="form-group"
+    ><span class="form-label">SKU (opcional)</span
+    ><input class="form-control" [(ngModel)]="draft.sku" maxlength="80" /></label
+  ><label class="form-check"
+    ><input type="checkbox" [(ngModel)]="draft.requiresSerialNumber" />Requiere serial</label
+  ><button class="btn-primario mt-6" (click)="createProduct()">Crear y agregar</button></p-dialog
+>

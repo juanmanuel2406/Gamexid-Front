@@ -1,139 +1,72 @@
-import { Component, OnInit, HostListener } from '@angular/core';
-import { ChangeDetectorRef } from '@angular/core';
-import { gsap } from 'gsap';
-
-import {
-  FastScanService,
-  Product,
-  SerializedUnit,
-} from '../../services-fastscan/fastscan-service';
-
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { FastScanService, Product, SerializedUnit } from '../../services-fastscan/fastscan-service';
+import { Workspace } from '../../core/workspace';
+import { Icon } from '../../shared/icon';
 @Component({
   selector: 'app-productos',
+  standalone: true,
+  imports: [FormsModule, TableModule, DialogModule, TagModule, TooltipModule, Icon],
   templateUrl: './productos.html',
   styleUrl: './productos.css',
-  standalone: false,
 })
 export class Productos implements OnInit {
-  productos: Product[] = [];
-  filtro = '';
-  mensaje = '';
-  tipoMensaje: 'ok' | 'error' = 'ok';
-
-  // alta
-  mostrarAlta = false;
-  nuevoSku = '';
-  nuevoNombre = '';
-  nuevoEan = '';
-  nuevoSerial = false;
-  guardando = false;
-
-  // detalle seriales
-  detalleProducto: Product | null = null;
-  detalleUnidades: SerializedUnit[] = [];
-
-  constructor(private service: FastScanService, private cdr: ChangeDetectorRef) {}
-
-  ngOnInit(): void {
-    this.cargar();
-  }
-
-  cargar(): void {
-    this.service.getProductos().subscribe((r) => {
-      this.productos = r;
-      this.cdr.detectChanges();
-      setTimeout(() => {
-        gsap.from('.prod-row', { opacity: 0, y: 10, duration: 0.4, stagger: 0.04, ease: 'power2.out' });
-      }, 50);
-    });
-  }
-
-  get productosFiltrados(): Product[] {
-    const q = this.filtro.trim().toLowerCase();
-    if (!q) return this.productos;
-    return this.productos.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q) ||
-        p.ean.includes(q)
+  private data = inject(FastScanService);
+  readonly workspace = inject(Workspace);
+  readonly productos = signal<Product[]>([]);
+  readonly filtro = signal('');
+  readonly mostrarAlta = signal(false);
+  readonly saving = signal(false);
+  readonly detalle = signal<Product | null>(null);
+  readonly units = signal<SerializedUnit[]>([]);
+  draft = { sku: '', name: '', ean: '', requiresSerialNumber: false };
+  readonly filtered = computed(() => {
+    const q = this.filtro().trim().toLowerCase();
+    return this.productos().filter((p) =>
+      [p.name, p.sku, p.ean].some((v) => v.toLowerCase().includes(q)),
     );
+  });
+  ngOnInit() {
+    this.load();
   }
-
-  notificar(mensaje: string, tipo: 'ok' | 'error'): void {
-    this.mensaje = mensaje;
-    this.tipoMensaje = tipo;
-    this.cdr.detectChanges();
-    setTimeout(() => {
-      this.mensaje = '';
-      this.cdr.detectChanges();
-    }, 3500);
-  }
-
-  abrirAlta(): void {
-    this.mostrarAlta = true;
-    this.nuevoSku = '';
-    this.nuevoNombre = '';
-    this.nuevoEan = '';
-    this.nuevoSerial = false;
-  }
-
-  cerrarAlta(): void {
-    this.mostrarAlta = false;
-  }
-
-  @HostListener('document:keydown.escape')
-  cancelarDialogos(): void { if (!this.guardando) { this.cerrarAlta(); this.cerrarDetalle(); } }
-
-  guardarProducto(): void {
-    if (!this.nuevoSku.trim() || !this.nuevoNombre.trim() || !this.nuevoEan.trim()) {
-      this.notificar('Completá SKU, nombre y EAN.', 'error');
-      return;
-    }
-    this.guardando = true;
-    this.service
-      .crearProducto({
-        sku: this.nuevoSku.trim(),
-        name: this.nuevoNombre.trim(),
-        ean: this.nuevoEan.trim(),
-        requiresSerialNumber: this.nuevoSerial,
-      })
+  load() {
+    this.data
+      .getProductos()
       .subscribe({
-        next: () => {
-          this.guardando = false;
-          this.cerrarAlta();
-          this.notificar('Producto creado correctamente.', 'ok');
-          this.cargar();
-        },
-        error: (err: any) => {
-          this.guardando = false;
-          this.notificar(err.error?.mensaje || 'No se pudo crear el producto.', 'error');
-          this.cdr.detectChanges();
-        },
+        next: (p) => this.productos.set(p),
+        error: () => this.workspace.notify('No se pudo cargar el catálogo.', 'error'),
       });
   }
-
-  verSeriales(p: Product): void {
-    this.detalleProducto = p;
-    this.service.getUnidadesDeProducto(p.id).subscribe((u) => {
-      this.detalleUnidades = u;
-      this.cdr.detectChanges();
+  abrirAlta() {
+    this.draft = { sku: '', name: '', ean: '', requiresSerialNumber: false };
+    this.mostrarAlta.set(true);
+  }
+  guardarProducto() {
+    if (this.saving()) return;
+    if (!this.draft.sku.trim() || !this.draft.name.trim() || !this.draft.ean.trim()) {
+      this.workspace.notify('Completá SKU, nombre y EAN.', 'error');
+      return;
+    }
+    this.saving.set(true);
+    this.data.crearProducto(this.draft).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.mostrarAlta.set(false);
+        this.load();
+        this.workspace.notify('Producto creado correctamente.');
+      },
+      error: (e) => {
+        this.saving.set(false);
+        this.workspace.notify(e.error?.mensaje || 'No se pudo crear el producto.', 'error');
+      },
     });
   }
-
-  cerrarDetalle(): void {
-    this.detalleProducto = null;
-  }
-
-  serialLabel(s: SerializedUnit): string {
-    switch (s.status) {
-      case 'Available':
-        return 'Disponible';
-      case 'Sold':
-        return 'Vendida';
-      case 'Transferred':
-        return 'Transferida';
-      default:
-        return 'Devuelta';
-    }
+  verSeriales(p: Product) {
+    this.detalle.set(p);
+    this.data.getUnidadesDeProducto(p.id).subscribe((u) => this.units.set(u));
   }
 }

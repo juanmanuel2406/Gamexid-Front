@@ -1,56 +1,79 @@
-<div class="login-wrap">
-  <div class="login-row">
-    <!-- PANEL BRAND -->
-    <div class="login-brand">
-      <svg class="brand-logo gamexid-logo" viewBox="190 95 365 345" role="img" aria-label="Gamexid"><image href="/gamexid-logo.png" width="744" height="596"/></svg>
-      <h1 class="visually-hidden">Gamexid</h1>
-      <p class="brand-lema">{{ lema }}</p>
-      <div class="brand-tags">
-        <span class="tag"><i class="bi bi-box-seam"></i> Inventario</span>
-        <span class="tag"><i class="bi bi-upc"></i> Control EAN</span>
-        <span class="tag"><i class="bi bi-arrow-down-left-circle"></i> Ingresos</span>
+<main class="login-wrap">
+  <section class="brand-panel">
+    <div class="brand-top">
+      <span class="brand-word">gamexid<span>.</span></span
+      ><span class="badge">OPERATIONS / 01</span>
+    </div>
+    <div class="brand-main">
+      <svg class="gamexid-logo" viewBox="215 105 315 245" role="img" aria-label="Logo Gamexid">
+        <image href="/gamexid-logo.png" width="744" height="596" />
+      </svg>
+      <p class="eyebrow">TRAZABILIDAD, UNIDAD POR UNIDAD</p>
+      <h1>El control empieza<br />con una lectura.</h1>
+      <p class="brand-description">
+        Identificá productos. Validá seriales.<br />Seguí cada movimiento.
+      </p>
+      <div class="brand-code">
+        <span>EAN</span><gx-icon name="arrow" /><span>SERIAL</span><gx-icon name="arrow" /><span
+          >VERIFICADO</span
+        >
       </div>
     </div>
-
-    <!-- FORM -->
-    <div class="login-card card-fastscan">
-      <h2 class="login-title">Iniciar sesión</h2>
-      <p class="login-sub">Ingresá con tu cuenta para continuar</p>
-
-      <div class="form-group mb-3">
-        <label class="form-label" for="login-email">Email</label>
-        <div class="input-icono">
-          <i class="bi bi-envelope"></i>
-          <input id="login-email" type="email" class="form-control" [(ngModel)]="email" required
-                 placeholder="usuario@gamexid.com" autocomplete="email" inputmode="email" [attr.aria-invalid]="errorMsg ? 'true' : null">
-        </div>
-      </div>
-
-      <div class="form-group mb-3">
-        <label class="form-label" for="login-password">Contraseña</label>
-        <div class="input-icono">
-          <i class="bi bi-shield-lock"></i>
-          <input id="login-password" [type]="mostrarPassword ? 'text' : 'password'" class="form-control"
-                 [(ngModel)]="password" placeholder="••••••••" autocomplete="current-password" minlength="8" required (keyup.enter)="ingresar()" [attr.aria-invalid]="errorMsg ? 'true' : null">
-          <button type="button" class="btn-ojo" (click)="togglePassword()" [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
-            <i class="bi" [ngClass]="mostrarPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="alert alert-danger py-2" *ngIf="errorMsg">
-        <i class="bi bi-exclamation-triangle"></i> {{ errorMsg }}
-      </div>
-
-      <button class="btn-login" (click)="ingresar()" [disabled]="cargando">
-        <span *ngIf="!cargando"><i class="bi bi-box-arrow-in-right"></i> Ingresar</span>
-        <span *ngIf="cargando" class="spinner-border spinner-border-sm"></span>
+    <p class="brand-bottom">GAMEXID · SISTEMA DE CONTROL DE INVENTARIO</p>
+  </section>
+  <section class="access-panel">
+    <form class="login-card" (ngSubmit)="ingresar()">
+      <span class="access-label"><gx-icon name="lock" /> ACCESO AL WORKSPACE</span>
+      <h2>Iniciar sesión</h2>
+      <p class="muted login-sub">Ingresá con tu cuenta para continuar.</p>
+      <label class="form-group" for="login-email"
+        ><span class="form-label">Email</span>
+        <div class="input-icon">
+          <gx-icon name="mail" /><input
+            id="login-email"
+            name="email"
+            type="email"
+            class="form-control"
+            [(ngModel)]="email"
+            autocomplete="username"
+            required
+          /></div
+      ></label>
+      <label class="form-group" for="login-password"
+        ><span class="form-label">Contraseña</span>
+        <div class="input-icon">
+          <gx-icon name="lock" /><input
+            id="login-password"
+            name="password"
+            [type]="visible() ? 'text' : 'password'"
+            class="form-control"
+            [(ngModel)]="password"
+            autocomplete="current-password"
+            required
+          /><button
+            type="button"
+            class="password-toggle"
+            (click)="visible.set(!visible())"
+            [attr.aria-label]="visible() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            <gx-icon [name]="visible() ? 'hidden' : 'eye'" />
+          </button></div
+      ></label>
+      @if (error()) {
+        <p class="notice status-error" role="alert"><gx-icon name="alert" />{{ error() }}</p>
+      }
+      <button type="submit" class="btn-login" [disabled]="busy()">
+        @if (busy()) {
+          <span class="skeleton loading-bar" aria-label="Verificando acceso"></span>
+        } @else {
+          Ingresar <gx-icon name="arrow" />
+        }
       </button>
-
-      <div class="login-nota">
-        <i class="bi bi-info-circle"></i>
-        Acceso autorizado para Gamexid. Ingresá el correo y la contraseña de tu cuenta.
+      <div class="access-foot">
+        <gx-icon name="shield" />
+        <p>Sesión protegida. Usá únicamente una cuenta autorizada.</p>
       </div>
-    </div>
-  </div>
-</div>
+    </form>
+    <p class="login-version">TECH PREVIEW <span>GAMEXID / 2026</span></p>
+  </section>
+</main>

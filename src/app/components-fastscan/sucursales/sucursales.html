@@ -1,34 +1,138 @@
-<section class="sucursales">
-  <div class="page-head"><div><h2 class="page-title">Pedidos a sucursales</h2><p class="page-sub">Controlá lo que llegó y lo que queda pendiente.</p></div>
-    <button class="btn-nuevo-page" (click)="nuevo()">Nuevo pedido</button></div>
-  <p class="text-muted-c">En esta versión los pedidos se guardan en este navegador. Conservá el PDF original hasta conectar la base compartida.</p>
-  <p role="status" *ngIf="mensaje && !draft">{{ mensaje }}</p>
-  <div class="card-fastscan" *ngFor="let pedido of pedidos">
-    <h3>{{ pedido.reference }} · {{ nombre(pedido.branchId) }}</h3><p>{{ pedido.lines.length }} productos · {{ faltantes(pedido) }} unidades pendientes</p>
-    <button class="btn-secundario" (click)="editar(pedido)">Controlar recepción</button>
+<div class="page-head">
+  <div>
+    <p class="eyebrow">DOCUMENTOS / RECEPCIÓN EN SUCURSAL</p>
+    <h1 class="page-title">Pedidos e ingesta</h1>
+    <p class="page-sub">Del remito a la recepción, con revisión de cada producto.</p>
   </div>
-  <p *ngIf="!pedidos.length">Todavía no hay pedidos. Creá uno con un PDF o cargalo manualmente.</p>
-</section>
-<div *ngIf="draft" class="modal-overlay" (click)="$event.target === $event.currentTarget ? cerrar() : null">
-  <section class="modal card-fastscan pedido-dialog" role="dialog" aria-modal="true" aria-labelledby="pedido-title">
-    <div class="modal-head"><h3 id="pedido-title">Pedido a sucursal</h3><button class="btn-secundario" (click)="cerrar()" [disabled]="busy" aria-label="Cerrar pedido">Cerrar</button></div>
-    <div class="modal-body">
-      <label class="form-label" for="pedido-ref">Referencia del pedido</label><input id="pedido-ref" class="form-control" [(ngModel)]="draft.reference" maxlength="100">
-      <label class="form-label" for="pedido-sucursal">Sucursal de destino</label>
-      <select id="pedido-sucursal" class="form-control" [(ngModel)]="draft.branchId"><option [ngValue]="0">Seleccioná una sucursal</option><option *ngFor="let sucursal of sucursales" [ngValue]="sucursal.id">{{ sucursal.name }}</option></select>
-      <label class="form-label" for="pedido-pdf">Pedido o factura en PDF (opcional, hasta 10 MB)</label><input id="pedido-pdf" type="file" accept=".pdf,application/pdf" [disabled]="busy" (change)="importar($event)">
-      <p *ngIf="draft.fileName">{{ draft.fileName }} <button class="btn-secundario" (click)="descargar()">Descargar original</button></p>
-      <p role="status" *ngIf="busy">Procesando…</p><p role="status" *ngIf="mensaje">{{ mensaje }}</p>
-      <div class="pedido-linea" *ngFor="let linea of draft.lines; let i = index">
-        <label>EAN<input class="form-control" [(ngModel)]="linea.ean" (blur)="relacionar(linea)" inputmode="numeric" maxlength="14"></label>
-        <label>Producto<input class="form-control" [(ngModel)]="linea.name" maxlength="180"></label>
-        <label>Pedido<input class="form-control" type="number" min="1" step="1" [(ngModel)]="linea.expected"></label>
-        <label>Recibido<input class="form-control" type="number" min="0" [max]="linea.expected || 0" step="1" [(ngModel)]="linea.received"></label>
-        <label><input type="checkbox" [disabled]="!linea.expected" [checked]="!!linea.expected && linea.received === linea.expected" (change)="marcar(linea, $event)"> Llegó todo</label>
-        <span>Pendiente: {{ (linea.expected || 0) - linea.received }}</span><button class="btn-secundario" (click)="draft.lines.splice(i, 1)" [disabled]="busy">Quitar</button>
-      </div>
-      <button class="btn-secundario" (click)="agregar()" [disabled]="busy">Agregar producto manualmente</button>
-    </div>
-    <div class="modal-foot"><button class="btn-secundario" (click)="cerrar()" [disabled]="busy">Cancelar</button><button class="btn-primario" (click)="guardar()" [disabled]="busy">Guardar pedido</button></div>
-  </section>
+  <button class="btn-primario" (click)="nuevo()"><gx-icon name="plus" />Nuevo pedido</button>
 </div>
+<div class="notice">
+  <gx-icon name="lock" />
+  <p>
+    Los pedidos se guardan en este navegador. Conservá el PDF original hasta conectar la base
+    compartida.
+  </p>
+</div>
+@if (loading()) {
+  <p-skeleton height="210px" />
+} @else {
+  @for (p of filtered(); track p.id) {
+    <article class="panel order-row">
+      <div>
+        <span class="eyebrow">PEDIDO / {{ nombre(p.branchId) }}</span>
+        <h2 class="section-title">{{ p.reference }}</h2>
+        <p class="page-sub">
+          {{ p.lines.length }} productos · {{ faltantes(p) }} unidades pendientes
+        </p>
+      </div>
+      <div class="order-actions">
+        <p-tag
+          [value]="faltantes(p) ? 'Recepción pendiente' : 'Recepción completa'"
+          [severity]="faltantes(p) ? 'warn' : 'success'"
+        /><button class="btn-secundario" (click)="editar(p)">
+          Controlar recepción <gx-icon name="arrow" />
+        </button>
+      </div>
+    </article>
+  } @empty {
+    <section class="panel empty">
+      <gx-icon name="file" [size]="32" />
+      <h2>No hay pedidos para esta sucursal</h2>
+      <p>Creá un pedido desde un PDF o cargá sus productos manualmente.</p>
+      <button class="btn-secundario" (click)="nuevo()">Crear primer pedido</button>
+    </section>
+  }
+}
+<p-dialog
+  header="Pedido a sucursal"
+  [visible]="!!draft()"
+  (visibleChange)="!busy() && !$event && draft.set(null)"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '1100px' }"
+  [closable]="!busy()"
+>
+  @if (draft(); as d) {
+    <div class="order-fields">
+      <label
+        ><span class="form-label">Referencia del pedido</span
+        ><input class="form-control" [(ngModel)]="d.reference" maxlength="100" /></label
+      ><label
+        ><span class="form-label">Sucursal de destino</span
+        ><select class="form-control" [(ngModel)]="d.branchId">
+          <option [ngValue]="0">Seleccioná una sucursal</option>
+          @for (b of branches(); track b.id) {
+            <option [ngValue]="b.id">{{ b.name }}</option>
+          }
+        </select></label
+      >
+    </div>
+    <gx-intake [products]="products()" (parsed)="parsed($event)" />
+    @if (d.fileName) {
+      <div class="flex items-center gap-3 mb-5">
+        <span class="code-pill">{{ d.fileName }}</span
+        ><button class="btn-secundario" (click)="descargar()">
+          <gx-icon name="download" />Descargar original
+        </button>
+      </div>
+    }
+    <div class="panel-header mt-6">
+      <h2 class="section-title">Revisión de productos</h2>
+      <p-tag value="Validación humana" severity="secondary" />
+    </div>
+    @for (line of d.lines; track $index) {
+      <div class="pedido-linea">
+        <label
+          ><span class="form-label">EAN</span
+          ><input
+            class="form-control mono"
+            [(ngModel)]="line.ean"
+            (blur)="relacionar(line)"
+            maxlength="14"
+            inputmode="numeric" /></label
+        ><label
+          ><span class="form-label">Producto</span
+          ><input class="form-control" [(ngModel)]="line.name" maxlength="180" /></label
+        ><label
+          ><span class="form-label">Pedido</span
+          ><input
+            type="number"
+            class="form-control mono"
+            [(ngModel)]="line.expected"
+            min="1"
+            step="1" /></label
+        ><label
+          ><span class="form-label">Recibido</span
+          ><input
+            type="number"
+            class="form-control mono"
+            [(ngModel)]="line.received"
+            min="0"
+            [max]="line.expected || 0"
+            step="1" /></label
+        ><label class="form-check"
+          ><input
+            type="checkbox"
+            [disabled]="!line.expected"
+            [checked]="!!line.expected && line.expected === line.received"
+            (change)="marcar(line, $event)"
+          />Llegó todo</label
+        ><button class="icon-button" aria-label="Quitar línea" (click)="d.lines.splice($index, 1)">
+          <gx-icon name="trash" />
+        </button>
+      </div>
+    }
+    <button class="btn-secundario mt-4" (click)="agregar()">
+      <gx-icon name="plus" />Agregar producto manualmente
+    </button>
+    @if (error()) {
+      <p class="notice status-error" role="alert">{{ error() }}</p>
+    }
+    <div class="modal-foot mt-6">
+      <button class="btn-secundario" (click)="draft.set(null)" [disabled]="busy()">Cancelar</button
+      ><button class="btn-primario" (click)="guardar()" [disabled]="busy()">
+        {{ busy() ? 'Guardando…' : 'Guardar pedido' }}
+      </button>
+    </div>
+  }
+</p-dialog>
