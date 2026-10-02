@@ -2,6 +2,7 @@ import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { Observable, of, throwError, defer } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { reconcileBranches } from './branches';
 
 export type UserRole = 'Administrator' | 'Manager' | 'Operator';
 
@@ -10,6 +11,7 @@ export interface Branch {
   code: string;
   name: string;
   address?: string;
+  isLegacy?: boolean;
   isActive: boolean;
 }
 
@@ -82,6 +84,12 @@ export class FastScanService {
   ) {
     if (isPlatformBrowser(this.platformId)) {
       this.seed();
+      if (!localStorage.getItem('fs_branches_official_v1')) {
+        const previous = this.read<Branch[]>(K_BRANCHES, []);
+        this.write('fs_branches_before_official_v1', previous);
+        this.write(K_BRANCHES, reconcileBranches(previous));
+        localStorage.setItem('fs_branches_official_v1', '1');
+      }
     }
   }
 
@@ -153,24 +161,14 @@ export class FastScanService {
     }
 
     if (!localStorage.getItem(K_BRANCHES)) {
-      const branches: Branch[] = [
-        {
-          id: 1,
-          code: 'SUC01',
-          name: 'Sucursal Centro',
-          address: 'Av. Central 123',
-          isActive: true,
-        },
-        { id: 2, code: 'SUC02', name: 'Depósito Norte', address: 'Ruta 9 km 12', isActive: true },
-        { id: 3, code: 'SUC03', name: 'Sucursal Sur', address: 'Calle 456', isActive: false },
-      ];
+      const branches = reconcileBranches([]);
       this.write(K_BRANCHES, branches);
     }
 
     if (!localStorage.getItem(K_UNITS)) {
       const units: SerializedUnit[] = [
-        { id: 1, productId: 1, serialNumber: 'NB-10001', currentBranchId: 1, status: 'Available' },
-        { id: 2, productId: 1, serialNumber: 'NB-10002', currentBranchId: 1, status: 'Available' },
+        { id: 1, productId: 1, serialNumber: 'NB-10001', currentBranchId: 2, status: 'Available' },
+        { id: 2, productId: 1, serialNumber: 'NB-10002', currentBranchId: 2, status: 'Available' },
         { id: 3, productId: 4, serialNumber: 'MON-90001', currentBranchId: 2, status: 'Available' },
       ];
       this.write(K_UNITS, units);
@@ -263,18 +261,7 @@ export class FastScanService {
   }
 
   getDeposito(): Branch {
-    const list = this.read<Branch[]>(K_BRANCHES, []);
-    let deposito =
-      list.find((b) => b.code === 'DEP-CENTRAL') || list.find((b) => /dep[oó]sito/i.test(b.name));
-    if (!deposito) {
-      deposito = { id: this.nextId(list), code: 'DEP-CENTRAL', name: 'Depósito', isActive: true };
-      list.push(deposito);
-    }
-    deposito.name = 'Depósito';
-    deposito.code = 'DEP-CENTRAL';
-    deposito.isActive = true;
-    this.write(K_BRANCHES, list);
-    return deposito;
+    return this.read<Branch[]>(K_BRANCHES, []).find((b) => b.code === 'DEP-CENTRAL')!;
   }
 
   getSucursales(): Observable<Branch[]> {

@@ -32,8 +32,8 @@
 .gamexid-logo {
   overflow: hidden;
   display: block;
-  width: 160px;
-  height: 125px;
+  width: 250px;
+  height: 248px;
   margin-bottom: 42px;
   border-radius: 8px;
 }
@@ -175,8 +175,8 @@
     margin: 0;
   }
   .gamexid-logo {
-    width: 85px;
-    height: 72px;
+    width: 105px;
+    height: 104px;
     margin: 0;
   }
   .brand-main .eyebrow,

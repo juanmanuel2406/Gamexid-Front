@@ -71,20 +71,18 @@ export class Audit {
           products.length
             ? forkJoin(
                 products.map((p) =>
-                  this.data
-                    .getUnidadesDeProducto(p.id)
-                    .pipe(
-                      switchMap((units) =>
-                        of(
-                          units.map((u) => ({
-                            ...u,
-                            component: p.name,
-                            chassis: '',
-                            verification: 'Sin control',
-                          })),
-                        ),
+                  this.data.getUnidadesDeProducto(p.id).pipe(
+                    switchMap((units) =>
+                      of(
+                        units.map((u) => ({
+                          ...u,
+                          component: p.name,
+                          chassis: '',
+                          verification: 'Sin control',
+                        })),
                       ),
                     ),
+                  ),
                 ),
               )
             : of([]),
@@ -96,18 +94,16 @@ export class Audit {
             const links = JSON.parse(localStorage.getItem('gx_lineage_v1') || '{}');
             const evidence: Evidence[] = JSON.parse(localStorage.getItem('gx_audit_v1') || '[]');
             this.rows.set(
-              groups
-                .flat()
-                .map((r) => ({
-                  ...r,
-                  chassis: typeof links[r.id] === 'string' ? links[r.id] : '',
-                  verification:
-                    evidence.filter((e) => e.unitId === r.id).at(-1)?.matches === true
-                      ? 'Verificado'
-                      : evidence.some((e) => e.unitId === r.id)
-                        ? 'Discrepancia'
-                        : 'Sin control',
-                })),
+              groups.flat().map((r) => ({
+                ...r,
+                chassis: typeof links[r.id] === 'string' ? links[r.id] : '',
+                verification:
+                  evidence.filter((e) => e.unitId === r.id).at(-1)?.matches === true
+                    ? 'Verificado'
+                    : evidence.some((e) => e.unitId === r.id)
+                      ? 'Discrepancia'
+                      : 'Sin control',
+              })),
             );
           } catch {
             this.rows.set(groups.flat());

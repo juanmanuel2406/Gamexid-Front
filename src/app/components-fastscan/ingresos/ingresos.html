@@ -184,7 +184,7 @@
     <aside class="panel receipt-summary">
       <p class="eyebrow">RESUMEN DE RECEPCIÓN</p>
       <label class="form-label">Destino</label
-      ><input class="form-control" readonly value="Depósito" aria-label="Destino: Depósito" />
+      ><input class="form-control" readonly [value]="depot.name" aria-label="Destino: Depósito" />
       <div class="summary-metric">
         <span>Productos</span><strong>{{ items().length }}</strong>
       </div>

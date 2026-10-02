@@ -16,7 +16,7 @@ export class Workspace {
     this.data.getDeposito();
     this.data
       .getSucursales()
-      .subscribe((items) => this.branches.set(items.filter((b) => b.isActive)));
+      .subscribe((items) => this.branches.set(items.filter((b) => b.isActive || b.isLegacy)));
     const saved = Number(sessionStorage.getItem('gx_branch'));
     this.branchId.set(
       this.branches().some((b) => b.id === saved) ? saved : this.data.getDeposito().id,

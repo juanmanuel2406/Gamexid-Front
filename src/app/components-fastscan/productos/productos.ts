@@ -34,12 +34,10 @@ export class Productos implements OnInit {
     this.load();
   }
   load() {
-    this.data
-      .getProductos()
-      .subscribe({
-        next: (p) => this.productos.set(p),
-        error: () => this.workspace.notify('No se pudo cargar el catálogo.', 'error'),
-      });
+    this.data.getProductos().subscribe({
+      next: (p) => this.productos.set(p),
+      error: () => this.workspace.notify('No se pudo cargar el catálogo.', 'error'),
+    });
   }
   abrirAlta() {
     this.draft = { sku: '', name: '', ean: '', requiresSerialNumber: false };

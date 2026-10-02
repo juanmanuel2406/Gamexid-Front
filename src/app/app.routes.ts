@@ -10,6 +10,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     canActivateChild: [AuthGuard],
     children: [
+      { path: 'integracion', loadComponent: () => import('./features/integration/integration').then((m) => m.Integration) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'dashboard',

@@ -50,7 +50,7 @@ test('sesión inválida redirige al login y logo responsive', async ({ page }) =
   await page.goto('/productos');
   await expect(page).toHaveURL(/login/);
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.locator('svg image')).toBeVisible();
+  await expect(page.locator('.gamexid-logo svg')).toBeVisible();
   await expect(page.locator('.gamexid-logo')).toHaveCSS('opacity', '1');
   await page.screenshot({ path: 'test-results/login-mobile.png', fullPage: true });
 });
@@ -83,7 +83,7 @@ test('ingreso manual: depósito, EAN vacío, seriales duplicados y confirmación
 }) => {
   await page.goto('/ingresos');
   await page.getByRole('button', { name: 'Nuevo ingreso' }).click();
-  await expect(page.getByLabel('Destino: Depósito')).toHaveValue('Depósito');
+  await expect(page.getByLabel('Destino: Depósito')).toHaveValue('Morón (Depósito Central)');
   await page.getByRole('button', { name: 'Agregar', exact: true }).click();
   await expect(page.getByText('No se recibió una lectura', { exact: false })).toBeVisible();
   await page.locator('#ean-scanner-input').fill('7790000000011');
@@ -97,13 +97,15 @@ test('ingreso manual: depósito, EAN vacío, seriales duplicados y confirmación
   await expect(page.locator('.p-dialog')).toBeVisible();
   await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
   await expect(page.getByText('Ingreso #1 registrado correctamente.')).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'Depósito', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('cell', { name: 'Morón (Depósito Central)', exact: true }),
+  ).toBeVisible();
 });
 test('pedido manual: persiste y permite recepción parcial', async ({ page }) => {
   await page.goto('/sucursales');
   await page.getByRole('button', { name: 'Nuevo pedido' }).click();
   await page.getByLabel('Referencia del pedido').fill('QA-PEDIDO');
-  await page.getByLabel('Sucursal de destino').selectOption({ label: 'Sucursal Centro' });
+  await page.getByLabel('Sucursal de destino').selectOption({ label: 'Belgrano' });
   await page.getByRole('button', { name: 'Agregar producto manualmente' }).click();
   await page.getByLabel('EAN', { exact: true }).fill('7790000000011');
   await page.getByLabel('EAN', { exact: true }).blur();
@@ -198,4 +200,85 @@ test('todas las pantallas se adaptan a móvil y no tienen errores de ejecución'
   await expect(page.locator('.shell')).toHaveClass(/menu-abierto/);
   await page.getByRole('button', { name: 'Cerrar menú', exact: true }).click();
   expect(errors).toEqual([]);
+});
+
+test('16 sedes reales, direcciones y depósito único', async ({ page }) => {
+  await page.goto('/dashboard');
+  await expect(page.getByLabel('Sucursal de trabajo').locator('option')).toHaveCount(16);
+  await page.getByLabel('Sucursal de trabajo').selectOption({ label: 'Belgrano' });
+  await page.goto('/sucursales');
+  await page.getByRole('button', { name: 'Nuevo pedido' }).click();
+  await expect(page.getByText('José Hernández 2438, CABA', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Sucursal de destino').locator('option')).toHaveCount(16);
+});
+test('migra sedes conservando IDs y registros anteriores', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('qa_setup')) {
+      localStorage.setItem(
+        'fs_branches',
+        JSON.stringify([
+          { id: 1, code: 'SUC01', name: 'Sucursal Centro', isActive: true },
+          { id: 2, code: 'DEP-CENTRAL', name: 'Depósito', isActive: true },
+        ]),
+      );
+      localStorage.setItem(
+        'fs_units',
+        JSON.stringify([
+          {
+            id: 99,
+            productId: 1,
+            serialNumber: 'LEGACY-99',
+            currentBranchId: 1,
+            status: 'Available',
+          },
+        ]),
+      );
+      localStorage.setItem('qa_setup', '1');
+    }
+  });
+  await page.goto('/dashboard');
+  await expect(page.getByLabel('Sucursal de trabajo').locator('option')).toHaveCount(17);
+  await page.getByLabel('Sucursal de trabajo').selectOption('1');
+  await page.goto('/auditoria');
+  await expect(page.getByText('LEGACY-99', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel('Sucursal de trabajo').locator('option')).toHaveCount(17);
+  expect(
+    await page.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem('fs_branches')!).find((b: any) => b.code === 'DEP-CENTRAL')
+          .id,
+    ),
+  ).toBe(2);
+});
+test('logo conserva espacio al desplegar sidebar y anima en login', async ({ page }) => {
+  await page.goto('/dashboard');
+  await page.locator('.sidebar').hover();
+  await expect(page.locator('.shell')).toHaveClass(/menu-abierto/);
+  const dimensions = await page.locator('.brand-symbol').boundingBox();
+  expect(dimensions?.width).toBe(42);
+  expect(dimensions?.height).toBe(38);
+  await expect(page.locator('.sidebar')).toHaveCSS('width', '248px');
+  await expect(page.locator('.brand-symbol .head').last()).toHaveCSS('opacity', '1');
+  await page.screenshot({ path: 'test-results/sidebar-logo.png' });
+  await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
+  await page.goto('/login');
+  await expect(page.locator('.gamexid-logo')).toHaveCSS('opacity', '1');
+  await expect
+    .poll(async () =>
+      page.locator('.gamexid-logo .head').first().evaluate((el) => getComputedStyle(el).transform),
+    )
+    .not.toBe('none');
+  await expect(page.locator('.gamexid-logo .ltr').last()).toHaveCSS('opacity', '1');
+  await page.screenshot({path:'test-results/vector-login-desktop.png',fullPage:true});
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload();
+  await expect(page.locator('.gamexid-logo .head').first()).toHaveCSS('transform', 'none');
+  await expect(page.locator('.gamexid-logo .ltr')).toHaveCount(7);
+  await expect(page.locator('.gamexid-logo .bone')).toHaveCount(34);
+  expect(await page.locator('.gamexid-logo svg').evaluate(svg=>
+    Array.from(svg.querySelectorAll('[fill^="url("]')).every(el=>{
+      const id=el.getAttribute('fill')!.slice(5,-1);
+      return !!svg.querySelector('[id="'+id+'"]');
+    }))).toBe(true);
 });

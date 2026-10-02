@@ -16,9 +16,8 @@
       aria-label="Navegación principal"
     >
       <a routerLink="/dashboard" class="brand" aria-label="Gamexid, inicio"
-        ><svg class="brand-symbol" viewBox="215 105 315 245" aria-hidden="true">
-          <image href="/gamexid-logo.png" width="744" height="596" /></svg
-        ><span class="nav-text wordmark">gamexid<span class="brand-dot">.</span></span></a
+        ><gx-logo class="brand-symbol" [compact]="true" [animated]="open()" />
+        <span class="nav-text wordmark">gamexid<span class="brand-dot">.</span></span></a
       >
       <div class="nav-label nav-text">WORKSPACE / INVENTARIO</div>
       <nav>
@@ -46,7 +45,7 @@
                 : 'API sin conexión'
           }}</span>
         </div>
-        <p class="nav-text muted text-xs">ERP CDS · No conectado</p>
+        <a routerLink="/integracion" class="nav-text muted text-xs">GC-API · Ver integración</a>
         <button class="nav-item logout" (click)="logout()" aria-label="Cerrar sesión">
           <gx-icon name="logout" /><span class="nav-text">Cerrar sesión</span>
         </button>
@@ -73,7 +72,9 @@
               (ngModelChange)="workspace.select(+$event)"
             >
               @for (b of workspace.branches(); track b.id) {
-                <option [value]="b.id">{{ b.name }}</option>
+                <option [value]="b.id" [title]="b.address || ''">
+                  {{ b.name }}{{ b.isLegacy ? ' (histórica)' : '' }}
+                </option>
               }
             </select></label
           ><span class="user-avatar" [pTooltip]="user()">{{

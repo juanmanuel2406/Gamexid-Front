@@ -1,39 +1,24 @@
-import { Component, AfterViewInit, OnDestroy, inject, signal, ElementRef } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { animate } from 'animejs';
+import { GamexidLogo } from '../../shared/logo';
 import { Icon } from '../../shared/icon';
 import { FastScanService } from '../../services-fastscan/fastscan-service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, Icon],
+  imports: [FormsModule, Icon, GamexidLogo],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login implements AfterViewInit, OnDestroy {
+export class Login {
   private data = inject(FastScanService);
   private router = inject(Router);
-  private host = inject(ElementRef);
-  private motion?: ReturnType<typeof animate>;
   email = 'admin@gamexid.com';
   password = '';
   readonly visible = signal(false);
   readonly busy = signal(false);
   readonly error = signal('');
-  ngAfterViewInit() {
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches)
-      this.motion = animate(this.host.nativeElement.querySelector('.gamexid-logo'), {
-        opacity: [0, 1],
-        scale: [0.94, 1],
-        translateY: [8, 0],
-        duration: 650,
-        ease: 'outExpo',
-      });
-  }
-  ngOnDestroy() {
-    this.motion?.revert();
-  }
   ingresar() {
     if (this.busy()) return;
     this.error.set('');

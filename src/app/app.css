@@ -23,6 +23,7 @@
   width: 80px;
 }
 .brand {
+  flex-shrink: 0;
   height: 54px;
   display: flex;
   align-items: center;
@@ -32,7 +33,7 @@
 .brand-symbol {
   overflow: hidden;
   width: 42px;
-  height: 42px;
+  height: 38px;
   flex-shrink: 0;
 }
 .wordmark {
@@ -223,7 +224,7 @@
   .mobile-scrim {
     display: block;
     position: fixed;
-    inset: 0;
+    inset: 0 0 0 248px;
     background: #0009;
     z-index: 39;
     border: 0;

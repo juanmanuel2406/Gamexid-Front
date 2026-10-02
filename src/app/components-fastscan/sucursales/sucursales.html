@@ -62,11 +62,18 @@
         ><select class="form-control" [(ngModel)]="d.branchId">
           <option [ngValue]="0">Seleccioná una sucursal</option>
           @for (b of branches(); track b.id) {
-            <option [ngValue]="b.id">{{ b.name }}</option>
+            <option [ngValue]="b.id" [title]="b.address || ''">
+              {{ b.name }}{{ b.isLegacy ? ' (histórica)' : '' }}
+            </option>
           }
         </select></label
       >
     </div>
+    @for (branch of branches(); track branch.id) {
+      @if (branch.id === d.branchId) {
+        <p class="muted text-sm mb-4">{{ branch.address }}</p>
+      }
+    }
     <gx-intake [products]="products()" (parsed)="parsed($event)" />
     @if (d.fileName) {
       <div class="flex items-center gap-3 mb-5">

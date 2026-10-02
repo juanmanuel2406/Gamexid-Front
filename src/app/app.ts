@@ -6,6 +6,7 @@ import { filter, timer } from 'rxjs';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { Icon } from './shared/icon';
+import { GamexidLogo } from './shared/logo';
 import { Workspace } from './core/workspace';
 import { FastScanService } from './services-fastscan/fastscan-service';
 @Component({
@@ -19,6 +20,7 @@ import { FastScanService } from './services-fastscan/fastscan-service';
     ToastModule,
     TooltipModule,
     Icon,
+    GamexidLogo,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -33,6 +35,7 @@ export class App {
   readonly login = computed(() => this.url().startsWith('/login'));
   readonly user = signal(sessionStorage.getItem('usuario') || 'Operador');
   readonly navigation = [
+    { url: '/integracion', icon: 'file', name: 'Integración GamingCity', short: 'GC-API' },
     { url: '/dashboard', icon: 'dashboard', name: 'Centro de operaciones', short: 'Resumen' },
     { url: '/ingresos', icon: 'scan', name: 'Terminal de ingreso', short: 'Escaneo' },
     { url: '/productos', icon: 'package', name: 'Catálogo de productos', short: 'Productos' },

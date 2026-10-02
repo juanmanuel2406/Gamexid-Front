@@ -26,7 +26,14 @@ export class Sucursales implements OnInit {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly branches = computed(() =>
-    this.workspace.branches().filter((b) => b.id !== this.data.getDeposito().id),
+    this.workspace
+      .branches()
+      .filter(
+        (b) =>
+          b.id !== this.data.getDeposito().id &&
+          (b.isActive ||
+            this.pedidos().some((p) => p.id === this.draft()?.id && p.branchId === b.id)),
+      ),
   );
   readonly filtered = computed(() =>
     this.pedidos().filter((p) => p.branchId === this.workspace.branchId()),
