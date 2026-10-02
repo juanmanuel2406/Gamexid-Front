@@ -1,77 +1,142 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
-import { FastScanService, Branch, Product } from '../../services-fastscan/fastscan-service';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { DialogModule } from 'primeng/dialog';
+import { TagModule } from 'primeng/tag';
+import { SkeletonModule } from 'primeng/skeleton';
+import { FastScanService, Product } from '../../services-fastscan/fastscan-service';
 import { OrdersService, BranchOrder, OrderLine } from '../../services-fastscan/orders';
-@Component({ selector: 'app-sucursales', templateUrl: './sucursales.html', styleUrl: './sucursales.css', standalone: false })
+import { Workspace } from '../../core/workspace';
+import { Icon } from '../../shared/icon';
+import { Intake, Extraction } from '../../features/intake/intake';
+@Component({
+  selector: 'app-sucursales',
+  standalone: true,
+  imports: [FormsModule, DialogModule, TagModule, SkeletonModule, Icon, Intake],
+  templateUrl: './sucursales.html',
+  styleUrl: './sucursales.css',
+})
 export class Sucursales implements OnInit {
-  sucursales: Branch[] = []; productos: Product[] = []; pedidos: BranchOrder[] = [];
-  draft: BranchOrder | null = null; mensaje = ''; busy = false;
-  constructor(private service: FastScanService, private orders: OrdersService, private cdr: ChangeDetectorRef) {}
+  private data = inject(FastScanService);
+  private orders = inject(OrdersService);
+  readonly workspace = inject(Workspace);
+  readonly products = signal<Product[]>([]);
+  readonly pedidos = signal<BranchOrder[]>([]);
+  readonly draft = signal<BranchOrder | null>(null);
+  readonly loading = signal(true);
+  readonly busy = signal(false);
+  readonly error = signal('');
+  readonly branches = computed(() =>
+    this.workspace
+      .branches()
+      .filter(
+        (b) =>
+          b.id !== this.data.getDeposito().id &&
+          (b.isActive ||
+            this.pedidos().some((p) => p.id === this.draft()?.id && p.branchId === b.id)),
+      ),
+  );
+  readonly filtered = computed(() =>
+    this.pedidos().filter((p) => p.branchId === this.workspace.branchId()),
+  );
   async ngOnInit() {
-    const depot = this.service.getDeposito();
-    this.service.getSucursales().subscribe(items => this.sucursales = items.filter(b => b.isActive && b.id !== depot.id));
-    this.service.getProductos().subscribe(items => this.productos = items);
-    try { this.pedidos = await this.orders.list(); } catch (error) { this.error(error); }
-    this.cdr.detectChanges();
+    this.data.getProductos().subscribe((p) => this.products.set(p));
+    try {
+      this.pedidos.set(await this.orders.list());
+    } catch {
+      this.workspace.notify('No se pudieron cargar los pedidos.', 'error');
+    } finally {
+      this.loading.set(false);
+    }
   }
   nuevo() {
-    this.mensaje = '';
-    this.draft = { id: crypto.randomUUID(), reference: '', branchId: 0, created: new Date().toISOString(), fileName: '', lines: [] };
+    this.error.set('');
+    this.draft.set({
+      id: crypto.randomUUID(),
+      reference: '',
+      branchId: this.branches().some((b) => b.id === this.workspace.branchId())
+        ? this.workspace.branchId()
+        : 0,
+      created: new Date().toISOString(),
+      fileName: '',
+      lines: [],
+    });
   }
-  editar(order: BranchOrder) { this.mensaje = ''; this.draft = structuredClone(order); }
-  @HostListener('document:keydown.escape')
-  cerrar() { if (!this.busy) this.draft = null; }
-  agregar() { this.draft?.lines.push({ ean: '', name: '', expected: null, received: 0 }); }
+  editar(order: BranchOrder) {
+    this.error.set('');
+    this.draft.set(structuredClone(order));
+  }
+  agregar() {
+    this.draft.update((d) =>
+      d ? { ...d, lines: [...d.lines, { ean: '', name: '', expected: null, received: 0 }] } : null,
+    );
+  }
+  parsed(result: Extraction) {
+    this.draft.update((d) => {
+      if (!d) return null;
+      const lines = d.lines.map((line) => {
+        const extracted = result.lines.find((candidate) => candidate.ean === line.ean);
+        return extracted
+          ? {
+              ...line,
+              name: line.name || extracted.name || '',
+              expected: line.expected ?? extracted.expected,
+            }
+          : line;
+      });
+      const existing = new Set(lines.map((line) => line.ean));
+      for (const line of result.lines) {
+        if (!existing.has(line.ean)) {
+          lines.push({
+            ean: line.ean,
+            name: line.name || this.products().find((p) => p.ean === line.ean)?.name || '',
+            expected: line.expected,
+            received: 0,
+          });
+          existing.add(line.ean);
+        }
+      }
+      return { ...d, pdf: result.file, fileName: result.file.name, lines };
+    });
+  }
   relacionar(line: OrderLine) {
-    const product = this.productos.find(p => p.ean === line.ean.trim());
-    if (product) line.name = product.name;
+    const p = this.products().find((p) => p.ean === line.ean.trim());
+    if (p) line.name = p.name;
   }
-  marcar(line: OrderLine, event: Event) { line.received = (event.target as HTMLInputElement).checked ? line.expected || 0 : 0; }
-  nombre(id: number) { return this.sucursales.find(b => b.id === id)?.name || 'Sucursal archivada'; }
-  faltantes(order: BranchOrder) { return order.lines.reduce((n, l) => n + Math.max(0, (l.expected || 0) - l.received), 0); }
-  error(error: unknown) { this.mensaje = error instanceof Error ? error.message : 'No se pudo completar la operación.'; }
+  marcar(line: OrderLine, event: Event) {
+    line.received = (event.target as HTMLInputElement).checked ? line.expected || 0 : 0;
+  }
+  faltantes(p: BranchOrder) {
+    return p.lines.reduce((n, l) => n + Math.max(0, (l.expected || 0) - l.received), 0);
+  }
+  nombre(id: number) {
+    return this.workspace.branches().find((b) => b.id === id)?.name || 'Sucursal archivada';
+  }
   async guardar() {
-    if (!this.draft || this.busy) return;
-    this.busy = true;
+    const d = this.draft();
+    if (!d || this.busy()) return;
+    this.busy.set(true);
     try {
-      if (!this.sucursales.some(b => b.id === this.draft!.branchId)) throw new Error('Seleccioná una sucursal activa.');
-      await this.orders.save(this.draft);
-      this.pedidos = await this.orders.list();
-      this.draft = null; this.mensaje = 'Pedido guardado. Podés volver a abrirlo para controlar la recepción.';
-    } catch (error) { this.error(error); }
-    finally { this.busy = false; this.cdr.detectChanges(); }
-  }
-  async importar(event: Event) {
-    const input = event.target as HTMLInputElement; const file = input.files?.[0]; input.value = '';
-    if (!file || !this.draft || this.busy) return;
-    this.busy = true; this.mensaje = '';
-    let task: { destroy(): Promise<void> } | undefined;
-    try {
-      if (!file.name.toLowerCase().endsWith('.pdf') || file.size > 10 * 1024 * 1024) throw new Error('Seleccioná un PDF de hasta 10 MB.');
-      const data = new Uint8Array(await file.arrayBuffer());
-      if (new TextDecoder().decode(data.slice(0, 5)) !== '%PDF-') throw new Error('El archivo no es un PDF válido.');
-      const pdfjs = await import('pdfjs-dist');
-      pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.mjs';
-      const loading = pdfjs.getDocument({ data }); task = loading;
-      loading.onPassword = () => { void loading.destroy(); };
-      const pdf = await loading.promise;
-      if (pdf.numPages > 50) throw new Error('El pedido admite hasta 50 páginas.');
-      const candidates = new Set<string>();
-      for (let page = 1; page <= pdf.numPages; page++) {
-        const content = await (await pdf.getPage(page)).getTextContent();
-        const text = content.items.map(item => 'str' in item ? item.str : '').join(' ');
-        for (const match of text.matchAll(/(?<!\d)(?:\d{14}|\d{13}|\d{12}|\d{8})(?!\d)/g)) candidates.add(match[0]);
-      }
-      this.draft.pdf = file; this.draft.fileName = file.name;
-      for (const ean of candidates) {
-        if (!this.draft.lines.some(l => l.ean === ean)) this.draft.lines.push({ ean, name: this.productos.find(p => p.ean === ean)?.name || '', expected: null, received: 0 });
-      }
-      this.mensaje = candidates.size ? 'Revisá los códigos encontrados y completá las cantidades según el PDF antes de guardar.' : 'PDF adjunto sin EAN legibles. Si es una imagen, cargá las líneas manualmente. La lectura con Gemini aún no está conectada.';
-    } catch (error) { this.error(error); }
-    finally { await task?.destroy().catch(() => {}); this.busy = false; this.cdr.detectChanges(); }
+      if (!this.branches().some((b) => b.id === d.branchId))
+        throw new Error('Seleccioná una sucursal activa.');
+      await this.orders.save(d);
+      this.pedidos.set(await this.orders.list());
+      this.workspace.select(d.branchId);
+      this.draft.set(null);
+      this.workspace.notify('Pedido guardado. Podés volver a abrirlo para controlar la recepción.');
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'No se pudo guardar el pedido.');
+    } finally {
+      this.busy.set(false);
+    }
   }
   descargar() {
-    if (!this.draft?.pdf) return;
-    const url = URL.createObjectURL(this.draft.pdf); const link = document.createElement('a');
-    link.href = url; link.download = this.draft.fileName; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const d = this.draft();
+    if (!d?.pdf) return;
+    const url = URL.createObjectURL(d.pdf);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = d.fileName;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 }

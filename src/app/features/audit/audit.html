@@ -1,0 +1,166 @@
+<div class="page-head">
+  <div>
+    <p class="eyebrow">TRAZABILIDAD / CONTROL DE DEVOLUCIONES</p>
+    <h1 class="page-title">Linaje digital</h1>
+    <p class="page-sub">Relacioná gabinetes, componentes y seriales individuales.</p>
+  </div>
+  <p-tag value="Registro local de prueba" severity="secondary" />
+</div>
+@if (alert(); as a) {
+  <section id="fraud-alert" class="fraud-alert" role="alert">
+    <gx-icon name="alert" [size]="24" />
+    <div>
+      <h2>Alerta de discrepancia · posible sustitución</h2>
+      <p>El serial recibido no coincide. No confirma fraude: requiere revisión humana.</p>
+      <div class="evidence">
+        <span
+          >Esperado <code class="code-pill">{{ a.expected }}</code></span
+        ><span
+          >Observado <code class="code-pill">{{ a.actual }}</code></span
+        >
+        @if (a.chassis) {
+          <span
+            >Gabinete <code class="code-pill">{{ a.chassis }}</code></span
+          >
+        }
+      </div>
+    </div>
+    <button class="icon-button" aria-label="Cerrar alerta" (click)="alert.set(null)">
+      <gx-icon name="x" />
+    </button>
+  </section>
+}
+<div class="notice">
+  <gx-icon name="shield" />
+  <p>
+    La comparación usa el serial registrado. Este piloto no consulta el ERP ni modifica stock al
+    verificar una devolución.
+  </p>
+</div>
+<section class="panel">
+  <div class="panel-header">
+    <label class="search-field"
+      ><gx-icon name="search" /><input
+        aria-label="Buscar linaje"
+        placeholder="Gabinete, componente o serial…"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)" /></label
+    ><span class="muted text-xs">{{ filtered().length }} unidades</span>
+  </div>
+  @if (loading()) {
+    <p-skeleton height="360px" />
+  } @else {
+    <p-table
+      [value]="filtered()"
+      [scrollable]="true"
+      scrollHeight="440px"
+      [virtualScroll]="true"
+      [virtualScrollItemSize]="64"
+      dataKey="id"
+    >
+      <ng-template #header
+        ><tr>
+          <th style="width: 22%">Gabinete S/N</th>
+          <th style="width: 23%">Componente</th>
+          <th style="width: 22%">S/N individual</th>
+          <th style="width: 20%">Devolución / tránsito</th>
+          <th style="width: 13%">Acciones</th>
+        </tr></ng-template
+      >
+      <ng-template #body let-row
+        ><tr style="height: 64px">
+          <td>
+            @if (row.chassis) {
+              <span class="code-pill"><gx-highlight [text]="row.chassis" [query]="query()" /></span>
+            } @else {
+              <button class="btn-link" (click)="link(row)">Asociar gabinete</button>
+            }
+          </td>
+          <td><gx-highlight [text]="row.component" [query]="query()" /></td>
+          <td>
+            <span class="code-pill"
+              ><gx-highlight [text]="row.serialNumber" [query]="query()"
+            /></span>
+          </td>
+          <td>
+            <p-tag
+              [value]="row.verification"
+              [severity]="
+                row.verification === 'Verificado'
+                  ? 'success'
+                  : row.verification === 'Discrepancia'
+                    ? 'danger'
+                    : 'secondary'
+              "
+            />
+            @if (row.status === 'Transferred') {
+              <p-tag value="En tránsito" severity="warn" />
+            }
+          </td>
+          <td>
+            <button
+              class="icon-button"
+              aria-label="Verificar devolución"
+              pTooltip="Comparar serial devuelto"
+              (click)="begin(row)"
+            >
+              <gx-icon name="shield" />
+            </button>
+          </td></tr
+      ></ng-template>
+      <ng-template #emptymessage
+        ><tr>
+          <td colspan="5">
+            <div class="empty">
+              <gx-icon name="cpu" [size]="28" />
+              <h3>No hay unidades para esta búsqueda</h3>
+              <p>Seleccioná otra sucursal o registrá un ingreso con seriales.</p>
+            </div>
+          </td>
+        </tr></ng-template
+      >
+    </p-table>
+  }
+</section>
+<p-dialog
+  header="Asociar componente a gabinete"
+  [visible]="!!linking()"
+  (visibleChange)="!$event && linking.set(null)"
+  [modal]="true"
+  [style]="{ width: '520px' }"
+  ><p class="code-pill mb-5">{{ linking()?.serialNumber }}</p>
+  <label
+    ><span class="form-label">Serial del gabinete</span
+    ><input
+      class="form-control mono"
+      [(ngModel)]="chassis"
+      maxlength="120"
+      (keyup.enter)="saveLink()"
+  /></label>
+  <p class="muted text-xs mt-3">La asociación se conserva como referencia del linaje.</p>
+  @if (formError()) {
+    <p class="notice status-error" role="alert">{{ formError() }}</p>
+  }
+  <button class="btn-primario mt-6" (click)="saveLink()">Guardar asociación</button></p-dialog
+>
+<p-dialog
+  header="Validar devolución"
+  [visible]="!!selected()"
+  (visibleChange)="!$event && selected.set(null)"
+  [modal]="true"
+  [style]="{ width: '520px' }"
+  ><label
+    ><span class="form-label">Serial observado en la unidad recibida</span
+    ><input
+      class="form-control mono"
+      [(ngModel)]="actual"
+      maxlength="120"
+      autocomplete="off"
+      (keyup.enter)="verify()"
+  /></label>
+  <p class="muted text-xs mt-3">Escaneá el código físico. Se compara con el registro original.</p>
+  @if (formError()) {
+    <p class="notice status-error" role="alert">{{ formError() }}</p>
+  }
+  <button class="btn-primario mt-6" (click)="verify()">Verificar serial</button></p-dialog
+>

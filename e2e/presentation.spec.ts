@@ -1,0 +1,23 @@
+import { test, expect } from '@playwright/test';
+test('capturas de demostración para la presentación', async ({ page }) => {
+  await page.setViewportSize({width: 1440, height: 900});
+  await page.route('**/api/access/me', r => r.fulfill({json: {id: 1, fullName: 'Demostración', role: 'Administrator'}}));
+  await page.route('**/api/access/health', r => r.fulfill({json: {status: 'ok'}}));
+  await page.route('**/api/access/integrations', r => r.fulfill({json: {gemini: false}}));
+  await page.goto('/dashboard');
+  await expect(page.getByRole('region', {name: 'Indicadores de inventario'})).toBeVisible();
+  await page.screenshot({path: 'test-results/current-dashboard.png', animations: 'disabled'});
+  await page.goto('/productos');
+  await page.getByRole('button', {name: 'Nuevo producto'}).click();
+  await expect(page.locator('.p-dialog')).toBeVisible();
+  await expect(page.locator('.p-dialog')).toHaveCSS('opacity', '1');
+  await page.screenshot({path: 'test-results/current-products.png', animations: 'disabled'});
+  await page.goto('/sucursales');
+  await page.getByRole('button', {name: 'Nuevo pedido'}).click();
+  await expect(page.getByLabel('Sucursal de destino')).toBeVisible();
+  await expect(page.locator('.p-dialog')).toHaveCSS('opacity', '1');
+  await page.screenshot({path: 'test-results/current-orders.png', animations: 'disabled'});
+  await page.goto('/login');
+  await expect(page.locator('.gamexid-logo .ltr')).toHaveCount(7);
+  await page.screenshot({path: 'test-results/current-login.png'});
+});

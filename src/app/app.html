@@ -1,70 +1,93 @@
-<ng-container *ngIf="!esLogin; else loginView">
-<div class="shell" [ngClass]="{ 'menu-cerrado': !menuAbierto }">
-  <div class="ambient ambient-uno"></div>
-  <div class="ambient ambient-dos"></div>
-  <!-- SIDEBAR -->
-  <aside class="sidebar" (mouseenter)="abrirMenuHover()" (mouseleave)="cerrarMenuHover()" (focusin)="abrirMenuHover()" (focusout)="salirFocoMenu($event)">
-    <div class="sidebar-logo">
-      <svg class="logo-badge gamexid-mark" viewBox="215 105 315 245" role="img" aria-label="Logo Gamexid"><image href="/gamexid-logo.png" width="744" height="596"/></svg>
-      <div class="logo-texto" *ngIf="menuAbierto">
-        <span class="logo-nombre">Gamexid</span>
-        <span class="logo-lema">{{ lema }}</span>
-      </div>
-    </div>
-
-    <nav class="sidebar-nav">
-      <a class="sidebar-item" [class.activo]="esActivo('dashboard')" (click)="ir('dashboard')">
-        <i class="bi bi-grid-1x2"></i><span *ngIf="menuAbierto">{{ textos.dashboard }}</span>
-      </a>
-      <a class="sidebar-item" [class.activo]="esActivo('productos')" (click)="ir('productos')">
-        <i class="bi bi-box-seam"></i><span *ngIf="menuAbierto">{{ textos.products }}</span>
-      </a>
-      <a class="sidebar-item" [class.activo]="esActivo('sucursales')" (click)="ir('sucursales')">
-        <i class="bi bi-building"></i><span *ngIf="menuAbierto">{{ textos.branches }}</span>
-      </a>
-      <a class="sidebar-item" [class.activo]="esActivo('ingresos')" (click)="ir('ingresos')">
-        <i class="bi bi-arrow-down-left-circle"></i><span *ngIf="menuAbierto">{{ textos.entries }}</span>
-      </a>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="usuario-chip" *ngIf="menuAbierto">
-        <div class="avatar">{{ inicial }}</div>
-        <div class="usuario-datos">
-          <span class="usuario-nombre">{{ usuario }}</span>
-          <span class="usuario-rol">{{ rol }}</span>
+<p-toast
+  position="bottom-right"
+  [breakpoints]="{ '640px': { width: 'calc(100% - 24px)', right: '12px' } }"
+/>
+@if (login()) {
+  <router-outlet />
+} @else {
+  <div class="shell" [class.menu-cerrado]="!open()" [class.menu-abierto]="open()">
+    @if (open()) {
+      <button class="mobile-scrim" aria-label="Cerrar menú" (click)="close()"></button>
+    }
+    <aside
+      class="sidebar"
+      (mouseenter)="hover(true)"
+      (mouseleave)="hover(false)"
+      aria-label="Navegación principal"
+    >
+      <a routerLink="/dashboard" class="brand" aria-label="Gamexid, inicio"
+        ><gx-logo class="brand-symbol" [compact]="true" [animated]="open()" />
+        <span class="nav-text wordmark">gamexid<span class="brand-dot">.</span></span></a
+      >
+      <div class="nav-label nav-text">WORKSPACE / INVENTARIO</div>
+      <nav>
+        @for (item of navigation; track item.url) {
+          <a
+            [routerLink]="item.url"
+            routerLinkActive="active"
+            class="nav-item"
+            [pTooltip]="!open() ? item.name : ''"
+            tooltipPosition="right"
+            [attr.aria-label]="item.name"
+          >
+            <gx-icon [name]="item.icon" /><span class="nav-text">{{ item.short }}</span>
+          </a>
+        }
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="connection">
+          <span class="led" [class.online]="workspace.connection() === 'online'"></span
+          ><span class="nav-text">{{
+            workspace.connection() === 'online'
+              ? 'API de acceso · OK'
+              : workspace.connection() === 'checking'
+                ? 'Comprobando API'
+                : 'API sin conexión'
+          }}</span>
         </div>
+        <a routerLink="/integracion" class="nav-text muted text-xs">GC-API · Ver integración</a>
+        <button class="nav-item logout" (click)="logout()" aria-label="Cerrar sesión">
+          <gx-icon name="logout" /><span class="nav-text">Cerrar sesión</span>
+        </button>
       </div>
-      <button class="btn-cerrar" (click)="cerrarSesion()">
-        <i class="bi bi-box-arrow-left"></i><span *ngIf="menuAbierto">Salir</span>
-      </button>
+    </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <button
+          class="icon-button"
+          (click)="open.set(!open())"
+          aria-label="Alternar menú"
+          [attr.aria-expanded]="open()"
+        >
+          <gx-icon name="menu" />
+        </button>
+        <div class="breadcrumb">
+          <span>Workspace</span><gx-icon name="right" [size]="14" /><strong>{{ title() }}</strong>
+        </div>
+        <div class="topbar-right">
+          <label class="branch-switch"
+            ><gx-icon name="warehouse" /><select
+              aria-label="Sucursal de trabajo"
+              [ngModel]="workspace.branchId()"
+              (ngModelChange)="workspace.select(+$event)"
+            >
+              @for (b of workspace.branches(); track b.id) {
+                <option [value]="b.id" [title]="b.address || ''">
+                  {{ b.name }}{{ b.isLegacy ? ' (histórica)' : '' }}
+                </option>
+              }
+            </select></label
+          ><span class="user-avatar" [pTooltip]="user()">{{
+            user().slice(0, 2).toUpperCase()
+          }}</span>
+        </div>
+      </header>
+      <main class="contenido scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div class="workspace-content"><router-outlet /></div>
+        <footer class="workspace-footer">
+          <span>GAMEXID / TECH PREVIEW</span><span>Datos locales · sin sincronización ERP</span>
+        </footer>
+      </main>
     </div>
-  </aside>
-
-  <!-- MAIN -->
-  <div class="main">
-    <header class="topbar">
-      <button class="btn-toggle" (click)="toggleMenu()" aria-label="Abrir o cerrar el menú">
-        <i class="bi" [ngClass]="menuAbierto ? 'bi-layout-sidebar-inset' : 'bi-layout-sidebar-inset-reverse'"></i>
-      </button>
-      <div class="topbar-titulo">
-        <span class="titulo-pagina">{{ paginaActual }}</span>
-      </div>
-      <div class="topbar-acciones">
-        <span class="badge-version"><span class="status-dot"></span> {{ textos.online }}</span>
-        <a class="btn-nuevo" [routerLink]="['/ingresos']">
-          <i class="bi bi-plus-lg"></i> {{ textos.newEntry }}
-        </a>
-      </div>
-    </header>
-
-    <main class="contenido" (scroll)="onContenidoScroll($event)">
-      <router-outlet></router-outlet>
-    </main>
-    <button class="volver-arriba" *ngIf="mostrarVolverArriba" (click)="volverArriba()" aria-label="Volver arriba">
-      <i class="bi bi-arrow-up"></i>
-    </button>
   </div>
-</div>
-</ng-container>
-<ng-template #loginView><router-outlet></router-outlet></ng-template>
+}

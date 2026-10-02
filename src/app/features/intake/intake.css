@@ -1,0 +1,131 @@
+.dropzone {
+  position: relative;
+  overflow: hidden;
+  border: 1px dashed #475569;
+  border-radius: 8px;
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  background: #080c14;
+}
+.dropzone > gx-icon {
+  color: #a78bfa;
+}
+.dropzone strong {
+  font-size: 14px;
+}
+.dropzone p {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.dropzone.dragging {
+  border-color: #a78bfa;
+  background: #7c3aed15;
+}
+.dropzone label {
+  cursor: pointer;
+  z-index: 1;
+}
+.scan-laser {
+  position: absolute;
+  top: 10px;
+  height: 1px;
+  left: 0;
+  right: 0;
+  background: #a78bfa;
+  box-shadow: 0 0 10px #8b5cf6;
+  opacity: 0;
+  pointer-events: none;
+}
+.scan-laser.active {
+  opacity: 0.6;
+}
+.intake-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 16px 0;
+}
+.document-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.document-pane {
+  background: #172031;
+  min-width: 0;
+}
+.json-pane {
+  background: #080c14;
+  min-width: 0;
+  border-left: 1px solid #1e293b;
+}
+.pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font:
+    9px 'JetBrains Mono',
+    monospace;
+  letter-spacing: 0.6px;
+  padding: 12px;
+  background: #0b111d;
+  border-bottom: 1px solid #1e293b;
+}
+.pane-header select {
+  background: #0f172a;
+  border: 1px solid #334155;
+  padding: 8px;
+  border-radius: 4px;
+}
+.pdf-preview {
+  display: block;
+  max-height: 480px;
+  width: 100%;
+  object-fit: contain;
+  padding: 14px;
+}
+.json-pane pre {
+  white-space: pre-wrap;
+  overflow: auto;
+  max-height: 330px;
+  font:
+    11px/1.8 'JetBrains Mono',
+    monospace;
+  padding: 16px;
+  margin: 0;
+}
+.confidence-list {
+  padding: 12px;
+  border-top: 1px solid #1e293b;
+  display: grid;
+  gap: 8px;
+}
+.confidence-list > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+@media (max-width: 700px) {
+  .document-split {
+    grid-template-columns: 1fr;
+  }
+  .json-pane {
+    border-left: 0;
+    border-top: 1px solid #1e293b;
+  }
+  .intake-toolbar {
+    flex-wrap: wrap;
+  }
+  .intake-toolbar .code-pill {
+    overflow-wrap: anywhere;
+  }
+}

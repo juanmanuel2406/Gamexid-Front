@@ -5,16 +5,22 @@ import { map, catchError, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuthGuard implements CanActivate {
-  constructor(private router: Router, private service: FastScanService) {}
+  canActivateChild() {
+    return this.canActivate();
+  }
+  constructor(
+    private router: Router,
+    private service: FastScanService,
+  ) {}
 
   canActivate() {
     return this.service.session().pipe(
-      map(user => {
+      map((user) => {
         sessionStorage.setItem('usuario', user.fullName);
         sessionStorage.setItem('userData', JSON.stringify(user));
         return true;
       }),
-      catchError(() => of(this.router.parseUrl('/login')))
+      catchError(() => of(this.router.parseUrl('/login'))),
     );
   }
 }

@@ -1,82 +1,133 @@
-<ng-container *ngIf="!cargando; else dashboardSkeleton">
-<div class="dashboard">
-  <div class="dash-head fade-in">
-    <div>
-      <h2 class="dash-hola">Hola, {{ nombreUsuario }}</h2>
-      <p class="dash-sub">Resumen del estado de tu inventario Gamexid</p>
-    </div>
+<div class="page-head">
+  <div>
+    <p class="eyebrow">CONTROL / VISIBILIDAD OPERATIVA</p>
+    <h1 class="page-title">Centro de operaciones</h1>
+    <p class="page-sub">{{ branchName() }} · Estado de tu inventario local</p>
   </div>
-
-  <!-- KPIs -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-icon kpi-blue"><i class="bi bi-box-seam"></i></div>
-      <div>
-        <div class="kpi-valor">{{ productosActivos }}</div>
-        <div class="kpi-label">Productos activos</div>
-      </div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-icon kpi-green"><i class="bi bi-building"></i></div>
-      <div>
-        <div class="kpi-valor">{{ sucursalesActivas }}</div>
-        <div class="kpi-label">Sucursales activas</div>
-      </div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-icon kpi-violet"><i class="bi bi-qr-code"></i></div>
-      <div>
-        <div class="kpi-valor">{{ unidadesActivas }}</div>
-        <div class="kpi-label">Unidades serializadas</div>
-      </div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-icon kpi-amber"><i class="bi bi-arrow-down-left-circle"></i></div>
-      <div>
-        <div class="kpi-valor">{{ ingresosHoy }}</div>
-        <div class="kpi-label">Ingresos hoy</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Últimos ingresos -->
-  <div class="card-fastscan moves-card">
-    <div class="moves-header">
-      <h3 class="moves-title"><i class="bi bi-clock-history"></i> Últimos ingresos</h3>
-      <button class="btn-link" [routerLink]="['/ingresos']">Ver todos <i class="bi bi-arrow-right"></i></button>
-    </div>
-
-    <div class="moves-table" *ngIf="ingresos.length; else vacio">
-      <div class="moves-row moves-cabecera">
-        <span>Fecha</span>
-        <span>N°</span>
-        <span>Destino</span>
-        <span>ítems</span>
-      </div>
-      <div class="moves-row" *ngFor="let i of ingresos">
-        <span>{{ fechaLegible(i.createdAtUtc) }}</span>
-        <span class="badge-num">#{{ i.id }}</span>
-        <span>{{ i.destinationBranchId }}</span>
-        <span>{{ totalItems(i) }}</span>
-      </div>
-    </div>
-
-    <ng-template #vacio>
-      <div class="vacio">
-        <i class="bi bi-inbox"></i>
-        <p>Todavía no hay ingresos registrados.</p>
-      </div>
-    </ng-template>
-  </div>
+  <a routerLink="/ingresos" class="btn-primario"><gx-icon name="scan" /> Nuevo ingreso</a>
 </div>
-</ng-container>
-
-<ng-template #dashboardSkeleton>
-  <div class="dashboard dashboard-skeleton" aria-label="Cargando panel">
-    <div class="skeleton skeleton-title"></div>
-    <div class="kpi-grid">
-      <div class="skeleton skeleton-kpi" *ngFor="let item of [1,2,3,4]"></div>
-    </div>
-    <div class="skeleton skeleton-table"></div>
+@if (loading()) {
+  <div class="metrics">
+    @for (n of [1, 2, 3, 4]; track n) {
+      <p-skeleton height="160px" />
+    }
   </div>
-</ng-template>
+  <p-skeleton height="320px" />
+} @else {
+  <section class="metrics" aria-label="Indicadores de inventario">
+    <article class="metric">
+      <div class="metric-top"><span>UNIDADES DISPONIBLES</span><gx-icon name="package" /></div>
+      <strong>{{ available() | number }}</strong
+      ><span class="metric-note"><span class="dot"></span> Seriales en sucursal</span>
+    </article>
+    <article class="metric">
+      <div class="metric-top"><span>UNIDADES INGRESADAS HOY</span><gx-icon name="scan" /></div>
+      <strong>{{ today() | number }}</strong
+      ><span class="metric-note">{{ delta() }} <span class="muted">/ vs. ayer</span></span
+      ><svg class="spark" viewBox="0 0 240 60" aria-hidden="true">
+        <polyline [attr.points]="spark()" fill="none" stroke="#8b5cf6" stroke-width="2" />
+      </svg>
+    </article>
+    <article class="metric">
+      <div class="metric-top"><span>CATÁLOGO DE PRODUCTOS</span><gx-icon name="barcode" /></div>
+      <strong>{{ products().length | number }}</strong
+      ><span class="metric-note muted">Catálogo global · todas las sedes</span>
+    </article>
+    <article class="metric">
+      <div class="metric-top"><span>MOVIMIENTOS REGISTRADOS</span><gx-icon name="activity" /></div>
+      <strong>{{ localMovements().length | number }}</strong
+      ><span class="metric-note muted">Historial de esta sucursal</span>
+    </article>
+  </section>
+  <div class="overview-grid">
+    <section class="panel activity-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="section-title">Volumen de ingreso</h2>
+          <p class="page-sub">Unidades registradas por día</p>
+        </div>
+        <span class="badge">Últimos 7 días</span>
+      </div>
+      <div class="chart" role="img" aria-label="Unidades ingresadas en los últimos siete días">
+        @for (day of weekly(); track $index) {
+          <div class="chart-column">
+            <span class="chart-value">{{ day.count }}</span>
+            <div class="chart-track">
+              <div class="chart-bar" [style.height.%]="(day.count / maximum()) * 100"></div>
+            </div>
+            <span>{{ day.label }}</span>
+          </div>
+        }
+      </div>
+    </section>
+    <section class="panel connections-panel">
+      <div class="panel-header">
+        <h2 class="section-title">Servicios y conexión</h2>
+        <gx-icon name="activity" />
+      </div>
+      <div class="service-row">
+        <div><strong>Acceso Gamexid</strong><span>Servidor Ubuntu</span></div>
+        <p-tag
+          [value]="workspace.connection() === 'online' ? 'Conectado' : 'No disponible'"
+          [severity]="workspace.connection() === 'online' ? 'success' : 'warn'"
+        />
+      </div>
+      <div class="service-row">
+        <div><strong>ERP CDS</strong><span>Integración empresarial</span></div>
+        <p-tag value="Pendiente" severity="secondary" />
+      </div>
+      <div class="service-row">
+        <div><strong>Gemini</strong><span>Extracción de remitos</span></div>
+        <p-tag
+          [value]="workspace.gemini() ? 'Configurado' : 'Sin configurar'"
+          [severity]="workspace.gemini() ? 'info' : 'secondary'"
+        />
+      </div>
+      <div class="notice">
+        <gx-icon name="lock" />
+        <p>Vista de prueba. Los movimientos todavía no se comparten entre dispositivos.</p>
+      </div>
+    </section>
+  </div>
+  <section class="panel recent">
+    <div class="panel-header">
+      <h2 class="section-title">Últimos movimientos</h2>
+      <a routerLink="/ingresos" class="btn-link">Ver ingresos <gx-icon name="arrow" /></a>
+    </div>
+    @if (localMovements().length) {
+      <div class="tabla-wrap">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Movimiento</th>
+              <th>Fecha</th>
+              <th>Destino</th>
+              <th>Unidades</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of localMovements().slice(0, 5); track m.id) {
+              <tr>
+                <td>
+                  <span class="code-pill">ING-{{ m.id }}</span>
+                </td>
+                <td>{{ m.createdAtUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ branchName() }}</td>
+                <td class="mono">{{ quantity(m) }}</td>
+                <td><p-tag value="Registrado localmente" severity="success" /></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="empty">
+        <gx-icon name="inbox" [size]="30" />
+        <h3>Tu próxima recepción empieza acá</h3>
+        <p>No hay ingresos registrados para esta sucursal.</p>
+        <a routerLink="/ingresos" class="btn-secundario">Abrir terminal <gx-icon name="arrow" /></a>
+      </div>
+    }
+  </section>
+}

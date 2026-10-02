@@ -6,42 +6,67 @@ function invoicePdf() {
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
     '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
-    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
   ];
-  let pdf = '%PDF-1.4\n'; const offsets = [0];
-  objects.forEach((object, i) => { offsets.push(pdf.length); pdf += `${i + 1} 0 obj\n${object}\nendobj\n`; });
+  let pdf = '%PDF-1.4\n';
+  const offsets = [0];
+  objects.forEach((object, i) => {
+    offsets.push(pdf.length);
+    pdf += `${i + 1} 0 obj\n${object}\nendobj\n`;
+  });
   const xref = pdf.length;
-  pdf += `xref\n0 6\n0000000000 65535 f \n${offsets.slice(1).map(n => n.toString().padStart(10, '0') + ' 00000 n \n').join('')}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  pdf += `xref\n0 6\n0000000000 65535 f \n${offsets
+    .slice(1)
+    .map((n) => n.toString().padStart(10, '0') + ' 00000 n \n')
+    .join('')}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
   return Buffer.from(pdf);
 }
 test('PDF: rechaza archivos falsos y relaciona EAN sin inventar cantidades', async ({ page }) => {
   await page.goto('/sucursales');
   await page.getByRole('button', { name: 'Nuevo pedido' }).click();
   const input = page.locator('#pedido-pdf');
-  await input.setInputFiles({ name: 'falso.pdf', mimeType: 'application/pdf', buffer: Buffer.from('invalid') });
+  await input.setInputFiles({
+    name: 'falso.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('invalid'),
+  });
   await expect(page.getByText('El archivo no es un PDF válido.')).toBeVisible();
-  await input.setInputFiles({ name: 'pedido.pdf', mimeType: 'application/pdf', buffer: invoicePdf() });
+  await input.setInputFiles({
+    name: 'pedido.pdf',
+    mimeType: 'application/pdf',
+    buffer: invoicePdf(),
+  });
   await expect(page.getByLabel('EAN', { exact: true })).toHaveValue('7790000000011');
   await expect(page.getByLabel('Producto', { exact: true })).toHaveValue('Notebook 14" 8GB');
   await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('');
   await expect(page.getByRole('button', { name: 'Descargar original' })).toBeVisible();
 });
 test('sesión inválida redirige al login y logo responsive', async ({ page }) => {
-  await page.route('**/api/access/me', route => route.fulfill({ status: 401 }));
+  await page.route('**/api/access/health', (route) => route.fulfill({ json: { status: 'ok' } }));
+  await page.route('**/api/access/integrations', (route) =>
+    route.fulfill({ json: { gemini: false } }),
+  );
+  await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
   await page.goto('/productos');
   await expect(page).toHaveURL(/login/);
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.locator('svg image')).toBeVisible();
+  await expect(page.locator('.gamexid-logo svg')).toBeVisible();
   await expect(page.locator('.gamexid-logo')).toHaveCSS('opacity', '1');
   await page.screenshot({ path: 'test-results/login-mobile.png', fullPage: true });
 });
 test.beforeEach(async ({ page }) => {
-  await page.route('**/api/access/me', route => route.fulfill({ json: { id: 1, fullName: 'QA', role: 'Administrator' } }));
+  await page.route('**/api/access/health', (route) => route.fulfill({ json: { status: 'ok' } }));
+  await page.route('**/api/access/integrations', (route) =>
+    route.fulfill({ json: { gemini: false } }),
+  );
+  await page.route('**/api/access/me', (route) =>
+    route.fulfill({ json: { id: 1, fullName: 'QA', role: 'Administrator' } }),
+  );
 });
 test('productos: formulario visible, validación, guardar y Escape', async ({ page }) => {
   await page.goto('/productos');
   await page.getByRole('button', { name: 'Nuevo producto' }).click();
-  await expect(page.locator('.modal-overlay > .modal')).toBeVisible();
+  await expect(page.locator('.p-dialog')).toBeVisible();
   await page.getByRole('button', { name: 'Guardar', exact: true }).click();
   await expect(page.getByText('Completá SKU, nombre y EAN.')).toBeVisible();
   await page.getByPlaceholder('Ej: NOTE-002').fill('QA-PROD');
@@ -51,31 +76,36 @@ test('productos: formulario visible, validación, guardar y Escape', async ({ pa
   await expect(page.getByRole('cell', { name: 'Producto QA', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Nuevo producto' }).click();
   await page.keyboard.press('Escape');
-  await expect(page.locator('.modal-overlay')).toHaveCount(0);
+  await expect(page.locator('.p-dialog')).toHaveCount(0);
 });
-test('ingreso manual: depósito, EAN vacío, seriales duplicados y confirmación', async ({ page }) => {
+test('ingreso manual: depósito, EAN vacío, seriales duplicados y confirmación', async ({
+  page,
+}) => {
   await page.goto('/ingresos');
   await page.getByRole('button', { name: 'Nuevo ingreso' }).click();
-  await expect(page.getByLabel('Destino: Depósito')).toHaveValue('Depósito');
+  await expect(page.getByLabel('Destino: Depósito')).toHaveValue('Morón (Depósito Central)');
   await page.getByRole('button', { name: 'Agregar', exact: true }).click();
   await expect(page.getByText('No se recibió una lectura', { exact: false })).toBeVisible();
   await page.locator('#ean-scanner-input').fill('7790000000011');
   await page.locator('#ean-scanner-input').press('Enter');
   await expect(page.locator('#serial-1')).toBeVisible();
+  await page.getByLabel('Cantidad esperada').fill('2');
   await page.locator('#serial-1').fill('QA-001\nQA-001');
   await expect(page.getByRole('button', { name: 'Cerrar ingreso' })).toBeDisabled();
   await page.locator('#serial-1').fill('QA-001\nQA-002');
   await page.getByRole('button', { name: 'Cerrar ingreso' }).click();
-  await expect(page.locator('.modal-overlay > .modal')).toBeVisible();
+  await expect(page.locator('.p-dialog')).toBeVisible();
   await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
   await expect(page.getByText('Ingreso #1 registrado correctamente.')).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'Depósito', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('cell', { name: 'Morón (Depósito Central)', exact: true }),
+  ).toBeVisible();
 });
 test('pedido manual: persiste y permite recepción parcial', async ({ page }) => {
   await page.goto('/sucursales');
   await page.getByRole('button', { name: 'Nuevo pedido' }).click();
   await page.getByLabel('Referencia del pedido').fill('QA-PEDIDO');
-  await page.getByLabel('Sucursal de destino').selectOption({ label: 'Sucursal Centro' });
+  await page.getByLabel('Sucursal de destino').selectOption({ label: 'Belgrano' });
   await page.getByRole('button', { name: 'Agregar producto manualmente' }).click();
   await page.getByLabel('EAN', { exact: true }).fill('7790000000011');
   await page.getByLabel('EAN', { exact: true }).blur();
@@ -102,6 +132,153 @@ test('menú hover, logo visible y vista móvil sin desborde', async ({ page }) =
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/productos');
   await page.getByRole('button', { name: 'Nuevo producto' }).click();
-  await expect(page.locator('.modal-overlay > .modal')).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+  await expect(page.locator('.p-dialog')).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+  ).toBeTruthy();
+});
+
+test('Gemini requiere botón explícito y completa cantidades sin duplicar líneas', async ({
+  page,
+}) => {
+  await page.route('**/api/access/integrations', (route) =>
+    route.fulfill({ json: { gemini: true } }),
+  );
+  let sent = 0;
+  await page.route('**/api/access/extract', async (route) => {
+    sent++;
+    expect(route.request().headers()['x-gamexid']).toBe('1');
+    await route.fulfill({
+      json: { lines: [{ ean: '7790000000011', name: 'Notebook', expected: 3, confidence: 0.96 }] },
+    });
+  });
+  await page.goto('/sucursales');
+  await page.getByRole('button', { name: 'Nuevo pedido' }).click();
+  await page
+    .locator('#pedido-pdf')
+    .setInputFiles({ name: 'pedido.pdf', mimeType: 'application/pdf', buffer: invoicePdf() });
+  await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('');
+  expect(sent).toBe(0);
+  await page.getByRole('button', { name: 'Extraer con Gemini' }).click();
+  await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('3');
+  await expect(page.getByLabel('EAN', { exact: true })).toHaveCount(1);
+  expect(sent).toBe(1);
+  await page.screenshot({ path: 'test-results/intake-desktop.png', fullPage: true });
+});
+test('auditoría: asociación, discrepancia persistente y búsqueda segura', async ({ page }) => {
+  await page.goto('/auditoria');
+  await page.getByRole('button', { name: 'Asociar gabinete' }).first().click();
+  await page.getByLabel('Serial del gabinete').fill('CASE-QA-001');
+  await page.getByRole('button', { name: 'Guardar asociación' }).click();
+  await page.getByRole('button', { name: 'Verificar devolución' }).first().click();
+  await page.getByLabel('Serial observado en la unidad recibida').fill('SERIAL-INCORRECTO');
+  await page.getByRole('button', { name: 'Verificar serial', exact: true }).click();
+  await expect(page.locator('#fraud-alert')).toBeVisible();
+  await page.screenshot({ path: 'test-results/audit-desktop.png', fullPage: true });
+  await page.reload();
+  await page.getByLabel('Buscar linaje').fill('CASE-QA');
+  await expect(page.locator('mark')).toHaveText('CASE-QA');
+  await expect(page.getByText('Discrepancia', { exact: true })).toBeVisible();
+});
+test('todas las pantallas se adaptan a móvil y no tienen errores de ejecución', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/dashboard');
+  await page.screenshot({ path: 'test-results/dashboard-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const route of ['dashboard', 'productos', 'ingresos', 'sucursales', 'auditoria']) {
+    await page.goto('/' + route);
+    await expect(page.locator('h1')).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    ).toBeTruthy();
+    await page.screenshot({ path: 'test-results/' + route + '-mobile.png', fullPage: true });
+  }
+  await page.getByRole('button', { name: 'Alternar menú' }).click();
+  await expect(page.locator('.shell')).toHaveClass(/menu-abierto/);
+  await page.getByRole('button', { name: 'Cerrar menú', exact: true }).click();
+  expect(errors).toEqual([]);
+});
+
+test('16 sedes reales, direcciones y depósito único', async ({ page }) => {
+  await page.goto('/dashboard');
+  await expect(page.getByLabel('Sucursal de trabajo').locator('option')).toHaveCount(16);
+  await page.getByLabel('Sucursal de trabajo').selectOption({ label: 'Belgrano' });
+  await page.goto('/sucursales');
+  await page.getByRole('button', { name: 'Nuevo pedido' }).click();
+  await expect(page.getByText('José Hernández 2438, CABA', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Sucursal de destino').locator('option')).toHaveCount(16);
+});
+test('migra sedes conservando IDs y registros anteriores', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('qa_setup')) {
+      localStorage.setItem(
+        'fs_branches',
+        JSON.stringify([
+          { id: 1, code: 'SUC01', name: 'Sucursal Centro', isActive: true },
+          { id: 2, code: 'DEP-CENTRAL', name: 'Depósito', isActive: true },
+        ]),
+      );
+      localStorage.setItem(
+        'fs_units',
+        JSON.stringify([
+          {
+            id: 99,
+            productId: 1,
+            serialNumber: 'LEGACY-99',
+            currentBranchId: 1,
+            status: 'Available',
+          },
+        ]),
+      );
+      localStorage.setItem('qa_setup', '1');
+    }
+  });
+  await page.goto('/dashboard');
+  await expect(page.getByLabel('Sucursal de trabajo').locator('option')).toHaveCount(17);
+  await page.getByLabel('Sucursal de trabajo').selectOption('1');
+  await page.goto('/auditoria');
+  await expect(page.getByText('LEGACY-99', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel('Sucursal de trabajo').locator('option')).toHaveCount(17);
+  expect(
+    await page.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem('fs_branches')!).find((b: any) => b.code === 'DEP-CENTRAL')
+          .id,
+    ),
+  ).toBe(2);
+});
+test('logo conserva espacio al desplegar sidebar y anima en login', async ({ page }) => {
+  await page.goto('/dashboard');
+  await page.locator('.sidebar').hover();
+  await expect(page.locator('.shell')).toHaveClass(/menu-abierto/);
+  const dimensions = await page.locator('.brand-symbol').boundingBox();
+  expect(dimensions?.width).toBe(42);
+  expect(dimensions?.height).toBe(38);
+  await expect(page.locator('.sidebar')).toHaveCSS('width', '248px');
+  await expect(page.locator('.brand-symbol .head').last()).toHaveCSS('opacity', '1');
+  await page.screenshot({ path: 'test-results/sidebar-logo.png' });
+  await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
+  await page.goto('/login');
+  await expect(page.locator('.gamexid-logo')).toHaveCSS('opacity', '1');
+  await expect
+    .poll(async () =>
+      page.locator('.gamexid-logo .head').first().evaluate((el) => getComputedStyle(el).transform),
+    )
+    .not.toBe('none');
+  await expect(page.locator('.gamexid-logo .ltr').last()).toHaveCSS('opacity', '1');
+  await page.screenshot({path:'test-results/vector-login-desktop.png',fullPage:true});
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload();
+  await expect(page.locator('.gamexid-logo .head').first()).toHaveCSS('transform', 'none');
+  await expect(page.locator('.gamexid-logo .ltr')).toHaveCount(7);
+  await expect(page.locator('.gamexid-logo .bone')).toHaveCount(34);
+  expect(await page.locator('.gamexid-logo svg').evaluate(svg=>
+    Array.from(svg.querySelectorAll('[fill^="url("]')).every(el=>{
+      const id=el.getAttribute('fill')!.slice(5,-1);
+      return !!svg.querySelector('[id="'+id+'"]');
+    }))).toBe(true);
 });

@@ -1,147 +1,86 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
-import { filter } from 'rxjs';
-import { animate, stagger } from 'animejs';
-
-import { rolLabel, FastScanService } from './services-fastscan/fastscan-service';
-
+import { Component, inject, signal, computed, DestroyRef, HostListener } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter, timer } from 'rxjs';
+import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
+import { Icon } from './shared/icon';
+import { GamexidLogo } from './shared/logo';
+import { Workspace } from './core/workspace';
+import { FastScanService } from './services-fastscan/fastscan-service';
 @Component({
   selector: 'app-root',
+  standalone: true,
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    FormsModule,
+    ToastModule,
+    TooltipModule,
+    Icon,
+    GamexidLogo,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css',
-  standalone: false,
 })
-export class App implements OnInit, OnDestroy {
-  menuAbierto = false;
-  esLogin = false;
-  usuario = '';
-  rol = '';
-  inicial = '';
-  lema = '';
-  tema: 'dark' | 'light' = 'dark';
-  idioma: 'es' | 'en' = 'es';
-  mostrarVolverArriba = false;
-
-  constructor(private router: Router, private service: FastScanService) {}
-
-  get paginaActual(): string {
-    const url = this.router.url;
-    if (url.includes('ingresos')) return 'Ingresos de mercadería';
-    if (url.includes('productos')) return 'Productos';
-    if (url.includes('sucursales')) return 'Sucursales';
-    return 'Dashboard';
-  }
-
-  get textos() {
-    return this.idioma === 'en'
-      ? { dashboard: 'Dashboard', products: 'Products', branches: 'Branches', entries: 'Receipts', newEntry: 'New receipt', online: 'Online' }
-      : { dashboard: 'Dashboard', products: 'Productos', branches: 'Sucursales', entries: 'Ingresos', newEntry: 'Nuevo ingreso', online: 'En línea' };
-  }
-
-  esActivo(ruta: string): boolean {
-    return this.router.url.includes(ruta);
-  }
-
-  ngOnInit(): void {
-    this.esLogin = this.router.url.startsWith('/login');
-    this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe(event => {
-      this.esLogin = event.urlAfterRedirects.startsWith('/login');
-      this.usuario = sessionStorage.getItem('usuario') || '';
-      this.inicial = this.usuario.charAt(0).toUpperCase();
-      try { this.rol = rolLabel(JSON.parse(sessionStorage.getItem('userData') || '{}').role); } catch { this.rol = ''; }
-      if (!this.esLogin && window.innerWidth <= 768) this.menuAbierto = false;
-    });
-    const name = sessionStorage.getItem('usuario') || '';
-    const data = sessionStorage.getItem('userData');
-    let role = 'Operator';
-    if (data) {
-      try {
-        const parsed = JSON.parse(data);
-        role = parsed.role || parsed.Role || 'Operator';
-      } catch {
-        /* ignore */
-      }
-    }
-    this.usuario = name;
-    this.rol = rolLabel(role);
-    this.inicial = name.charAt(0).toUpperCase();
-    this.lema = localStorage.getItem('fs_lema') || 'Gestión de inventario integral';
-    this.tema = 'dark';
-    this.idioma = 'es';
-    this.aplicarTema();
-
-    setTimeout(() => {
-      animate('.sidebar-item', {
-        opacity: [0, 1],
-        translateX: [-14, 0],
-        delay: stagger(55),
-        duration: 420,
-        ease: 'outExpo',
+export class App {
+  readonly workspace = inject(Workspace);
+  private router = inject(Router);
+  private data = inject(FastScanService);
+  private destroy = inject(DestroyRef);
+  readonly url = signal(this.router.url);
+  readonly open = signal(false);
+  readonly login = computed(() => this.url().startsWith('/login'));
+  readonly user = signal(sessionStorage.getItem('usuario') || 'Operador');
+  readonly navigation = [
+    { url: '/integracion', icon: 'file', name: 'Integración GamingCity', short: 'GC-API' },
+    { url: '/dashboard', icon: 'dashboard', name: 'Centro de operaciones', short: 'Resumen' },
+    { url: '/ingresos', icon: 'scan', name: 'Terminal de ingreso', short: 'Escaneo' },
+    { url: '/productos', icon: 'package', name: 'Catálogo de productos', short: 'Productos' },
+    { url: '/sucursales', icon: 'file', name: 'Pedidos e ingesta', short: 'Pedidos' },
+    { url: '/auditoria', icon: 'shield', name: 'Linaje y devoluciones', short: 'Auditoría' },
+  ];
+  readonly title = computed(
+    () => this.navigation.find((n) => this.url().startsWith(n.url))?.short || 'Gamexid',
+  );
+  constructor() {
+    document.documentElement.classList.add('gamexid-dark');
+    document.documentElement.lang = 'es';
+    this.router.events
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe((e) => {
+        this.url.set(e.urlAfterRedirects);
+        this.user.set(sessionStorage.getItem('usuario') || 'Operador');
+        if (!this.login()) this.workspace.refreshStatus();
+        if (innerWidth < 1024) this.open.set(false);
       });
-    }, 50);
+    timer(0, 30000)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        if (!this.login()) this.workspace.refreshStatus();
+      });
   }
-
-  ngOnDestroy(): void {
-    /* sin timers que limpiar en el shell */
+  hover(value: boolean) {
+    if (matchMedia('(hover: hover) and (min-width: 1024px)').matches) this.open.set(value);
   }
-
-  toggleMenu(): void {
-    this.menuAbierto = !this.menuAbierto;
+  @HostListener('document:keydown.escape') close() {
+    this.open.set(false);
   }
-
-  abrirMenuHover(): void {
-    if (window.matchMedia('(hover: hover) and (min-width: 769px)').matches) this.menuAbierto = true;
-  }
-
-  cerrarMenuHover(): void {
-    if (window.matchMedia('(hover: hover) and (min-width: 769px)').matches &&
-        !document.querySelector('.sidebar')?.contains(document.activeElement)) this.menuAbierto = false;
-  }
-
-  salirFocoMenu(event: FocusEvent): void {
-    if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node)) this.cerrarMenuHover();
-  }
-
-  toggleTema(): void {
-    this.tema = this.tema === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('fs_tema', this.tema);
-    this.aplicarTema();
-  }
-
-  cambiarIdioma(): void {
-    this.idioma = this.idioma === 'es' ? 'en' : 'es';
-    localStorage.setItem('fs_idioma', this.idioma);
-    document.documentElement.lang = this.idioma;
-  }
-
-  onContenidoScroll(event: Event): void {
-    this.mostrarVolverArriba = (event.target as HTMLElement).scrollTop > 280;
-  }
-
-  volverArriba(): void {
-    document.querySelector('.contenido')?.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  cerrarSesion(): void {
-    this.service.logout().subscribe({
+  logout() {
+    this.data.logout().subscribe({
       next: () => {
-    sessionStorage.removeItem('logueado');
-    sessionStorage.removeItem('usuario');
-    sessionStorage.removeItem('userData');
-    this.router.navigate(['/login']);
+        sessionStorage.removeItem('usuario');
+        sessionStorage.removeItem('userData');
+        sessionStorage.removeItem('logueado');
+        this.router.navigateByUrl('/login');
       },
-      error: () => window.alert('No se pudo cerrar la sesión. Revisá tu conexión y volvé a intentar.')
+      error: () =>
+        this.workspace.notify('No se pudo cerrar la sesión. Revisá tu conexión.', 'error'),
     });
-  }
-
-  ir(ruta: string): void {
-    if (this.router.url !== '/' + ruta) {
-      this.router.navigate([ruta]);
-    }
-  }
-
-  private aplicarTema(): void {
-    document.body.dataset['theme'] = this.tema;
-    document.documentElement.lang = this.idioma;
   }
 }
