@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { GamexidLogo } from '../../shared/logo';
 import { Icon } from '../../shared/icon';
-import { FastScanService } from '../../services-fastscan/fastscan-service';
+import { GamexidService } from '../../services-gamexid/gamexid-service';
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -12,7 +12,7 @@ import { FastScanService } from '../../services-fastscan/fastscan-service';
   styleUrl: './login.css',
 })
 export class Login {
-  private data = inject(FastScanService);
+  private data = inject(GamexidService);
   private router = inject(Router);
   email = 'admin@gamexid.com';
   password = '';

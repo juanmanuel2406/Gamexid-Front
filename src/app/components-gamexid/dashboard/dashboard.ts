@@ -5,11 +5,11 @@ import { forkJoin, of, switchMap } from 'rxjs';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import {
-  FastScanService,
+  GamexidService,
   Product,
   SerializedUnit,
   InventoryMovement,
-} from '../../services-fastscan/fastscan-service';
+} from '../../services-gamexid/gamexid-service';
 import { Workspace } from '../../core/workspace';
 import { Icon } from '../../shared/icon';
 @Component({
@@ -20,7 +20,7 @@ import { Icon } from '../../shared/icon';
   styleUrl: './dashboard.css',
 })
 export class Dashboard implements OnInit {
-  private data = inject(FastScanService);
+  private data = inject(GamexidService);
   readonly workspace = inject(Workspace);
   readonly loading = signal(true);
   readonly products = signal<Product[]>([]);

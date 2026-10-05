@@ -23,11 +23,11 @@ El inventario sigue siendo un piloto con almacenamiento en el navegador: product
 | Inicio y rutas | src/main.ts, src/app/app.config.ts, src/app/app.routes.ts |
 | Tema | .postcssrc.json, src/styles.css, angular.json, package.json, package-lock.json |
 | Navegación y sucursal | src/app/app.ts, app.html, app.css, core/workspace.ts |
-| Pantallas | src/app/components-fastscan/{login,dashboard,productos,ingresos,sucursales}/* |
+| Pantallas | src/app/components-gamexid/{login,dashboard,productos,ingresos,sucursales}/* |
 | PDF y Gemini | src/app/features/intake/* |
 | Linaje y devoluciones | src/app/features/audit/* |
 | Iconos, búsqueda y animación | src/app/shared/{icon,highlight,motion}.ts |
-| Acceso y servicios conservados | src/app/guards/auth.guard.ts, src/app/services-fastscan/* |
+| Acceso y servicios conservados | src/app/guards/auth.guard.ts, src/app/services-gamexid/* |
 | Pruebas | e2e/workflows.spec.ts, playwright.config.ts |
 
 Se retiraron AppModule, el módulo de rutas y la configuración de pruebas Karma sin pruebas asociadas. Se eliminaron los comentarios decorativos del servicio. Se conserva la documentación útil y las marcas de código generado de las migraciones.
@@ -62,7 +62,7 @@ Se retiraron AppModule, el módulo de rutas y la configuración de pruebas Karma
 
 Se cubren creación de productos, ingreso EAN/serial, duplicados, recepción parcial persistente, rechazo de PDF falso, extracción local, envío explícito a Gemini, auditoría persistente y navegación móvil sin desborde.
 
-En Back: `dotnet build FastScan.sln`, `dotnet build Gamexid.Access/Gamexid.Access.csproj` y `dotnet run --project Gamexid.Access.Checks`.
+En Back: `dotnet build Gamexid.sln`, `dotnet build Gamexid.Access/Gamexid.Access.csproj` y `dotnet run --project Gamexid.Access.Checks`.
 
 ## Antes de publicar
 

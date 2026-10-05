@@ -4,7 +4,7 @@ import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { FastScanService, Product, SerializedUnit } from '../../services-fastscan/fastscan-service';
+import { GamexidService, Product, SerializedUnit } from '../../services-gamexid/gamexid-service';
 import { Workspace } from '../../core/workspace';
 import { Icon } from '../../shared/icon';
 @Component({
@@ -15,7 +15,7 @@ import { Icon } from '../../shared/icon';
   styleUrl: './productos.css',
 })
 export class Productos implements OnInit {
-  private data = inject(FastScanService);
+  private data = inject(GamexidService);
   readonly workspace = inject(Workspace);
   readonly productos = signal<Product[]>([]);
   readonly filtro = signal('');

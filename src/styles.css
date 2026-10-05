@@ -150,7 +150,7 @@
     flex-shrink: 0;
   }
   .panel,
-  .card-fastscan {
+  .card-gamexid {
     background: #0f172a;
     border: 1px solid #1e293b;
     border-radius: 10px;
@@ -571,7 +571,7 @@
       font-size: 25px;
     }
     .panel,
-    .card-fastscan {
+    .card-gamexid {
       padding: 18px;
     }
     .form-control {

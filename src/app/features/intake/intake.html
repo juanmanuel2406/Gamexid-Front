@@ -28,19 +28,20 @@
     ><button
       class="btn-primario"
       (click)="extract(laser)"
-      [disabled]="!workspace.gemini() || busy()"
+      [disabled]="!workspace.pdfPig() || busy()"
     >
-      <gx-icon name="file" />{{ busy() ? 'Procesando…' : 'Extraer con Gemini' }}
+      <gx-icon name="file" />{{ busy() ? 'Procesando…' : 'Extraer con PdfPig' }}
     </button>
   </div>
   <div class="prose prose-invert prose-sm max-w-none mb-4 text-slate-400">
     <p>
-      La lectura local no envía el PDF a terceros. «Extraer con Gemini» envía este documento a
-      Google para analizarlo. Revisá los datos obtenidos antes de guardar.
+      PdfPig procesa el documento en el servidor de Gamexid, sin enviarlo a Google ni consumir
+      créditos de IA. Necesita texto seleccionable: las imágenes escaneadas requieren OCR.
+      Revisá los datos obtenidos antes de guardar.
     </p>
   </div>
-  @if (!workspace.gemini()) {
-    <p class="muted text-xs mb-4">Gemini no está configurado en el servidor.</p>
+  @if (!workspace.pdfPig()) {
+    <p class="muted text-xs mb-4">La extracción de PDF no está disponible. Revisá la conexión con la API.</p>
   }
   <div class="document-split">
     <section class="document-pane">
@@ -61,7 +62,7 @@
     <section class="json-pane">
       <div class="pane-header">
         <span>02 / DATOS ESTRUCTURADOS</span
-        ><p-tag [value]="source() === 'gemini' ? 'Gemini' : 'Lectura local'" severity="info" />
+        ><p-tag [value]="source() === 'pdfpig' ? 'PdfPig' : 'Vista previa'" severity="info" />
       </div>
       @if (busy()) {
         <div class="p-4">
@@ -79,12 +80,12 @@
       <div class="confidence-list">
         @for (line of lines(); track $index) {
           <div>
-            <span class="code-pill">{{ line.ean }}</span
+            <span class="code-pill">{{ line.ean || line.sku }}</span
             ><p-tag
               [value]="
                 line.confidence === null
                   ? 'Revisión manual'
-                  : 'Confianza IA: ' + (line.confidence * 100).toFixed(0) + '%'
+                  : 'Revisión manual'
               "
               [severity]="line.confidence !== null && line.confidence >= 0.9 ? 'success' : 'warn'"
             />

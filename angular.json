@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "FastBack-front": {
+    "Gamexid-Front": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:class": {
@@ -82,10 +82,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "FastBack-front:build:production"
+              "buildTarget": "Gamexid-Front:build:production"
             },
             "development": {
-              "buildTarget": "FastBack-front:build:development"
+              "buildTarget": "Gamexid-Front:build:development"
             }
           },
           "defaultConfiguration": "development"

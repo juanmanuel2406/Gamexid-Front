@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom, timeout } from 'rxjs';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
-import { Product } from '../../services-fastscan/fastscan-service';
+import { Product } from '../../services-gamexid/gamexid-service';
 import { Workspace } from '../../core/workspace';
 import { Icon } from '../../shared/icon';
 import { Motion } from '../../shared/motion';
@@ -13,11 +13,18 @@ export interface ExtractionLine {
   name: string;
   expected: number | null;
   confidence: number | null;
+  sku?: string | null;
+  unitPrice?: number | null;
+  total?: number | null;
+  currency?: string | null;
+  page?: number;
+  rawText?: string;
+  warnings?: string[];
 }
 export interface Extraction {
   file: File;
   lines: ExtractionLine[];
-  source: 'local' | 'gemini';
+  source: 'preview' | 'pdfpig';
 }
 @Component({
   selector: 'gx-intake',
@@ -38,13 +45,13 @@ export class Intake implements OnDestroy {
   readonly preview = signal('');
   readonly lines = signal<ExtractionLine[]>([]);
   readonly message = signal('');
-  readonly source = signal<'local' | 'gemini'>('local');
+  readonly source = signal<'preview' | 'pdfpig'>('preview');
   readonly pageCount = signal(0);
   readonly page = signal(1);
   readonly tokens = computed(() =>
     JSON.stringify(
       {
-        source: this.source() === 'gemini' ? 'Gemini' : 'PDF textual · revisión manual',
+        source: this.source() === 'pdfpig' ? 'PdfPig · revisión manual' : 'Vista previa',
         products: this.lines(),
       },
       null,
@@ -108,28 +115,10 @@ export class Intake implements OnDestroy {
       this.pageCount.set(this.document.numPages);
       this.page.set(1);
       await this.render(1);
-      const codes = new Set<string>();
-      for (let n = 1; n <= this.document.numPages; n++) {
-        const content = await (await this.document.getPage(n)).getTextContent();
-        const text = content.items.map((x: any) => ('str' in x ? x.str : '')).join(' ');
-        for (const match of text.matchAll(/(?<!\d)(?:\d{14}|\d{13}|\d{12}|\d{8})(?!\d)/g))
-          codes.add(match[0]);
-      }
       if (this.destroyed) return;
-      const lines = [...codes].map((ean) => ({
-        ean,
-        name: this.products().find((p) => p.ean === ean)?.name || '',
-        expected: null,
-        confidence: null,
-      }));
-      this.source.set('local');
-      this.lines.set(lines);
-      this.parsed.emit({ file, lines, source: 'local' });
-      this.message.set(
-        lines.length
-          ? 'Revisá los códigos encontrados y completá las cantidades según el PDF antes de guardar.'
-          : 'PDF adjunto sin EAN legibles. Cargá las líneas manualmente o usá Gemini cuando esté configurado.',
-      );
+      this.source.set('preview');
+      this.parsed.emit({ file, lines: [], source: 'preview' });
+      this.message.set('PDF adjunto. Pulsá «Extraer con PdfPig» para leer productos, cantidades y precios.');
     } catch (e) {
       this.message.set(e instanceof Error ? e.message : 'No se pudo leer el PDF.');
       await this.task?.destroy().catch(() => {});
@@ -158,7 +147,7 @@ export class Intake implements OnDestroy {
   }
   async extract(laser: HTMLElement) {
     const file = this.file();
-    if (!file || !this.workspace.gemini() || this.busy()) return;
+    if (!file || !this.workspace.pdfPig() || this.busy()) return;
     this.busy.set(true);
     this.message.set('');
     this.laser = this.motion.laser(laser);
@@ -167,19 +156,19 @@ export class Intake implements OnDestroy {
       form.append('file', file);
       const result = await firstValueFrom(
         this.http
-          .post<{ lines: ExtractionLine[] }>('/api/access/extract', form, {
+          .post<{ lines: ExtractionLine[]; warnings: string[]; requiresOcr: boolean }>('/api/documents/extract', form, {
             headers: { 'X-Gamexid': '1' },
           })
           .pipe(timeout(65000)),
       );
       if (this.destroyed) return;
       this.lines.set(result.lines);
-      this.source.set('gemini');
-      this.parsed.emit({ file, lines: result.lines, source: 'gemini' });
-      this.message.set('Extracción de Gemini recibida. Verificá cada línea antes de guardar.');
+      this.source.set('pdfpig');
+      this.parsed.emit({ file, lines: result.lines, source: 'pdfpig' });
+      this.message.set(result.warnings.join(' '));
     } catch (e: any) {
       this.message.set(
-        e.error?.mensaje || 'No se pudo extraer el PDF con Gemini. Podés usar la lectura local.',
+        e.error?.mensaje || 'No se pudo extraer el PDF. Podés completar el pedido manualmente.',
       );
     } finally {
       this.busy.set(false);

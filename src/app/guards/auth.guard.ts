@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
-import { FastScanService } from '../services-fastscan/fastscan-service';
+import { GamexidService } from '../services-gamexid/gamexid-service';
 import { map, catchError, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -10,7 +10,7 @@ export class AuthGuard implements CanActivate {
   }
   constructor(
     private router: Router,
-    private service: FastScanService,
+    private service: GamexidService,
   ) {}
 
   canActivate() {

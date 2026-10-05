@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockInventory } from './mock-api';
 function invoicePdf() {
   const stream = 'BT /F1 12 Tf 40 700 Td (EAN 7790000000011 Cantidad 3) Tj ET';
   const objects = [
@@ -21,7 +22,7 @@ function invoicePdf() {
     .join('')}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
   return Buffer.from(pdf);
 }
-test('PDF: rechaza archivos falsos y relaciona EAN sin inventar cantidades', async ({ page }) => {
+test('PDF: rechaza archivos falsos y extrae datos bajo botón', async ({ page }) => {
   await page.goto('/sucursales');
   await page.getByRole('button', { name: 'Nuevo pedido' }).click();
   const input = page.locator('#pedido-pdf');
@@ -36,15 +37,16 @@ test('PDF: rechaza archivos falsos y relaciona EAN sin inventar cantidades', asy
     mimeType: 'application/pdf',
     buffer: invoicePdf(),
   });
+  await page.getByRole('button', { name: 'Extraer con PdfPig' }).click();
   await expect(page.getByLabel('EAN', { exact: true })).toHaveValue('7790000000011');
   await expect(page.getByLabel('Producto', { exact: true })).toHaveValue('Notebook 14" 8GB');
-  await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('');
+  await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('3');
   await expect(page.getByRole('button', { name: 'Descargar original' })).toBeVisible();
 });
 test('sesión inválida redirige al login y logo responsive', async ({ page }) => {
   await page.route('**/api/access/health', (route) => route.fulfill({ json: { status: 'ok' } }));
   await page.route('**/api/access/integrations', (route) =>
-    route.fulfill({ json: { gemini: false } }),
+    route.fulfill({ json: { pdfPig: true } }),
   );
   await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
   await page.goto('/productos');
@@ -55,9 +57,10 @@ test('sesión inválida redirige al login y logo responsive', async ({ page }) =
   await page.screenshot({ path: 'test-results/login-mobile.png', fullPage: true });
 });
 test.beforeEach(async ({ page }) => {
+  await mockInventory(page);
   await page.route('**/api/access/health', (route) => route.fulfill({ json: { status: 'ok' } }));
   await page.route('**/api/access/integrations', (route) =>
-    route.fulfill({ json: { gemini: false } }),
+    route.fulfill({ json: { pdfPig: true } }),
   );
   await page.route('**/api/access/me', (route) =>
     route.fulfill({ json: { id: 1, fullName: 'QA', role: 'Administrator' } }),
@@ -138,18 +141,18 @@ test('menú hover, logo visible y vista móvil sin desborde', async ({ page }) =
   ).toBeTruthy();
 });
 
-test('Gemini requiere botón explícito y completa cantidades sin duplicar líneas', async ({
+test('PdfPig requiere botón explícito y completa cantidades sin duplicar líneas', async ({
   page,
 }) => {
   await page.route('**/api/access/integrations', (route) =>
-    route.fulfill({ json: { gemini: true } }),
+    route.fulfill({ json: { pdfPig: true } }),
   );
   let sent = 0;
-  await page.route('**/api/access/extract', async (route) => {
+  await page.route('**/api/documents/extract', async (route) => {
     sent++;
     expect(route.request().headers()['x-gamexid']).toBe('1');
     await route.fulfill({
-      json: { lines: [{ ean: '7790000000011', name: 'Notebook', expected: 3, confidence: 0.96 }] },
+      json: { lines: [{ ean: '7790000000011', name: 'Notebook', expected: 3, unitPrice: 100, confidence: null }], warnings: ['Revisión manual'], requiresOcr: false },
     });
   });
   await page.goto('/sucursales');
@@ -157,9 +160,9 @@ test('Gemini requiere botón explícito y completa cantidades sin duplicar líne
   await page
     .locator('#pedido-pdf')
     .setInputFiles({ name: 'pedido.pdf', mimeType: 'application/pdf', buffer: invoicePdf() });
-  await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('');
+  await expect(page.getByLabel('Pedido', { exact: true })).toHaveCount(0);
   expect(sent).toBe(0);
-  await page.getByRole('button', { name: 'Extraer con Gemini' }).click();
+  await page.getByRole('button', { name: 'Extraer con PdfPig' }).click();
   await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('3');
   await expect(page.getByLabel('EAN', { exact: true })).toHaveCount(1);
   expect(sent).toBe(1);
@@ -211,46 +214,41 @@ test('16 sedes reales, direcciones y depósito único', async ({ page }) => {
   await expect(page.getByText('José Hernández 2438, CABA', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Sucursal de destino').locator('option')).toHaveCount(16);
 });
-test('migra sedes conservando IDs y registros anteriores', async ({ page }) => {
+test('conserva los datos locales sin importarlos silenciosamente a MySQL', async ({ page }) => {
   await page.addInitScript(() => {
-    if (!localStorage.getItem('qa_setup')) {
-      localStorage.setItem(
-        'fs_branches',
-        JSON.stringify([
-          { id: 1, code: 'SUC01', name: 'Sucursal Centro', isActive: true },
-          { id: 2, code: 'DEP-CENTRAL', name: 'Depósito', isActive: true },
-        ]),
-      );
-      localStorage.setItem(
-        'fs_units',
-        JSON.stringify([
-          {
-            id: 99,
-            productId: 1,
-            serialNumber: 'LEGACY-99',
-            currentBranchId: 1,
-            status: 'Available',
-          },
-        ]),
-      );
-      localStorage.setItem('qa_setup', '1');
-    }
+    localStorage.setItem('fs_products', JSON.stringify([{ id: 999, name: 'Legacy-only' }]));
+    localStorage.setItem('fs_units', JSON.stringify([{ id: 999, serialNumber: 'LEGACY-99' }]));
   });
-  await page.goto('/dashboard');
-  await expect(page.getByLabel('Sucursal de trabajo').locator('option')).toHaveCount(17);
-  await page.getByLabel('Sucursal de trabajo').selectOption('1');
-  await page.goto('/auditoria');
-  await expect(page.getByText('LEGACY-99', { exact: true })).toBeVisible();
-  await page.reload();
-  await expect(page.getByLabel('Sucursal de trabajo').locator('option')).toHaveCount(17);
-  expect(
-    await page.evaluate(
-      () =>
-        JSON.parse(localStorage.getItem('fs_branches')!).find((b: any) => b.code === 'DEP-CENTRAL')
-          .id,
-    ),
-  ).toBe(2);
+  await page.goto('/productos');
+  await expect(page.getByRole('cell', { name: 'Notebook 14" 8GB', exact: true })).toBeVisible();
+  await expect(page.getByText('Legacy-only', { exact: true })).toHaveCount(0);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('fs_units')!)[0].serialNumber)).toBe('LEGACY-99');
 });
+
+test('scanner resuelve SKU y serial conocido sin duplicar el ingreso', async ({ page }) => {
+  await page.goto('/ingresos');
+  await page.getByRole('button', { name: 'Nuevo ingreso' }).click();
+  await page.locator('#ean-scanner-input').fill('nb-10001');
+  await page.locator('#ean-scanner-input').press('Enter');
+  await expect(page.getByText('Esta unidad ya está registrada', { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cerrar ingreso' })).toBeDisabled();
+  await expect(page.locator('#serial-1')).toHaveCount(0);
+  await page.locator('#ean-scanner-input').fill('NOTE-001');
+  await page.locator('#ean-scanner-input').press('Enter');
+  await expect(page.locator('#serial-1')).toBeVisible();
+  await expect(page.locator('#serial-1')).toBeFocused();
+});
+
+test('scanner recupera el botón cuando falla la API', async ({ page }) => {
+  await page.route('**/api/products/lookup?*', r => r.fulfill({ status: 503, json: { mensaje: 'MySQL no disponible' } }));
+  await page.goto('/ingresos');
+  await page.getByRole('button', { name: 'Nuevo ingreso' }).click();
+  await page.locator('#ean-scanner-input').fill('NOTE-001');
+  await page.getByRole('button', { name: 'Agregar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Agregar', exact: true })).toBeEnabled();
+  await expect(page.getByText('MySQL no disponible').first()).toBeVisible();
+});
+
 test('logo conserva espacio al desplegar sidebar y anima en login', async ({ page }) => {
   await page.goto('/dashboard');
   await page.locator('.sidebar').hover();

@@ -1,4 +1,4 @@
-import type { Branch } from './fastscan-service';
+import type { Branch } from './gamexid-service';
 
 export const OFFICIAL_BRANCHES = [
   ['DEP-CENTRAL', 'Morón (Depósito Central)', 'Av. Rivadavia 17939, Morón, PBA'],

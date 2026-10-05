@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { mockInventory } from './mock-api';
+test.beforeEach(async ({ page }) => { await mockInventory(page); });
 test('capturas de demostración para la presentación', async ({ page }) => {
   await page.setViewportSize({width: 1440, height: 900});
   await page.route('**/api/access/me', r => r.fulfill({json: {id: 1, fullName: 'Demostración', role: 'Administrator'}}));
   await page.route('**/api/access/health', r => r.fulfill({json: {status: 'ok'}}));
-  await page.route('**/api/access/integrations', r => r.fulfill({json: {gemini: false}}));
+  await page.route('**/api/access/integrations', r => r.fulfill({json: {pdfPig: true}}));
   await page.goto('/dashboard');
   await expect(page.getByRole('region', {name: 'Indicadores de inventario'})).toBeVisible();
   await page.screenshot({path: 'test-results/current-dashboard.png', animations: 'disabled'});

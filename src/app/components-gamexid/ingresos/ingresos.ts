@@ -1,14 +1,16 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { DatePipe } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { StepperModule } from 'primeng/stepper';
 import { TagModule } from 'primeng/tag';
 import {
-  FastScanService,
+  GamexidService,
   Product,
+  ProductLookup,
   InventoryMovement,
-} from '../../services-fastscan/fastscan-service';
+} from '../../services-gamexid/gamexid-service';
 import { Workspace } from '../../core/workspace';
 import { Motion } from '../../shared/motion';
 import { Icon } from '../../shared/icon';
@@ -27,13 +29,15 @@ interface ScanItem {
   styleUrl: './ingresos.css',
 })
 export class Ingresos {
-  private data = inject(FastScanService);
+  private data = inject(GamexidService);
   readonly workspace = inject(Workspace);
   readonly motion = inject(Motion);
   readonly creating = signal(false);
   readonly items = signal<ScanItem[]>([]);
   readonly movements = signal<InventoryMovement[]>([]);
   readonly saving = signal(false);
+  readonly lookingUp = signal(false);
+  readonly identified = signal<ProductLookup | null>(null);
   readonly confirm = signal(false);
   readonly newProduct = signal(false);
   readonly unknown = signal(false);
@@ -59,14 +63,19 @@ export class Ingresos {
   ean = '';
   notes = '';
   draft = { sku: '', name: '', requiresSerialNumber: true };
-  depot = this.data.getDeposito();
+  get depot() { return this.workspace.branches().find(b => b.code === 'DEP-CENTRAL') ?? this.data.getDeposito(); }
   constructor() {
     this.load();
   }
   load() {
-    this.data.getMovimientos().subscribe((v) => this.movements.set(v));
+    this.data.getMovimientos().subscribe({
+      next: v => this.movements.set(v),
+      error: e => this.fail(e.error?.mensaje || 'No se pudieron cargar los movimientos.'),
+    });
   }
   iniciarIngreso() {
+    if (!this.depot.id) { this.fail('Esperá la conexión con el depósito central.'); return; }
+    this.identified.set(null);
     this.creating.set(true);
     this.items.set([]);
     this.ean = '';
@@ -77,36 +86,41 @@ export class Ingresos {
     this.activeProduct.set(null);
   }
   validarEan() {
+    if (this.lookingUp()) return;
     this.error.set('');
     this.unknown.set(false);
+    this.identified.set(null);
     const code = this.ean.trim();
     if (!code) {
-      this.fail(
-        'No se recibió una lectura del scanner. Podés escribir el EAN manualmente y presionar Agregar.',
-      );
+      this.fail('No se recibió una lectura del scanner. Podés escribir EAN, SKU o serial manualmente y presionar Agregar.');
       return;
     }
-    if (!/^(?:\d{8}|\d{12,14})$/.test(code)) {
-      this.fail('El EAN debe contener 8, 12, 13 o 14 dígitos.');
+    if (code.length > 100 || /[\x00-\x1f\x7f]/.test(code)) {
+      this.fail('Ingresá un código de hasta 100 caracteres, sin caracteres de control.');
       return;
     }
-    const existing = this.items().find((i) => i.product.ean === code);
-    if (existing) {
-      this.activeProduct.set(existing.product.id);
-      this.scanMode.set('serial');
-      this.fail('Este EAN ya está cargado. Completá sus seriales o ajustá su cantidad.');
-      return;
-    }
-    this.data.buscarProductoPorEan(code).subscribe({
-      next: (p) => {
-        if (!p) {
-          this.unknown.set(true);
-          this.fail('Producto no registrado. Podés crearlo para continuar.');
+    this.lookingUp.set(true);
+    this.data.buscarProductoPorCodigo(code).pipe(finalize(() => this.lookingUp.set(false))).subscribe({
+      next: (result) => {
+        this.identified.set(result);
+        if (result.alreadyInInventory) {
+          this.fail('Serial identificado: ' + result.product.name + '. Esta unidad ya está registrada; no puede ingresarse de nuevo.');
           return;
         }
-        this.add(p);
+        const existing = this.items().find(i => i.product.id === result.product.id);
+        if (existing) {
+          this.activeProduct.set(existing.product.id);
+          this.scanMode.set(existing.product.requiresSerialNumber ? 'serial' : 'ean');
+          document.getElementById('serial-' + existing.product.id)?.focus();
+          this.workspace.notify('Producto identificado. Completá los seriales o ajustá la cantidad.', 'info');
+          return;
+        }
+        this.add(result.product);
       },
-      error: () => this.fail('No se pudo buscar el producto.'),
+      error: (e) => {
+        this.unknown.set(e.status === 404 && /^(?:\d{8}|\d{12,14})$/.test(code));
+        this.fail(e.error?.mensaje || 'No se pudo consultar el catálogo. Revisá la conexión con la API.');
+      },
     });
   }
   add(p: Product) {
@@ -180,7 +194,7 @@ export class Ingresos {
       });
   }
   save() {
-    if (!this.ready() || this.saving()) return;
+    if (!this.ready() || this.saving() || !this.depot.id) return;
     this.saving.set(true);
     this.data
       .registrarIngreso({

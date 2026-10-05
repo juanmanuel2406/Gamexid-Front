@@ -5,7 +5,7 @@
       <h1 class="page-title">Ingresos de mercadería</h1>
       <p class="page-sub">Recepción verificada por producto y número de serie</p>
     </div>
-    <button class="btn-primario" (click)="iniciarIngreso()">
+    <button class="btn-primario" (click)="iniciarIngreso()" [disabled]="!depot.id">
       <gx-icon name="scan" />Nuevo ingreso
     </button>
   </div>
@@ -42,7 +42,7 @@
         <gx-icon name="scan" [size]="32" />
         <h3>Listo para recibir mercadería</h3>
         <p>No hay ingresos en esta sucursal. Creá uno y empezá por el EAN.</p>
-        <button class="btn-secundario" (click)="iniciarIngreso()">Abrir terminal</button>
+        <button class="btn-secundario" (click)="iniciarIngreso()" [disabled]="!depot.id">Abrir terminal</button>
       </div>
     }
   </section>
@@ -65,7 +65,7 @@
   </div>
   <p-stepper [value]="step()" [linear]="true"
     ><p-step-list
-      ><p-step [value]="1">Identificar EAN</p-step><p-step [value]="2">Validar seriales</p-step
+      ><p-step [value]="1">Identificar producto</p-step><p-step [value]="2">Validar seriales</p-step
       ><p-step [value]="3">Confirmar ingreso</p-step></p-step-list
     ></p-stepper
   >
@@ -73,24 +73,24 @@
     <section class="terminal-main">
       <div class="panel scan-zone" [class.awaiting]="scanMode() === 'ean'">
         <div class="panel-header">
-          <h2 class="section-title"><gx-icon name="scan" /> Cargar producto por EAN y serial</h2>
+          <h2 class="section-title"><gx-icon name="scan" /> Identificar por EAN, SKU o serial</h2>
           <span class="badge" [class.status-ok]="scanMode() === 'ean'">{{
-            scanMode() === 'ean' ? 'ESPERANDO EAN' : 'VALIDANDO SERIAL'
+            scanMode() === 'ean' ? 'ESPERANDO CÓDIGO' : 'VALIDANDO SERIAL'
           }}</span>
         </div>
-        <label for="ean-scanner-input" class="form-label">EAN del producto</label>
+        <label for="ean-scanner-input" class="form-label">EAN, SKU o serial registrado</label>
         <div class="scan-input">
           <input
             id="ean-scanner-input"
             class="form-control mono"
             [(ngModel)]="ean"
             (keyup.enter)="validarEan()"
-            inputmode="numeric"
-            maxlength="14"
+            inputmode="text"
+            maxlength="100"
             autocomplete="off"
-            placeholder="Escaneá o escribí el código EAN..."
-          /><button class="btn-agregar" (click)="validarEan()">
-            <gx-icon name="plus" />Agregar
+            placeholder="Escaneá EAN, SKU o serial..."
+          /><button class="btn-agregar" (click)="validarEan()" [disabled]="lookingUp()">
+            <gx-icon name="plus" />{{ lookingUp() ? 'Buscando…' : 'Agregar' }}
           </button>
         </div>
         <p class="muted text-xs mt-3">
@@ -100,6 +100,15 @@
           <div class="notice status-warn">
             <p>Producto no registrado.</p>
             <button class="btn-enlace" (click)="newProduct.set(true)">Crear producto</button>
+          </div>
+        }
+        @if (identified(); as match) {
+          <div class="notice mt-3" role="status">
+            <strong>{{ match.product.name }}</strong>
+            <p>SKU: <span class="code-pill">{{ match.product.sku }}</span> EAN: <span class="code-pill">{{ match.product.ean }}</span></p>
+            @if (match.unit; as unit) {
+              <p>Serial: <span class="code-pill">{{ unit.serialNumber }}</span> · {{ branch(unit.currentBranchId) }} · {{ unit.status }}</p>
+            }
           </div>
         }
       </div>

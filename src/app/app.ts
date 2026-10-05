@@ -8,7 +8,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { Icon } from './shared/icon';
 import { GamexidLogo } from './shared/logo';
 import { Workspace } from './core/workspace';
-import { FastScanService } from './services-fastscan/fastscan-service';
+import { GamexidService } from './services-gamexid/gamexid-service';
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -28,7 +28,7 @@ import { FastScanService } from './services-fastscan/fastscan-service';
 export class App {
   readonly workspace = inject(Workspace);
   private router = inject(Router);
-  private data = inject(FastScanService);
+  private data = inject(GamexidService);
   private destroy = inject(DestroyRef);
   readonly url = signal(this.router.url);
   readonly open = signal(false);

@@ -2,7 +2,7 @@
   <div>
     <p class="eyebrow">CONTROL / VISIBILIDAD OPERATIVA</p>
     <h1 class="page-title">Centro de operaciones</h1>
-    <p class="page-sub">{{ branchName() }} · Estado de tu inventario local</p>
+    <p class="page-sub">{{ branchName() }} · Inventario centralizado</p>
   </div>
   <a routerLink="/ingresos" class="btn-primario"><gx-icon name="scan" /> Nuevo ingreso</a>
 </div>
@@ -77,15 +77,15 @@
         <p-tag value="Pendiente" severity="secondary" />
       </div>
       <div class="service-row">
-        <div><strong>Gemini</strong><span>Extracción de remitos</span></div>
+        <div><strong>PdfPig</strong><span>Extracción de remitos sin IA</span></div>
         <p-tag
-          [value]="workspace.gemini() ? 'Configurado' : 'Sin configurar'"
-          [severity]="workspace.gemini() ? 'info' : 'secondary'"
+          [value]="workspace.pdfPig() ? 'Disponible' : 'Sin conexión'"
+          [severity]="workspace.pdfPig() ? 'info' : 'secondary'"
         />
       </div>
       <div class="notice">
         <gx-icon name="lock" />
-        <p>Vista de prueba. Los movimientos todavía no se comparten entre dispositivos.</p>
+        <p>Inventario central mediante MySQL. La API debe confirmar la conexión antes de operar.</p>
       </div>
     </section>
   </div>
@@ -115,7 +115,7 @@
                 <td>{{ m.createdAtUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
                 <td>{{ branchName() }}</td>
                 <td class="mono">{{ quantity(m) }}</td>
-                <td><p-tag value="Registrado localmente" severity="success" /></td>
+                <td><p-tag value="Registrado en MySQL" severity="success" /></td>
               </tr>
             }
           </tbody>

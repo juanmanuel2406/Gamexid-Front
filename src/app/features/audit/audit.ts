@@ -6,7 +6,7 @@ import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { SkeletonModule } from 'primeng/skeleton';
-import { FastScanService, SerializedUnit } from '../../services-fastscan/fastscan-service';
+import { GamexidService, SerializedUnit } from '../../services-gamexid/gamexid-service';
 import { Workspace } from '../../core/workspace';
 import { Motion } from '../../shared/motion';
 import { Icon } from '../../shared/icon';
@@ -42,7 +42,7 @@ interface Evidence {
 })
 export class Audit {
   readonly workspace = inject(Workspace);
-  private data = inject(FastScanService);
+  private data = inject(GamexidService);
   private motion = inject(Motion);
   readonly rows = signal<AuditRow[]>([]);
   readonly query = signal('');
@@ -91,8 +91,8 @@ export class Audit {
       .subscribe({
         next: (groups) => {
           try {
-            const links = JSON.parse(localStorage.getItem('gx_lineage_v1') || '{}');
-            const evidence: Evidence[] = JSON.parse(localStorage.getItem('gx_audit_v1') || '[]');
+            const links = JSON.parse(localStorage.getItem('gx_lineage_mysql_v1') || '{}');
+            const evidence: Evidence[] = JSON.parse(localStorage.getItem('gx_audit_mysql_v1') || '[]');
             this.rows.set(
               groups.flat().map((r) => ({
                 ...r,
@@ -136,7 +136,7 @@ export class Audit {
       return;
     }
     try {
-      const links = JSON.parse(localStorage.getItem('gx_lineage_v1') || '{}');
+      const links = JSON.parse(localStorage.getItem('gx_lineage_mysql_v1') || '{}');
       if (row.chassis && row.chassis !== chassis) {
         this.formError.set(
           'Este componente ya tiene un gabinete asociado. No se modifica su linaje desde esta pantalla.',
@@ -144,7 +144,7 @@ export class Audit {
         return;
       }
       links[row.id] = chassis;
-      localStorage.setItem('gx_lineage_v1', JSON.stringify(links));
+      localStorage.setItem('gx_lineage_mysql_v1', JSON.stringify(links));
       this.rows.update((rows) => rows.map((r) => (r.id === row.id ? { ...r, chassis } : r)));
       this.linking.set(null);
       this.workspace.notify('Componente asociado al gabinete en el registro local.');
@@ -169,8 +169,8 @@ export class Audit {
       matches: row.serialNumber.trim().toUpperCase() === actual.toUpperCase(),
     };
     try {
-      const history: Evidence[] = JSON.parse(localStorage.getItem('gx_audit_v1') || '[]');
-      localStorage.setItem('gx_audit_v1', JSON.stringify([...history, evidence]));
+      const history: Evidence[] = JSON.parse(localStorage.getItem('gx_audit_mysql_v1') || '[]');
+      localStorage.setItem('gx_audit_mysql_v1', JSON.stringify([...history, evidence]));
       this.rows.update((rows) =>
         rows.map((r) =>
           r.id === row.id

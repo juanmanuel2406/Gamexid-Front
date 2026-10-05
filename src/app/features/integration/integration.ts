@@ -14,7 +14,7 @@ import { finalize, timeout } from 'rxjs';
       <div class="border border-slate-800 rounded-xl p-6 bg-slate-900">
         <h2 class="text-xl font-medium">{{ checking() ? 'Comprobando configuración…' : configured() ? 'Credencial configurada · conexión por verificar' : 'Faltan credenciales de GamingCity' }}</h2>
         <p class="text-slate-400 mt-3">El contrato de API está incorporado. Las consultas requieren un access_token autorizado, guardado únicamente en el servidor.</p>
-        <p class="text-amber-400 mt-3">Modo demostración: inventario y pedidos guardados en este navegador, sin sincronización central.</p>
+        <p class="text-amber-400 mt-3">El inventario usa la base MySQL de Gamexid. Los pedidos y controles históricos del navegador no se importan automáticamente.</p>
         <p class="text-slate-400 mt-3">Consultas de solo lectura. No se envían altas, bajas ni cambios de stock al sistema de la empresa.</p>
       </div>
       <form (ngSubmit)="query('products')" class="flex flex-wrap items-end gap-3">

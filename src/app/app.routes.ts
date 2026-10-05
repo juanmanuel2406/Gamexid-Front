@@ -3,7 +3,7 @@ import { AuthGuard } from './guards/auth.guard';
 export const routes: Routes = [
   {
     path: 'login',
-    loadComponent: () => import('./components-fastscan/login/login').then((m) => m.Login),
+    loadComponent: () => import('./components-gamexid/login/login').then((m) => m.Login),
   },
   {
     path: '',
@@ -15,22 +15,22 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./components-fastscan/dashboard/dashboard').then((m) => m.Dashboard),
+          import('./components-gamexid/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
         path: 'productos',
         loadComponent: () =>
-          import('./components-fastscan/productos/productos').then((m) => m.Productos),
+          import('./components-gamexid/productos/productos').then((m) => m.Productos),
       },
       {
         path: 'ingresos',
         loadComponent: () =>
-          import('./components-fastscan/ingresos/ingresos').then((m) => m.Ingresos),
+          import('./components-gamexid/ingresos/ingresos').then((m) => m.Ingresos),
       },
       {
         path: 'sucursales',
         loadComponent: () =>
-          import('./components-fastscan/sucursales/sucursales').then((m) => m.Sucursales),
+          import('./components-gamexid/sucursales/sucursales').then((m) => m.Sucursales),
       },
       {
         path: 'auditoria',

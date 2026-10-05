@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 export interface OrderLine {
   ean: string;
+  sku?: string | null;
+  unitPrice?: number | null;
+  total?: number | null;
+  currency?: string | null;
   name: string;
   expected: number | null;
   received: number;
@@ -18,7 +22,7 @@ export interface BranchOrder {
 export class OrdersService {
   private open(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('gamexid-orders', 1);
+      const request = indexedDB.open('gamexid-orders-mysql-v1', 1);
       request.onupgradeneeded = () => request.result.createObjectStore('orders', { keyPath: 'id' });
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(new Error('No se pudo abrir el almacenamiento de pedidos.'));
@@ -56,7 +60,10 @@ export class OrdersService {
           l.expected! < 1 ||
           !Number.isSafeInteger(l.received) ||
           l.received < 0 ||
-          l.received > l.expected!,
+          l.received > l.expected! ||
+          (l.unitPrice != null && (!Number.isFinite(l.unitPrice) || l.unitPrice < 0)) ||
+          (l.total != null && (!Number.isFinite(l.total) || l.total < 0)) ||
+          (l.currency != null && !['ARS', 'USD'].includes(l.currency)),
       )
     )
       throw new Error(

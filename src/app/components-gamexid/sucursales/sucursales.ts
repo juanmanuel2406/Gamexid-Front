@@ -3,8 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
-import { FastScanService, Product } from '../../services-fastscan/fastscan-service';
-import { OrdersService, BranchOrder, OrderLine } from '../../services-fastscan/orders';
+import { GamexidService, Product } from '../../services-gamexid/gamexid-service';
+import { OrdersService, BranchOrder, OrderLine } from '../../services-gamexid/orders';
 import { Workspace } from '../../core/workspace';
 import { Icon } from '../../shared/icon';
 import { Intake, Extraction } from '../../features/intake/intake';
@@ -16,7 +16,7 @@ import { Intake, Extraction } from '../../features/intake/intake';
   styleUrl: './sucursales.css',
 })
 export class Sucursales implements OnInit {
-  private data = inject(FastScanService);
+  private data = inject(GamexidService);
   private orders = inject(OrdersService);
   readonly workspace = inject(Workspace);
   readonly products = signal<Product[]>([]);
@@ -74,25 +74,37 @@ export class Sucursales implements OnInit {
     this.draft.update((d) => {
       if (!d) return null;
       const lines = d.lines.map((line) => {
-        const extracted = result.lines.find((candidate) => candidate.ean === line.ean);
+        const extracted = result.lines.find((candidate) =>
+          (candidate.ean && candidate.ean === line.ean) || (candidate.sku && candidate.sku === line.sku));
         return extracted
           ? {
               ...line,
               name: line.name || extracted.name || '',
               expected: line.expected ?? extracted.expected,
+              sku: line.sku || extracted.sku,
+              unitPrice: line.unitPrice ?? extracted.unitPrice,
+              total: line.total ?? extracted.total,
+              currency: line.currency || extracted.currency,
             }
           : line;
       });
-      const existing = new Set(lines.map((line) => line.ean));
+      const existing = new Set(lines.map((line) => line.ean || line.sku));
       for (const line of result.lines) {
-        if (!existing.has(line.ean)) {
+        const product = this.products().find(p => (line.ean && p.ean === line.ean) || (line.sku && p.sku.toUpperCase() === line.sku.toUpperCase()));
+        const ean = line.ean || product?.ean || '';
+        const key = ean || line.sku;
+        if (!existing.has(key)) {
           lines.push({
-            ean: line.ean,
+            ean,
+            sku: line.sku,
+            unitPrice: line.unitPrice,
+            total: line.total,
+            currency: line.currency,
             name: line.name || this.products().find((p) => p.ean === line.ean)?.name || '',
             expected: line.expected,
             received: 0,
           });
-          existing.add(line.ean);
+          existing.add(key);
         }
       }
       return { ...d, pdf: result.file, fileName: result.file.name, lines };
