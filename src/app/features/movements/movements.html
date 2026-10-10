@@ -1,0 +1,90 @@
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Trazabilidad / {{ scope() === 'red' ? 'Toda la red' : workspace.branch()?.name }}</p>
+    <h1 class="page-title">Auditoría de movimientos</h1>
+    <p class="page-sub">Registro de la API ordenado por fecha, más recientes primero · se actualiza cada 15 s</p>
+  </div>
+  <button class="btn-secundario" (click)="store.refresh()" [disabled]="store.loading()">
+    <gx-icon name="refresh" />{{ store.loading() ? 'Actualizando…' : 'Actualizar' }}
+  </button>
+</div>
+
+<div class="toolbar">
+  <div class="filters" role="group" aria-label="Tipo de movimiento">
+    @for (t of types; track t) {
+      <button class="filter" [class.on]="type() === t" (click)="setType(t)">
+        {{ t }}
+        @if (t !== 'Todos') { <span class="count">{{ counts().get(t) || 0 }}</span> }
+      </button>
+    }
+  </div>
+  <div class="scope" role="group" aria-label="Alcance">
+    <button class="filter" [class.on]="scope() === 'red'" (click)="scope.set('red')">Toda la red</button>
+    <button class="filter" [class.on]="scope() === 'sede'" (click)="scope.set('sede')">Mi sede</button>
+  </div>
+  <label class="search-field"
+    ><gx-icon name="search" /><input
+      aria-label="Buscar movimiento"
+      placeholder="Buscar por N°, producto, sede o nota"
+      [ngModel]="query()"
+      (ngModelChange)="query.set($event)"
+  /></label>
+</div>
+
+@if (store.error() && !store.loaded()) {
+  <div class="notice status-error" role="alert"><gx-icon name="alert" />{{ store.error() }}</div>
+}
+
+@if (!store.loaded()) {
+  <div class="timeline">
+    @for (n of [1, 2, 3, 4]; track n) { <div class="skeleton" style="height: 70px"></div> }
+  </div>
+} @else {
+  <div class="timeline">
+    <span class="spine" aria-hidden="true"></span>
+    @for (m of visible(); track m.id) {
+      <article class="tl-item panel" [class.open]="expanded() === m.id">
+        <button class="tl-head" (click)="toggle(m.id)" [attr.aria-expanded]="expanded() === m.id">
+          <div class="tl-main">
+            <span class="tag-gx {{ meta[m.type]?.tone }}"
+              ><gx-icon [name]="meta[m.type]?.icon || 'adjust'" [size]="13" />{{ m.type }} · #{{ m.id }}</span
+            >
+            <h3>{{ products(m) }}</h3>
+          </div>
+          <div class="when">
+            {{ m.createdAtUtc | date: 'dd MMM, HH:mm' }}<br />{{ m.registeredByUserId ? 'Usuario #' + m.registeredByUserId : 'Sistema' }}
+          </div>
+          <div class="meta">
+            <span>×{{ quantity(m) }} u.</span><span>{{ route(m) }}</span>
+            @if (m.notes) { <span>{{ m.notes }}</span> }
+          </div>
+        </button>
+        @if (expanded() === m.id) {
+          <div class="tl-detail">
+            @if (serials(m); as list) {
+              @if (list.length) {
+                <p class="eyebrow">Seriales registrados</p>
+                <div class="serials">
+                  @for (s of list; track s) { <span class="code-pill">{{ s }}</span> }
+                </div>
+              } @else {
+                <p class="muted">Movimiento por cantidad, sin seriales individuales.</p>
+              }
+            }
+          </div>
+        }
+      </article>
+    } @empty {
+      <div class="empty">
+        <gx-icon name="history" [size]="28" />
+        <h3>Sin movimientos para este filtro</h3>
+        <p>Probá con otro tipo o con "Toda la red".</p>
+      </div>
+    }
+  </div>
+  @if (filtered().length > visible().length) {
+    <button class="btn-secundario more" (click)="limit.set(limit() + 40)">
+      Ver 40 más · quedan {{ filtered().length - visible().length }}
+    </button>
+  }
+}

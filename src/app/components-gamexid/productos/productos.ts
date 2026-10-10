@@ -7,6 +7,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { GamexidService, Product, SerializedUnit } from '../../services-gamexid/gamexid-service';
 import { Workspace } from '../../core/workspace';
 import { Icon } from '../../shared/icon';
+import { InventoryStore } from '../../core/inventory-store';
+import { enterStagger, growBars } from '../../shared/anim';
 @Component({
   selector: 'app-productos',
   standalone: true,
@@ -17,6 +19,15 @@ import { Icon } from '../../shared/icon';
 export class Productos implements OnInit {
   private data = inject(GamexidService);
   readonly workspace = inject(Workspace);
+  private store = inject(InventoryStore);
+  /** Available units per product, from the shared inventory store. */
+  readonly stock = computed(() => {
+    const map = new Map<number, number>();
+    for (const u of this.store.available()) map.set(u.productId, (map.get(u.productId) || 0) + 1);
+    return map;
+  });
+  readonly maxStock = computed(() => Math.max(1, ...this.stock().values()));
+  private entered = false;
   readonly productos = signal<Product[]>([]);
   readonly filtro = signal('');
   readonly mostrarAlta = signal(false);
@@ -35,7 +46,16 @@ export class Productos implements OnInit {
   }
   load() {
     this.data.getProductos().subscribe({
-      next: (p) => this.productos.set(p),
+      next: (p) => {
+        this.productos.set(p);
+        if (!this.entered) {
+          this.entered = true;
+          setTimeout(() => {
+            enterStagger(document.querySelectorAll('.prod-row'), 0, 25);
+            growBars(Array.from(document.querySelectorAll('.prod-row .gx-meter i')), 'x', 200, 25);
+          });
+        }
+      },
       error: () => this.workspace.notify('No se pudo cargar el catálogo.', 'error'),
     });
   }
@@ -55,6 +75,7 @@ export class Productos implements OnInit {
         this.saving.set(false);
         this.mostrarAlta.set(false);
         this.load();
+        this.store.refresh();
         this.workspace.notify('Producto creado correctamente.');
       },
       error: (e) => {

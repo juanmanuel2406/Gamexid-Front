@@ -78,6 +78,13 @@
             scanMode() === 'ean' ? 'ESPERANDO CÓDIGO' : 'VALIDANDO SERIAL'
           }}</span>
         </div>
+        <div class="scanner" [class.good]="scanState() === 'match'" [class.bad]="scanState() === 'miss'" aria-hidden="true">
+          <svg class="barcode" viewBox="0 0 320 80">
+            @for (b of bars; track $index) { <rect [attr.x]="b.x" y="4" [attr.width]="b.w" height="72" /> }
+          </svg>
+          <i class="laser" #laser></i>
+          <div class="readout"><span>{{ scanLabel() }}</span><span>EAN-13 · SKU · SERIAL</span></div>
+        </div>
         <label for="ean-scanner-input" class="form-label">EAN, SKU o serial registrado</label>
         <div class="scan-input">
           <input
@@ -195,10 +202,10 @@
       <label class="form-label">Destino</label
       ><input class="form-control" readonly [value]="depot.name" aria-label="Destino: Depósito" />
       <div class="summary-metric">
-        <span>Productos</span><strong>{{ items().length }}</strong>
+        <span>Productos</span><strong [gxCount]="items().length"></strong>
       </div>
       <div class="summary-metric">
-        <span>Unidades esperadas</span><strong>{{ total() }}</strong>
+        <span>Unidades esperadas</span><strong [gxCount]="total()"></strong>
       </div>
       <label class="form-label" for="entry-notes">Notas (opcional)</label
       ><textarea
@@ -229,7 +236,7 @@
   [style]="{ width: '520px' }"
   ><p>Registrar {{ total() }} unidades de {{ items().length }} productos en Depósito.</p>
   <div class="notice">
-    <gx-icon name="lock" />Los datos se guardan en este navegador, no en el ERP.
+    <gx-icon name="lock" />Se registra en MySQL mediante la API de Gamexid. No se envía al ERP.
   </div>
   <div class="modal-foot">
     <button class="btn-secundario" (click)="confirm.set(false)" [disabled]="saving()">

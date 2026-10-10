@@ -1,0 +1,118 @@
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Red / {{ workspace.branches().length }} ubicaciones</p>
+    <h1 class="page-title">Red de sedes</h1>
+    <p class="page-sub">Morón es el único depósito · tocá una sede para ver sus unidades disponibles</p>
+  </div>
+  @if (workspace.isAdmin()) {
+    <button class="btn-primario" (click)="openCreate()"><gx-icon name="plus" />Nueva sede</button>
+  }
+</div>
+
+<div class="toolbar">
+  <label class="search-field"
+    ><gx-icon name="search" /><input
+      aria-label="Buscar sede"
+      placeholder="Buscar por nombre, código o dirección"
+      [ngModel]="query()"
+      (ngModelChange)="query.set($event)"
+  /></label>
+  @if (store.loading()) { <span class="tag-gx"><span class="dot"></span>Actualizando</span> }
+</div>
+
+@if (!store.loaded() || !workspace.branches().length) {
+  <div class="branches">
+    @for (n of [1, 2, 3, 4, 5, 6, 7, 8]; track n) {
+      <div class="skeleton" style="height: 150px"></div>
+    }
+  </div>
+} @else {
+  <div class="branches">
+    @for (c of cards(); track c.branch.id) {
+      <button
+        #card
+        type="button"
+        class="b-card panel"
+        [class.depot]="c.depot"
+        [class.legacy]="!c.branch.isActive"
+        (click)="open(c.branch, card)"
+      >
+        <div class="foot">
+          <span class="code">{{ c.branch.code }}</span>
+          @if (c.depot) {
+            <span class="tag-gx vio">Depósito</span>
+          } @else if (!c.branch.isActive) {
+            <span class="tag-gx">Histórica</span>
+          } @else if (c.branch.id === workspace.branchId()) {
+            <span class="tag-gx ok">Tu sede</span>
+          }
+        </div>
+        <h3>{{ c.branch.name }}</h3>
+        <p class="addr">{{ c.branch.address || 'Sin dirección cargada' }}</p>
+        <div class="foot">
+          <span class="stock" [gxCount]="c.count"></span><span class="eyebrow">unidades</span>
+        </div>
+        <span class="gx-meter"><i [style.width.%]="c.pct"></i></span>
+      </button>
+    } @empty {
+      <div class="empty"><gx-icon name="pin" [size]="28" /><p>Ninguna sede coincide con la búsqueda.</p></div>
+    }
+  </div>
+}
+
+@if (selected(); as b) {
+  <div class="scrim" (click)="close()"></div>
+  <section class="flip-panel" role="dialog" [attr.aria-label]="b.name">
+    <div class="flip-inner">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">{{ b.code }}</p>
+          <h2 class="flip-title">{{ b.name }}</h2>
+          <p class="page-sub">{{ b.address || 'Sin dirección cargada' }}</p>
+        </div>
+        <button class="icon-button" aria-label="Cerrar" (click)="close()"><gx-icon name="x" /></button>
+      </div>
+      <div class="kv">
+        <div><span>Disponibles</span><b>{{ units().length }}</b></div>
+        <div><span>Tipo</span><b>{{ b.code === 'DEP-CENTRAL' ? 'Depósito' : 'Sede' }}</b></div>
+        <div><span>Estado</span><b [class.ok]="b.isActive">{{ b.isActive ? 'Activa' : 'Histórica' }}</b></div>
+      </div>
+      <div class="units">
+        @for (u of units(); track u.id) {
+          <div class="unit"><span>{{ u.product }}</span><span class="sn">{{ u.serialNumber }}</span></div>
+        } @empty {
+          <div class="empty"><gx-icon name="package" [size]="26" /><p>Esta sede no tiene unidades disponibles registradas.</p></div>
+        }
+      </div>
+      <button class="btn-secundario" [disabled]="b.id === workspace.branchId()" (click)="useBranch(b)">
+        {{ b.id === workspace.branchId() ? 'Ya es tu sede de trabajo' : 'Trabajar en esta sede' }}
+      </button>
+    </div>
+  </section>
+}
+
+<p-dialog
+  header="Nueva sede"
+  [visible]="creating()"
+  (visibleChange)="creating.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '480px' }"
+>
+  <label class="form-group"
+    ><span class="form-label">Código</span
+    ><input class="form-control mono" [(ngModel)]="draft.code" maxlength="20" placeholder="GX-NUEVA" /></label
+  ><label class="form-group"
+    ><span class="form-label">Nombre</span
+    ><input class="form-control" [(ngModel)]="draft.name" maxlength="120" placeholder="Nombre visible de la sede" /></label
+  ><label class="form-group"
+    ><span class="form-label">Dirección (opcional)</span
+    ><input class="form-control" [(ngModel)]="draft.address" maxlength="200" /></label>
+  @if (formError()) {
+    <p class="notice status-error" role="alert"><gx-icon name="alert" />{{ formError() }}</p>
+  }
+  <div class="modal-foot">
+    <button class="btn-secundario" (click)="creating.set(false)" [disabled]="saving()">Cancelar</button>
+    <button class="btn-primario" (click)="create()" [disabled]="saving()">{{ saving() ? 'Creando…' : 'Crear sede' }}</button>
+  </div>
+</p-dialog>

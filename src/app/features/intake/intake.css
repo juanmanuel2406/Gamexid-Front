@@ -8,21 +8,21 @@
   align-items: center;
   flex-direction: column;
   gap: 10px;
-  background: #080c14;
+  background: #07090f;
 }
 .dropzone > gx-icon {
-  color: #a78bfa;
+  color: #b77cf5;
 }
 .dropzone strong {
   font-size: 14px;
 }
 .dropzone p {
   font-size: 11px;
-  color: #94a3b8;
+  color: #8b91ab;
 }
 .dropzone.dragging {
-  border-color: #a78bfa;
-  background: #7c3aed15;
+  border-color: #b77cf5;
+  background: #9b38ee15;
 }
 .dropzone label {
   cursor: pointer;
@@ -34,8 +34,8 @@
   height: 1px;
   left: 0;
   right: 0;
-  background: #a78bfa;
-  box-shadow: 0 0 10px #8b5cf6;
+  background: #b77cf5;
+  box-shadow: 0 0 10px #9b38ee;
   opacity: 0;
   pointer-events: none;
 }
@@ -52,7 +52,7 @@
 .document-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border: 1px solid #1e293b;
+  border: 1px solid #1a2034;
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 24px;
@@ -62,9 +62,9 @@
   min-width: 0;
 }
 .json-pane {
-  background: #080c14;
+  background: #07090f;
   min-width: 0;
-  border-left: 1px solid #1e293b;
+  border-left: 1px solid #1a2034;
 }
 .pane-header {
   display: flex;
@@ -76,12 +76,12 @@
     monospace;
   letter-spacing: 0.6px;
   padding: 12px;
-  background: #0b111d;
-  border-bottom: 1px solid #1e293b;
+  background: #0a0d18;
+  border-bottom: 1px solid #1a2034;
 }
 .pane-header select {
-  background: #0f172a;
-  border: 1px solid #334155;
+  background: #0e1220;
+  border: 1px solid #2a3150;
   padding: 8px;
   border-radius: 4px;
 }
@@ -104,7 +104,7 @@
 }
 .confidence-list {
   padding: 12px;
-  border-top: 1px solid #1e293b;
+  border-top: 1px solid #1a2034;
   display: grid;
   gap: 8px;
 }
@@ -120,7 +120,7 @@
   }
   .json-pane {
     border-left: 0;
-    border-top: 1px solid #1e293b;
+    border-top: 1px solid #1a2034;
   }
   .intake-toolbar {
     flex-wrap: wrap;

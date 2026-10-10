@@ -124,21 +124,50 @@ test('pedido manual: persiste y permite recepción parcial', async ({ page }) =>
   await page.getByRole('button', { name: 'Guardar pedido' }).click();
   await expect(page.getByText('1 productos · 0 unidades pendientes')).toBeVisible();
 });
-test('menú hover, logo visible y vista móvil sin desborde', async ({ page }) => {
+test('navegación: atajos, menú móvil y vista sin desborde', async ({ page }) => {
   await page.goto('/dashboard');
-  await expect(page.locator('.shell')).toHaveClass(/menu-cerrado/);
-  await page.locator('.sidebar').hover();
-  await expect(page.locator('.shell')).not.toHaveClass(/menu-cerrado/);
-  await page.locator('.contenido').hover();
-  await expect(page.locator('.shell')).toHaveClass(/menu-cerrado/);
+  await expect(page.locator('.nav-item.active')).toHaveText(/Operaciones/);
+  await page.locator('.page-title').click();
+  await page.keyboard.press('3');
+  await expect(page).toHaveURL(/productos/);
   await expect(page.locator('.btn-utilidad')).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Alternar menú' }).click();
+  await expect(page.locator('.shell')).toHaveClass(/menu-abierto/);
+  await page.getByRole('link', { name: 'Red de sedes' }).click();
+  await expect(page).toHaveURL(/sedes/);
+  await expect(page.locator('.shell')).not.toHaveClass(/menu-abierto/);
   await page.goto('/productos');
   await page.getByRole('button', { name: 'Nuevo producto' }).click();
   await expect(page.locator('.p-dialog')).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
   ).toBeTruthy();
+});
+
+test('sedes: stock calculado desde unidades y detalle por sede', async ({ page }) => {
+  await page.goto('/sedes');
+  const depot = page.locator('.b-card.depot');
+  await expect(depot).toContainText('Morón (Depósito Central)');
+  await expect(depot.locator('.stock')).toHaveText('1');
+  await depot.click();
+  await expect(page.locator('.flip-panel')).toContainText('NB-10001');
+  await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
+  await expect(page.locator('.flip-panel')).toHaveCount(0);
+});
+
+test('movimientos: el ingreso confirmado aparece en la auditoría', async ({ page }) => {
+  await page.goto('/ingresos');
+  await page.getByRole('button', { name: 'Nuevo ingreso' }).click();
+  await page.locator('#ean-scanner-input').fill('7790000000028');
+  await page.locator('#ean-scanner-input').press('Enter');
+  await page.getByRole('button', { name: 'Cerrar ingreso' }).click();
+  await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
+  await expect(page.getByText('Ingreso #1 registrado correctamente.')).toBeVisible();
+  await page.goto('/movimientos');
+  await expect(page.locator('.tl-item').first()).toContainText('Mouse inalámbrico');
+  await page.getByRole('button', { name: /Venta/ }).click();
+  await expect(page.getByText('Sin movimientos para este filtro')).toBeVisible();
 });
 
 test('PdfPig requiere botón explícito y completa cantidades sin duplicar líneas', async ({
@@ -249,14 +278,12 @@ test('scanner recupera el botón cuando falla la API', async ({ page }) => {
   await expect(page.getByText('MySQL no disponible').first()).toBeVisible();
 });
 
-test('logo conserva espacio al desplegar sidebar y anima en login', async ({ page }) => {
+test('logo conserva espacio en la barra lateral y anima en login', async ({ page }) => {
   await page.goto('/dashboard');
-  await page.locator('.sidebar').hover();
-  await expect(page.locator('.shell')).toHaveClass(/menu-abierto/);
   const dimensions = await page.locator('.brand-symbol').boundingBox();
-  expect(dimensions?.width).toBe(42);
-  expect(dimensions?.height).toBe(38);
-  await expect(page.locator('.sidebar')).toHaveCSS('width', '248px');
+  expect(dimensions?.width).toBe(50);
+  expect(dimensions?.height).toBe(40);
+  await expect(page.locator('.rail')).toHaveCSS('width', '232px');
   await expect(page.locator('.brand-symbol .head').last()).toHaveCSS('opacity', '1');
   await page.screenshot({ path: 'test-results/sidebar-logo.png' });
   await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));

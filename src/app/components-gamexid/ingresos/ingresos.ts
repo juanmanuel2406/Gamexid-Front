@@ -1,4 +1,5 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, ElementRef, OnDestroy, effect, inject, signal, computed, viewChild } from '@angular/core';
+import { animate } from 'animejs';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { DatePipe } from '@angular/common';
@@ -14,6 +15,8 @@ import {
 import { Workspace } from '../../core/workspace';
 import { Motion } from '../../shared/motion';
 import { Icon } from '../../shared/icon';
+import { InventoryStore } from '../../core/inventory-store';
+import { CountUp, burst, flyChip, reducedMotion, shake } from '../../shared/anim';
 interface ScanItem {
   product: Product;
   expected: number;
@@ -24,12 +27,26 @@ interface ScanItem {
 @Component({
   selector: 'app-ingresos',
   standalone: true,
-  imports: [FormsModule, DatePipe, DialogModule, StepperModule, TagModule, Icon],
+  imports: [FormsModule, DatePipe, DialogModule, StepperModule, TagModule, Icon, CountUp],
   templateUrl: './ingresos.html',
   styleUrl: './ingresos.css',
 })
-export class Ingresos {
+export class Ingresos implements OnDestroy {
   private data = inject(GamexidService);
+  private store = inject(InventoryStore);
+  private laser = viewChild<ElementRef<HTMLElement>>('laser');
+  private laserAnim?: { pause: () => unknown };
+  /** Scanner readout: idle → reading → match/miss, mirrors the lookup request. */
+  readonly scanState = signal<'idle' | 'reading' | 'match' | 'miss'>('idle');
+  readonly scanLabel = signal('LISTO PARA ESCANEAR');
+  readonly bars = Array.from({ length: 46 }, (_, i) => {
+    const w = [1.6, 1.6, 3.2, 4.8, 1.6, 3.2][(i * 7 + 3) % 6];
+    return { w, gap: [1.6, 2.4, 3.2][(i * 5) % 3] };
+  }).reduce<{ x: number; w: number }[]>((acc, b) => {
+    const last = acc.at(-1);
+    acc.push({ x: last ? last.x + last.w + b.gap : 6, w: b.w });
+    return acc;
+  }, []).filter((b) => b.x < 312);
   readonly workspace = inject(Workspace);
   readonly motion = inject(Motion);
   readonly creating = signal(false);
@@ -66,6 +83,23 @@ export class Ingresos {
   get depot() { return this.workspace.branches().find(b => b.code === 'DEP-CENTRAL') ?? this.data.getDeposito(); }
   constructor() {
     this.load();
+    // The laser speeds up while the API lookup is in flight.
+    effect(() => {
+      const fast = this.lookingUp();
+      const el = this.laser()?.nativeElement;
+      this.laserAnim?.pause();
+      if (!el || reducedMotion()) return;
+      this.laserAnim = animate(el, {
+        top: ['14%', '74%'],
+        duration: fast ? 260 : 1800,
+        alternate: true,
+        loop: true,
+        ease: fast ? 'linear' : 'inOutSine',
+      });
+    });
+  }
+  ngOnDestroy() {
+    this.laserAnim?.pause();
   }
   load() {
     this.data.getMovimientos().subscribe({
@@ -100,10 +134,15 @@ export class Ingresos {
       return;
     }
     this.lookingUp.set(true);
+    this.scanState.set('reading');
+    this.scanLabel.set('LEYENDO ' + code.toUpperCase());
     this.data.buscarProductoPorCodigo(code).pipe(finalize(() => this.lookingUp.set(false))).subscribe({
       next: (result) => {
         this.identified.set(result);
+        this.scanState.set(result.alreadyInInventory ? 'miss' : 'match');
+        this.scanLabel.set(result.alreadyInInventory ? 'SERIAL YA REGISTRADO' : 'COINCIDENCIA · ' + result.matchedBy.toUpperCase());
         if (result.alreadyInInventory) {
+          shake(document.querySelector('.scanner'));
           this.fail('Serial identificado: ' + result.product.name + '. Esta unidad ya está registrada; no puede ingresarse de nuevo.');
           return;
         }
@@ -118,12 +157,18 @@ export class Ingresos {
         this.add(result.product);
       },
       error: (e) => {
+        this.scanState.set('miss');
+        this.scanLabel.set(e.status === 404 ? 'SIN COINCIDENCIA' : e.status === 409 ? 'CÓDIGO AMBIGUO' : 'ERROR DE CONEXIÓN');
+        shake(document.querySelector('.scanner'));
         this.unknown.set(e.status === 404 && /^(?:\d{8}|\d{12,14})$/.test(code));
         this.fail(e.error?.mensaje || 'No se pudo consultar el catálogo. Revisá la conexión con la API.');
       },
     });
   }
   add(p: Product) {
+    const from = document.querySelector('.scan-input')?.getBoundingClientRect();
+    const to = document.querySelector('.receipt-summary .summary-metric')?.getBoundingClientRect();
+    if (from && to) flyChip(from, to, p.sku);
     this.items.update((items) => [
       ...items,
       { product: p, expected: 1, text: '', serials: [], duplicate: false },
@@ -209,6 +254,11 @@ export class Ingresos {
       })
       .subscribe({
         next: (m) => {
+          const anchor = document.querySelector('.page-head')?.getBoundingClientRect();
+          if (anchor) burst(new DOMRect(anchor.right - 160, anchor.top + 10, 0, 0), '+' + this.total());
+          this.store.refresh();
+          this.scanState.set('idle');
+          this.scanLabel.set('LISTO PARA ESCANEAR');
           this.saving.set(false);
           this.confirm.set(false);
           this.creating.set(false);
@@ -219,7 +269,12 @@ export class Ingresos {
         error: (e) => {
           this.saving.set(false);
           this.confirm.set(false);
-          this.fail(e.error?.mensaje || 'No se pudo registrar el ingreso.');
+          shake(document.querySelector('.receipt-summary'));
+          this.fail(
+            e.status === 0
+              ? 'No hay conexión con la API. El ingreso no se registró.'
+              : e.error?.mensaje || 'No se pudo registrar el ingreso.',
+          );
         },
       });
   }

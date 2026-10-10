@@ -1,133 +1,184 @@
 <div class="page-head">
   <div>
-    <p class="eyebrow">CONTROL / VISIBILIDAD OPERATIVA</p>
+    <p class="eyebrow">Control / Visibilidad operativa</p>
     <h1 class="page-title">Centro de operaciones</h1>
-    <p class="page-sub">{{ branchName() }} · Inventario centralizado</p>
+    <p class="page-sub">{{ branchName() }} · inventario centralizado en MySQL</p>
   </div>
   <a routerLink="/ingresos" class="btn-primario"><gx-icon name="scan" /> Nuevo ingreso</a>
 </div>
-@if (loading()) {
+
+@if (store.error() && !store.loaded()) {
+  <div class="notice status-error" role="alert">
+    <gx-icon name="alert" /><span>{{ store.error() }}</span>
+    <button class="btn-secundario retry" (click)="store.refresh()">Reintentar</button>
+  </div>
+}
+
+@if (!store.loaded()) {
   <div class="metrics">
     @for (n of [1, 2, 3, 4]; track n) {
-      <p-skeleton height="160px" />
+      <div class="skeleton" style="height: 128px"></div>
     }
   </div>
-  <p-skeleton height="320px" />
+  <div class="grid-2"><div class="skeleton" style="height: 300px"></div><div class="skeleton" style="height: 300px"></div></div>
 } @else {
   <section class="metrics" aria-label="Indicadores de inventario">
-    <article class="metric">
-      <div class="metric-top"><span>UNIDADES DISPONIBLES</span><gx-icon name="package" /></div>
-      <strong>{{ available() | number }}</strong
-      ><span class="metric-note"><span class="dot"></span> Seriales en sucursal</span>
+    <article class="metric panel">
+      <div class="metric-top"><span>Unidades disponibles</span><gx-icon name="package" /></div>
+      <strong [gxCount]="available()"></strong>
+      <span class="metric-note"><span class="tag-gx ok"><span class="dot"></span>en sede</span> seriales activos</span>
     </article>
-    <article class="metric">
-      <div class="metric-top"><span>UNIDADES INGRESADAS HOY</span><gx-icon name="scan" /></div>
-      <strong>{{ today() | number }}</strong
-      ><span class="metric-note">{{ delta() }} <span class="muted">/ vs. ayer</span></span
-      ><svg class="spark" viewBox="0 0 240 60" aria-hidden="true">
-        <polyline [attr.points]="spark()" fill="none" stroke="#8b5cf6" stroke-width="2" />
+    <article class="metric panel">
+      <div class="metric-top"><span>Ingresadas hoy</span><gx-icon name="scan" /></div>
+      <strong [gxCount]="today()"></strong>
+      <span class="metric-note"
+        ><span class="tag-gx" [class.ok]="delta() > 0" [class.warn]="delta() < 0">{{ delta() > 0 ? '+' : '' }}{{ delta() }}</span> vs. ayer</span
+      >
+      <svg class="spark" viewBox="0 0 240 60" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="dash-spark" x1="0" x2="1">
+            <stop offset="0" stop-color="#ff00e6" /><stop offset=".45" stop-color="#9b38ee" /><stop offset="1" stop-color="#3f6ee0" />
+          </linearGradient>
+        </defs>
+        <polyline class="spark-line" [attr.points]="spark()" fill="none" stroke="url(#dash-spark)" stroke-width="2" stroke-linejoin="round" />
       </svg>
     </article>
-    <article class="metric">
-      <div class="metric-top"><span>CATÁLOGO DE PRODUCTOS</span><gx-icon name="barcode" /></div>
-      <strong>{{ products().length | number }}</strong
-      ><span class="metric-note muted">Catálogo global · todas las sedes</span>
+    <article class="metric panel">
+      <div class="metric-top"><span>Stock en la red</span><gx-icon name="pin" /></div>
+      <strong [gxCount]="networkStock()"></strong>
+      <span class="metric-note">{{ workspace.branches().length }} sedes · 1 depósito</span>
     </article>
-    <article class="metric">
-      <div class="metric-top"><span>MOVIMIENTOS REGISTRADOS</span><gx-icon name="activity" /></div>
-      <strong>{{ localMovements().length | number }}</strong
-      ><span class="metric-note muted">Historial de esta sucursal</span>
+    <article class="metric panel">
+      <div class="metric-top"><span>Movimientos</span><gx-icon name="swap" /></div>
+      <strong [gxCount]="local().length"></strong>
+      <span class="metric-note">historial de esta sede</span>
     </article>
   </section>
-  <div class="overview-grid">
-    <section class="panel activity-panel">
+
+  <div class="grid-2">
+    <section class="panel" data-enter>
       <div class="panel-header">
         <div>
           <h2 class="section-title">Volumen de ingreso</h2>
-          <p class="page-sub">Unidades registradas por día</p>
+          <p class="page-sub">Unidades registradas por día · {{ branchName() }}</p>
         </div>
-        <span class="badge">Últimos 7 días</span>
+        <span class="tag-gx">Últimos 7 días</span>
       </div>
       <div class="chart" role="img" aria-label="Unidades ingresadas en los últimos siete días">
-        @for (day of weekly(); track $index) {
-          <div class="chart-column">
+        @for (day of weekly(); track $index; let last = $last) {
+          <div class="chart-column" [class.today]="last">
             <span class="chart-value">{{ day.count }}</span>
-            <div class="chart-track">
-              <div class="chart-bar" [style.height.%]="(day.count / maximum()) * 100"></div>
-            </div>
-            <span>{{ day.label }}</span>
+            <div class="chart-track"><div class="bar" [style.height.%]="(day.count / maximum()) * 100"></div></div>
+            <span class="chart-day">{{ day.label }}</span>
           </div>
         }
       </div>
     </section>
-    <section class="panel connections-panel">
+
+    <section class="panel" data-enter>
       <div class="panel-header">
-        <h2 class="section-title">Servicios y conexión</h2>
-        <gx-icon name="activity" />
+        <div>
+          <h2 class="section-title">Actividad de la red</h2>
+          <p class="page-sub">
+            Últimos movimientos registrados en la API
+            @if (store.updatedAt(); as t) { · {{ t | date: 'HH:mm:ss' }} }
+          </p>
+        </div>
+        <span class="live-dot"><i></i>EN VIVO</span>
       </div>
-      <div class="service-row">
-        <div><strong>Acceso Gamexid</strong><span>Servidor Ubuntu</span></div>
-        <p-tag
-          [value]="workspace.connection() === 'online' ? 'Conectado' : 'No disponible'"
-          [severity]="workspace.connection() === 'online' ? 'success' : 'warn'"
-        />
-      </div>
-      <div class="service-row">
-        <div><strong>ERP CDS</strong><span>Integración empresarial</span></div>
-        <p-tag value="Pendiente" severity="secondary" />
-      </div>
-      <div class="service-row">
-        <div><strong>PdfPig</strong><span>Extracción de remitos sin IA</span></div>
-        <p-tag
-          [value]="workspace.pdfPig() ? 'Disponible' : 'Sin conexión'"
-          [severity]="workspace.pdfPig() ? 'info' : 'secondary'"
-        />
-      </div>
-      <div class="notice">
-        <gx-icon name="lock" />
-        <p>Inventario central mediante MySQL. La API debe confirmar la conexión antes de operar.</p>
+      <div class="feed">
+        @for (m of feed(); track m.id) {
+          <div class="feed-item">
+            <span class="feed-ico tag-gx {{ meta[m.type]?.tone }}"><gx-icon [name]="meta[m.type]?.icon || 'adjust'" [size]="15" /></span>
+            <div class="feed-main">
+              <div class="t">{{ m.type }} · {{ productName(m) }}</div>
+              <div class="s">{{ route(m) }} · {{ m.registeredByUserId ? 'Usuario #' + m.registeredByUserId : 'Sistema' }}</div>
+            </div>
+            <div class="feed-side">
+              <div class="q">×{{ quantity(m) }}</div>
+              <div class="s">{{ m.createdAtUtc | date: 'dd/MM HH:mm' }}</div>
+            </div>
+          </div>
+        } @empty {
+          <div class="empty">
+            <gx-icon name="history" [size]="28" />
+            <p>Todavía no hay movimientos. El primer ingreso aparecerá acá automáticamente.</p>
+          </div>
+        }
       </div>
     </section>
   </div>
-  <section class="panel recent">
-    <div class="panel-header">
-      <h2 class="section-title">Últimos movimientos</h2>
-      <a routerLink="/ingresos" class="btn-link">Ver ingresos <gx-icon name="arrow" /></a>
-    </div>
-    @if (localMovements().length) {
-      <div class="tabla-wrap">
-        <table class="tabla">
-          <thead>
-            <tr>
-              <th>Movimiento</th>
-              <th>Fecha</th>
-              <th>Destino</th>
-              <th>Unidades</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (m of localMovements().slice(0, 5); track m.id) {
-              <tr>
-                <td>
-                  <span class="code-pill">ING-{{ m.id }}</span>
-                </td>
-                <td>{{ m.createdAtUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
-                <td>{{ branchName() }}</td>
-                <td class="mono">{{ quantity(m) }}</td>
-                <td><p-tag value="Registrado en MySQL" severity="success" /></td>
-              </tr>
-            }
-          </tbody>
-        </table>
+
+  <div class="grid-2">
+    <section class="panel" data-enter>
+      <div class="panel-header">
+        <div>
+          <h2 class="section-title">Stock por sede</h2>
+          <p class="page-sub">Unidades disponibles · se reordena cuando cambia el inventario</p>
+        </div>
+        <a routerLink="/sedes" class="btn-secundario sm">Ver sedes</a>
       </div>
-    } @else {
-      <div class="empty">
-        <gx-icon name="inbox" [size]="30" />
-        <h3>Tu próxima recepción empieza acá</h3>
-        <p>No hay ingresos registrados para esta sucursal.</p>
-        <a routerLink="/ingresos" class="btn-secundario">Abrir terminal <gx-icon name="arrow" /></a>
+      @if (workspace.depot(); as depot) {
+        <div class="depot-row">
+          <div><strong>{{ depot.name }}</strong><span class="eyebrow">Abastece a {{ sedes().length }} sedes</span></div>
+          <span class="n" [gxCount]="depotStock()"></span>
+        </div>
+      }
+      <div class="stock-list">
+        @for (row of sedes(); track row.branch.id) {
+          <a
+            class="s-row"
+            routerLink="/sedes"
+            [attr.data-row]="row.branch.id"
+            [class.me]="row.branch.id === workspace.branchId()"
+            [title]="row.branch.address || ''"
+          >
+            <span class="nm">{{ row.branch.name }}</span>
+            <span class="gx-meter" [class.low]="row.count < lowStock"><i [style.width.%]="row.pct"></i></span>
+            <span class="n">{{ row.count }}</span>
+          </a>
+        }
       </div>
-    }
-  </section>
+      <div class="s-legend">
+        <span><i></i>Stock normal</span><span><i class="w"></i>Menos de {{ lowStock }} u. · pedir reposición</span>
+      </div>
+    </section>
+
+    <section class="panel" data-enter>
+      <div class="panel-header">
+        <div>
+          <h2 class="section-title">Servicios y conexión</h2>
+          <p class="page-sub">Estado informado por el servidor</p>
+        </div>
+      </div>
+      <div class="services">
+        <div class="svc">
+          <div><strong>API Gamexid</strong><span>Acceso, inventario y sesión</span></div>
+          <span class="tag-gx" [class.ok]="workspace.connection() === 'online'" [class.bad]="workspace.connection() === 'offline'"
+            ><span class="dot"></span>{{ workspace.connection() === 'online' ? 'Conectada' : workspace.connection() === 'offline' ? 'Sin conexión' : 'Comprobando' }}</span
+          >
+        </div>
+        <div class="svc">
+          <div><strong>MySQL Inventario</strong><span>{{ store.units().length }} unidades registradas</span></div>
+          <span class="tag-gx {{ serviceTag(workspace.database()) }}"
+            ><span class="dot"></span>{{ workspace.database() === 'ok' ? 'Operativa' : workspace.database() === 'checking' ? 'Comprobando' : 'No disponible' }}</span
+          >
+        </div>
+        <div class="svc">
+          <div><strong>PdfPig</strong><span>Extracción de remitos sin IA</span></div>
+          <span class="tag-gx" [class.ok]="workspace.pdfPig()"><span class="dot"></span>{{ workspace.pdfPig() ? 'Listo' : 'No disponible' }}</span>
+        </div>
+        <div class="svc">
+          <div><strong>GamingCity · GC-API</strong><span>Consultas de solo lectura</span></div>
+          <span class="tag-gx {{ serviceTag(workspace.gamingCity()) }}"
+            ><span class="dot"></span>{{ workspace.gamingCity() === 'ok' ? 'Configurada' : workspace.gamingCity() === 'pending' ? 'Sin credencial' : workspace.gamingCity() === 'checking' ? 'Comprobando' : 'No disponible' }}</span
+          >
+        </div>
+        <div class="svc">
+          <div><strong>ERP CDS</strong><span>Integración empresarial</span></div>
+          <span class="tag-gx"><span class="dot"></span>Pendiente</span>
+        </div>
+      </div>
+    </section>
+  </div>
 }

@@ -5,66 +5,77 @@
 @if (login()) {
   <router-outlet />
 } @else {
-  <div class="shell" [class.menu-cerrado]="!open()" [class.menu-abierto]="open()">
+  <div class="shell" [class.menu-abierto]="open()">
     @if (open()) {
       <button class="mobile-scrim" aria-label="Cerrar menú" (click)="close()"></button>
     }
-    <aside
-      class="sidebar"
-      (mouseenter)="hover(true)"
-      (mouseleave)="hover(false)"
-      aria-label="Navegación principal"
-    >
+    <aside class="rail" aria-label="Navegación principal">
       <a routerLink="/dashboard" class="brand" aria-label="Gamexid, inicio"
-        ><gx-logo class="brand-symbol" [compact]="true" [animated]="open()" />
-        <span class="nav-text wordmark">gamexid<span class="brand-dot">.</span></span></a
+        ><gx-logo class="brand-symbol" [compact]="true" /><span class="wordmark"
+          >gamexid<b>.</b></span
+        ></a
       >
-      <div class="nav-label nav-text">WORKSPACE / INVENTARIO</div>
-      <nav>
+      <div class="rail-label">Workspace / Inventario</div>
+      <nav class="nav">
+        <span class="nav-pill" #pill aria-hidden="true"></span>
         @for (item of navigation; track item.url) {
           <a
             [routerLink]="item.url"
             routerLinkActive="active"
             class="nav-item"
-            [pTooltip]="!open() ? item.name : ''"
-            tooltipPosition="right"
             [attr.aria-label]="item.name"
+            (click)="open.set(false)"
           >
-            <gx-icon [name]="item.icon" /><span class="nav-text">{{ item.short }}</span>
+            <gx-icon [name]="item.icon" /><span>{{ item.short }}</span
+            ><kbd>{{ item.key }}</kbd>
           </a>
         }
       </nav>
-      <div class="sidebar-bottom">
+      <div class="rail-foot">
         <div class="connection">
-          <span class="led" [class.online]="workspace.connection() === 'online'"></span
-          ><span class="nav-text">{{
-            workspace.connection() === 'online'
-              ? 'API de acceso · OK'
-              : workspace.connection() === 'checking'
-                ? 'Comprobando API'
-                : 'API sin conexión'
+          <span
+            class="led"
+            [class.on]="workspace.connection() === 'online' && workspace.database() === 'ok'"
+            [class.off]="workspace.connection() === 'offline'"
+          ></span
+          ><span>{{
+            workspace.connection() === 'checking'
+              ? 'Comprobando API'
+              : workspace.connection() === 'offline'
+                ? 'API sin conexión'
+                : workspace.database() === 'ok'
+                  ? 'API y MySQL · OK'
+                  : 'API activa · MySQL no disponible'
           }}</span>
         </div>
-        <a routerLink="/integracion" class="nav-text muted text-xs">GC-API · Ver integración</a>
         <button class="nav-item logout" (click)="logout()" aria-label="Cerrar sesión">
-          <gx-icon name="logout" /><span class="nav-text">Cerrar sesión</span>
+          <gx-icon name="logout" /><span>Cerrar sesión</span>
         </button>
       </div>
     </aside>
     <div class="workspace">
       <header class="topbar">
         <button
-          class="icon-button"
+          class="menu-btn"
           (click)="open.set(!open())"
           aria-label="Alternar menú"
           [attr.aria-expanded]="open()"
         >
           <gx-icon name="menu" />
         </button>
-        <div class="breadcrumb">
-          <span>Workspace</span><gx-icon name="right" [size]="14" /><strong>{{ title() }}</strong>
+        <div class="crumb">
+          <span class="ws">Workspace</span><gx-icon class="ws" name="right" [size]="14" /><strong>{{
+            title()
+          }}</strong>
         </div>
         <div class="topbar-right">
+          @if (net.last(); as req) {
+            <div class="netchip" title="Última solicitud al servidor">
+              <span class="m">{{ req.method }}</span><span class="p">{{ req.path }}</span
+              ><span [class.ok]="netOk()" [class.bad]="!netOk()">{{ req.status || 'ERR' }}</span
+              ><span>{{ req.ms }}ms</span>
+            </div>
+          }
           <label class="branch-switch"
             ><gx-icon name="warehouse" /><select
               aria-label="Sucursal de trabajo"
@@ -77,15 +88,16 @@
                 </option>
               }
             </select></label
-          ><span class="user-avatar" [pTooltip]="user()">{{
-            user().slice(0, 2).toUpperCase()
+          ><span class="avatar" [pTooltip]="(workspace.user()?.fullName || 'Operador') + ' · ' + workspace.role()" tooltipPosition="bottom">{{
+            workspace.initials()
           }}</span>
         </div>
+        <i class="loadbar" #loadbar aria-hidden="true"></i>
       </header>
-      <main class="contenido scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      <main class="contenido">
         <div class="workspace-content"><router-outlet /></div>
         <footer class="workspace-footer">
-          <span>GAMEXID / TECH PREVIEW</span><span>Inventario MySQL · integración ERP pendiente</span>
+          <span>GAMEXID / CONTROL DE INVENTARIO</span><span>MySQL · GC-API solo lectura · ERP pendiente</span>
         </footer>
       </main>
     </div>
