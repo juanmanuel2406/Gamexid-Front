@@ -24,7 +24,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   align-items: end;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid #1a2034;
   padding: 16px 0;
 }
 .pedido-linea .form-check {

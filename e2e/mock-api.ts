@@ -33,7 +33,7 @@ export async function mockInventory(page: Page) {
   await page.route('**/api/inventory/receipts', r => {
     const body = r.request().postDataJSON();
     const movement = { ...body, id: movements.length + 1, type: 'Ingreso', createdAtUtc: new Date().toISOString() };
-    movements.push(movement);
+    movements.unshift(movement);
     return r.fulfill({ json: movement });
   });
   await page.route('**/api/documents/extract', r => r.fulfill({

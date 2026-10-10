@@ -29,12 +29,14 @@
         <th>Producto</th>
         <th>EAN</th>
         <th>Validación</th>
+        <th class="num">Stock red</th>
+        <th style="width: 120px">Distribución</th>
         <th>Estado</th>
         <th>Acciones</th>
       </tr></ng-template
     >
     <ng-template #body let-p
-      ><tr>
+      ><tr class="prod-row">
         <td>
           <span class="code-pill">{{ p.sku }}</span>
         </td>
@@ -44,6 +46,10 @@
         </td>
         <td>
           <p-tag [value]="p.requiresSerialNumber ? 'EAN + SERIAL' : 'EAN'" severity="secondary" />
+        </td>
+        <td class="num mono">{{ stock().get(p.id) || 0 }}</td>
+        <td>
+          <span class="gx-meter"><i [style.width.%]="((stock().get(p.id) || 0) / maxStock()) * 100"></i></span>
         </td>
         <td>
           <p-tag
@@ -64,7 +70,7 @@
     ></ng-template>
     <ng-template #emptymessage
       ><tr>
-        <td colspan="6">
+        <td colspan="8">
           <div class="empty">
             <gx-icon name="search" />
             <p>No se encontraron productos. Probá otro EAN o nombre.</p>

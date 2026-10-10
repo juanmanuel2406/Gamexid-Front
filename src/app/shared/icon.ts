@@ -36,6 +36,15 @@ import {
   LucideCpu,
   LucideArrowUpRight,
   LucideVolume2,
+  LucideMapPin,
+  LucideHistory,
+  LucideArrowLeftRight,
+  LucideShoppingCart,
+  LucideArrowDownToLine,
+  LucideArrowUpFromLine,
+  LucideSlidersHorizontal,
+  LucidePlug,
+  LucideRefreshCw,
 } from '@lucide/angular';
 const icons: Record<string, any> = {
   activity: LucideActivity,
@@ -73,6 +82,15 @@ const icons: Record<string, any> = {
   cpu: LucideCpu,
   trend: LucideArrowUpRight,
   sound: LucideVolume2,
+  pin: LucideMapPin,
+  history: LucideHistory,
+  swap: LucideArrowLeftRight,
+  sale: LucideShoppingCart,
+  in: LucideArrowDownToLine,
+  out: LucideArrowUpFromLine,
+  adjust: LucideSlidersHorizontal,
+  plug: LucidePlug,
+  refresh: LucideRefreshCw,
 };
 @Component({
   selector: 'gx-icon',

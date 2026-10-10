@@ -33,6 +33,14 @@ export const routes: Routes = [
           import('./components-gamexid/sucursales/sucursales').then((m) => m.Sucursales),
       },
       {
+        path: 'sedes',
+        loadComponent: () => import('./features/branches/branches').then((m) => m.Branches),
+      },
+      {
+        path: 'movimientos',
+        loadComponent: () => import('./features/movements/movements').then((m) => m.Movements),
+      },
+      {
         path: 'auditoria',
         loadComponent: () => import('./features/audit/audit').then((m) => m.Audit),
       },

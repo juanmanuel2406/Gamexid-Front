@@ -1,0 +1,151 @@
+:host {
+  display: grid;
+  gap: 16px;
+}
+.page-head {
+  margin-bottom: 4px;
+}
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.toolbar .search-field {
+  flex: 1;
+  border-radius: 10px;
+}
+.branches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.b-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  text-align: left;
+  color: var(--gx-text);
+  cursor: pointer;
+  min-width: 0;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.b-card:hover {
+  transform: translateY(-2px);
+}
+.b-card.depot {
+  border-color: rgba(255, 0, 230, 0.3);
+  background: linear-gradient(135deg, rgba(255, 0, 230, 0.06), var(--gx-surface) 60%);
+}
+.b-card.legacy {
+  opacity: 0.7;
+}
+.b-card .foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.b-card .foot .eyebrow {
+  margin: 0;
+}
+.code {
+  font: 10px var(--gx-mono);
+  letter-spacing: 0.1em;
+  color: var(--gx-dim);
+}
+.b-card h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.addr {
+  font-size: 12px;
+  color: var(--gx-muted);
+  min-height: 36px;
+}
+.stock {
+  font: 19px var(--gx-mono);
+}
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(3, 4, 8, 0.62);
+}
+.flip-panel {
+  position: fixed;
+  z-index: 61;
+  left: 50%;
+  top: 50%;
+  width: min(540px, calc(100vw - 32px));
+  height: min(560px, calc(100dvh - 48px));
+  margin-left: calc(min(540px, calc(100vw - 32px)) / -2);
+  margin-top: calc(min(560px, calc(100dvh - 48px)) / -2);
+  transform-origin: 0 0;
+  overflow: hidden;
+  background: var(--gx-surface);
+  border: 1px solid rgba(155, 56, 238, 0.4);
+  border-radius: 14px;
+}
+.flip-inner {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 22px;
+}
+.flip-inner .panel-header {
+  padding: 0;
+}
+.flip-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+.kv {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.kv div {
+  display: grid;
+  gap: 2px;
+}
+.kv span {
+  font-size: 11px;
+  color: var(--gx-muted);
+}
+.kv b {
+  font: 500 13px var(--gx-mono);
+}
+.kv b.ok {
+  color: var(--gx-ok);
+}
+.units {
+  overflow: auto;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-height: 0;
+}
+.unit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--gx-bg);
+  font-size: 12px;
+}
+.unit span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.unit .sn {
+  font-family: var(--gx-mono);
+  color: var(--gx-muted);
+}
+.modal-foot {
+  border-top: 0;
+  gap: 10px;
+}
