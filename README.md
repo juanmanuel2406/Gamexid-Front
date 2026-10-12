@@ -51,3 +51,18 @@ láser del scanner y confirmación de ingresos. Con movimiento reducido se desac
 Atajos de teclado: 1 a 8 para cambiar de pantalla.
 
 Consultar [el plan, los cambios y la reversión](REFACTOR-GAMEXID.md) antes de publicar esta rama experimental.
+
+## Catálogo Gaming City (octubre 2026)
+
+La pantalla `/integracion` consulta el backend autenticado en `/api/access/gc/products`
+y `/api/access/gc/products/{id}`. Permite búsqueda por nombre/código y consulta por ID,
+con código de proveedor, precio y stock informados. El detalle usa el depósito 1 del
+proveedor. El catálogo no se importa al inventario de Gamexid.
+
+La credencial IUE pertenece exclusivamente al backend. Angular no necesita ni recibe
+esa credencial. La conexión solo se muestra como verificada después de una consulta
+exitosa. Se eliminó la consulta de sucursales con el contrato anterior.
+
+Destino de publicación: https://gamexid.goodlycomunicacion.com.
+Publicar junto con la API actualizada de Gamexid; el servicio de acceso antiguo no
+cubre los endpoints de inventario que requiere esta versión del frontend.
