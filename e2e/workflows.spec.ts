@@ -318,6 +318,36 @@ test('home pública: hero, KPIs animados, arquitectura y acceso al login', async
   await expect(page.locator('.architecture-path')).toHaveCount(4);
   await page.locator('.nav').getByRole('link', { name: 'Entrar', exact: true }).click();
   await expect(page).toHaveURL(/login/);
-  await page.getByRole('link', { name: '← Volver al inicio' }).click();
+  await page.getByRole('link', { name: 'Volver al inicio' }).click();
   await expect(page).toHaveURL(/\/$/);
+});
+
+test('sistema tipográfico: solo Archivo, IBM Plex Sans y Plex Mono, sin emojis como íconos', async ({ page }) => {
+  await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
+  const allowed = /^"?(Archivo Variable|IBM Plex Sans|IBM Plex Mono)"?,/;
+  const audit = () =>
+    page.evaluate(() => {
+      const families = new Set<string>();
+      const glyphs: string[] = [];
+      const pictographic = /[\p{Extended_Pictographic}✓✔←-⇿]/u;
+      for (const el of Array.from(document.querySelectorAll('body *'))) {
+        families.add(getComputedStyle(el).fontFamily);
+        for (const node of Array.from(el.childNodes)) {
+          if (node.nodeType === 3 && pictographic.test((node.textContent || '').replace(/[©®™]/g, ''))) glyphs.push((node.textContent || '').trim());
+        }
+      }
+      return { families: [...families], glyphs };
+    });
+  for (const url of ['/', '/login']) {
+    await page.goto(url);
+    await page.waitForTimeout(500);
+    const { families, glyphs } = await audit();
+    for (const f of families) expect(f, `${url}: ${f}`).toMatch(allowed);
+    expect(glyphs, url).toEqual([]);
+  }
+  await page.goto('/');
+  const h1 = page.locator('h1');
+  await expect(h1).toHaveCSS('font-family', /Archivo Variable/);
+  await expect(h1).toHaveCSS('font-stretch', '112%');
+  await expect(page.locator('.kpi b').first()).toHaveCSS('font-family', /IBM Plex Mono/);
 });

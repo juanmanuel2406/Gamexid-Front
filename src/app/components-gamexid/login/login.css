@@ -64,16 +64,22 @@
   line-height: 1;
 }
 .gx-word b {
-  font: 700 34px 'Space Grotesk', var(--font-sans);
-  letter-spacing: 0.02em;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  font-stretch: var(--stretch-wordmark);
+  letter-spacing: 0.06em;
 }
 .gx-word small {
-  font: 600 11px var(--gx-mono);
-  letter-spacing: 0.24em;
+  font: 500 11px var(--font-data);
+  letter-spacing: 0.26em;
   color: #34d399;
   margin-top: 6px;
 }
 .back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   position: absolute;
   top: calc(20px + env(safe-area-inset-top, 0px));
   left: max(16px, 5vw);
@@ -88,11 +94,9 @@
   margin: 0;
 }
 .brand-panel h1 {
-  font-size: clamp(26px, 3vw, 38px);
-  font-weight: 600;
-  line-height: 1.12;
-  letter-spacing: -0.02em;
-  max-width: 18ch;
+  font-size: var(--fs-display);
+  line-height: 1.08;
+  max-width: 17ch;
 }
 .brand-description {
   color: var(--gx-muted);
@@ -134,9 +138,8 @@
   color: var(--gx-muted);
 }
 .login-card h2 {
-  font-size: 21px;
-  font-weight: 600;
-  margin-top: 8px;
+  font-size: 22px;
+  margin-top: 10px;
 }
 .login-sub {
   margin-bottom: 18px;
@@ -210,7 +213,7 @@
     --gx-iso-size: 64px;
   }
   .gx-word b {
-    font-size: 26px;
+    font-size: 23px;
   }
   .login-wrap {
     padding-top: 64px;

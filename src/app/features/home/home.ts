@@ -12,6 +12,7 @@ import { HttpClient } from '@angular/common/http';
 import { timeout } from 'rxjs';
 import { animate, spring, stagger, svg, utils } from 'animejs';
 import { GxIsotype } from '../../shared/gx-isotype';
+import { Icon } from '../../shared/icon';
 
 type Anim = { pause: () => unknown };
 
@@ -22,14 +23,18 @@ interface Kpi {
   to: number;
   unit?: string;
   note: string;
-  icon: 'pin' | 'scan' | 'db';
+  icon: 'pin' | 'scan' | 'database';
 }
 
 /** Public landing page (route "/"). Every animation lives in ngAfterViewInit and is released in ngOnDestroy. */
+/** Lucide `check` path, inlined because serial pills are created imperatively by the scan loop. */
+const CHECK_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+
 @Component({
   selector: 'gx-home',
   standalone: true,
-  imports: [RouterLink, GxIsotype],
+  imports: [RouterLink, GxIsotype, Icon],
   templateUrl: './home.html',
   styleUrl: './home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,7 +54,7 @@ export class Home implements AfterViewInit, OnDestroy {
   readonly kpis: Kpi[] = [
     { cls: 'kpi-counter-1', label: 'Sedes Gaming City', from: 0, to: 16, note: 'Depósito central + 15 locales conectados', icon: 'pin' },
     { cls: 'kpi-counter-2', label: 'Escaneo por cámara', from: 0, to: 60, unit: 'fps', note: 'Lectura continua del visor', icon: 'scan' },
-    { cls: 'kpi-counter-3', label: 'Respuesta Aiven MySQL', from: 100, to: 10, unit: 'ms', note: 'Consulta de serial en la base', icon: 'db' },
+    { cls: 'kpi-counter-3', label: 'Respuesta Aiven MySQL', from: 100, to: 10, unit: 'ms', note: 'Consulta de serial en la base', icon: 'database' },
   ];
   readonly stock = [
     { name: 'Belgrano', value: 42 },
@@ -174,7 +179,8 @@ export class Home implements AfterViewInit, OnDestroy {
         if (t !== this.token) return;
         const pill = document.createElement('span');
         pill.className = 'pill ok';
-        pill.textContent = '✓ ' + s;
+        pill.innerHTML = CHECK_SVG;
+        pill.append(s);
         serials.appendChild(pill);
         if (!this.reduced) animate(pill, { opacity: [0, 1], scale: [0.6, 1], duration: 600, ease: this.spring });
         setCount(i + 1);

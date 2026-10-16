@@ -10,7 +10,7 @@
       <span class="status" [class.on]="api() === 'online'" [class.off]="api() === 'preview'">
         <i></i>{{ api() === 'online' ? 'Sistema en línea' : api() === 'preview' ? 'API sin conexión' : 'Comprobando API' }}
       </span>
-      <a class="btn primary" routerLink="/login">Entrar</a>
+      <a class="btn primary" routerLink="/login">Entrar <gx-icon name="trend" [size]="16" /></a>
     </div>
   </div>
 </header>
@@ -24,22 +24,22 @@
           <gx-isotype [animated]="true" [loop]="true" label="Gamexid" style="--gx-iso-size: 88px" />
           <span class="gx-word"><b>GAMEXID</b><small>SERIAL TRACKING</small></span>
         </div>
-        <h1 id="hero-title">Cada serial, en la sede correcta.</h1>
+        <h1 id="hero-title">Cada serial, <span class="soft">en la sede correcta.</span></h1>
         <p class="lead">
           Registro de consolas y accesorios por EAN-13 y número de serie, desde el depósito de Morón
           hasta los 16 locales de Gaming City. Ingresos verificados, stock por sede y auditoría en
           tiempo real.
         </p>
         <div class="ctas">
-          <a class="btn primary" routerLink="/login">Entrar al workspace <span aria-hidden="true">→</span></a>
-          <a class="btn" href="#arquitectura">Ver la arquitectura</a>
+          <a class="btn primary" routerLink="/login">Entrar al workspace <gx-icon name="arrow" [size]="17" /></a>
+          <a class="btn" href="#arquitectura"><gx-icon name="route" [size]="17" /> Ver la arquitectura</a>
         </div>
       </div>
 
       <div class="term glass" aria-label="Terminal de escaneo en vivo">
         <div class="term-head">
           <span class="dots"><i></i><i></i><i></i></span>
-          <span class="t">TERMINAL · DEPÓSITO MORÓN</span>
+          <span class="t"><gx-icon name="scanline" [size]="14" /> TERMINAL · DEPÓSITO MORÓN</span>
           <span class="live"><i class="live-dot"></i>EN VIVO</span>
         </div>
         <div class="viewfinder">
@@ -65,7 +65,7 @@
         </div>
         <div class="term-foot"><span>Unidades verificadas</span><strong class="count">00</strong></div>
         <div class="term-toast" role="status">
-          <span class="ok-icon" aria-hidden="true">✓</span><span>Ingreso <b class="mono">#128</b> registrado en Morón · 3 unidades</span>
+          <gx-icon class="ok-icon" name="done" [size]="18" /><span>Ingreso <b class="mono">#128</b> registrado en Morón · 3 unidades</span>
         </div>
       </div>
     </div>
@@ -75,13 +75,7 @@
         <div class="kpi glass">
           <div class="top">
             {{ k.label }}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-              @switch (k.icon) {
-                @case ('pin') { <path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /> }
-                @case ('scan') { <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16" /> }
-                @default { <ellipse cx="12" cy="6" rx="7" ry="3" /><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3" /> }
-              }
-            </svg>
+            <span class="ico" [class.em]="k.icon === 'scan'"><gx-icon [name]="k.icon" [size]="16" /></span>
           </div>
           <b><span [class]="k.cls">{{ k.to }}</span>@if (k.unit) {<small>{{ k.unit }}</small>}</b>
           <span class="note">{{ k.note }}</span>
@@ -94,13 +88,13 @@
   <!-- BENTO -->
   <section class="wrap sec" aria-labelledby="bento-t">
     <div class="sec-head">
-      <div class="eyebrow">Funciones</div>
+      <div class="eyebrow"><span class="idx">01</span><span class="rule"></span>Funciones</div>
       <h2 id="bento-t">Lo que el equipo usa todos los días.</h2>
       <p>Pantallas para operar rápido con teclado, lector o cámara.</p>
     </div>
     <div class="bento">
       <article class="card glass span-4">
-        <h3>Stock por sede</h3>
+        <div class="card-head"><span class="ico"><gx-icon name="warehouse" [size]="18" /></span><h3>Stock por sede</h3></div>
         <p>Unidades disponibles por local, calculadas desde los seriales. Las sedes por debajo del mínimo se marcan para reponer.</p>
         <div class="mini-bars">
           @for (s of stock; track s.name) {
@@ -111,11 +105,11 @@
         </div>
       </article>
       <article class="card glass span-2">
-        <h3>Scanner integrado</h3>
+        <div class="card-head"><span class="ico em"><gx-icon name="scan" [size]="18" /></span><h3>Scanner integrado</h3></div>
         <p>Lectores USB o Bluetooth en modo teclado. Enter confirma cada lectura.</p>
       </article>
       <article class="card glass span-3">
-        <h3>Auditoría de movimientos</h3>
+        <div class="card-head"><span class="ico"><gx-icon name="history" [size]="18" /></span><h3>Auditoría de movimientos</h3></div>
         <p>Ingresos, transferencias y ventas con fecha, usuario y seriales.</p>
         <div class="tl">
           <div><b>Ingreso #128</b><span class="ok">Morón · 3 u.</span></div>
@@ -124,7 +118,7 @@
         </div>
       </article>
       <article class="card glass span-3">
-        <h3>Remitos en PDF</h3>
+        <div class="card-head"><span class="ico"><gx-icon name="doc" [size]="18" /></span><h3>Remitos en PDF</h3></div>
         <p>PdfPig lee el remito en el servidor y propone productos y cantidades para revisar.</p>
         <div class="tl">
           <div><b>R-4821-07.pdf</b><span>4 líneas detectadas</span></div>
@@ -137,7 +131,7 @@
   <!-- ARCHITECTURE -->
   <section class="wrap sec" id="arquitectura" aria-labelledby="arch-t">
     <div class="sec-head">
-      <div class="eyebrow">Arquitectura</div>
+      <div class="eyebrow"><span class="idx">02</span><span class="rule"></span>Arquitectura</div>
       <h2 id="arch-t">De la lectura a la base, sin pasos intermedios.</h2>
       <p>Cada lectura viaja a la API .NET, que valida contra Aiven MySQL y consulta GC-API en modo solo lectura.</p>
     </div>

@@ -67,9 +67,7 @@
   border-bottom: 1px solid #1a2034;
 }
 .summary-metric strong {
-  font:
-    22px 'JetBrains Mono',
-    monospace;
+  font: 500 22px var(--font-data);
 }
 .summary-metric span {
   font-size: 12px;

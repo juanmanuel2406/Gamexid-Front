@@ -73,7 +73,7 @@
     <section class="terminal-main">
       <div class="panel scan-zone" [class.awaiting]="scanMode() === 'ean'">
         <div class="panel-header">
-          <h2 class="section-title"><gx-icon name="scan" /> Identificar por EAN, SKU o serial</h2>
+          <h2 class="section-title"><gx-icon name="scan" [size]="15" />Identificar por EAN, SKU o serial</h2>
           <span class="badge" [class.status-ok]="scanMode() === 'ean'">{{
             scanMode() === 'ean' ? 'ESPERANDO CÓDIGO' : 'VALIDANDO SERIAL'
           }}</span>

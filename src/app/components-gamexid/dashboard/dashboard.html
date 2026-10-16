@@ -59,7 +59,7 @@
     <section class="panel" data-enter>
       <div class="panel-header">
         <div>
-          <h2 class="section-title">Volumen de ingreso</h2>
+          <h2 class="section-title"><gx-icon name="chart" [size]="15" />Volumen de ingreso</h2>
           <p class="page-sub">Unidades registradas por día · {{ branchName() }}</p>
         </div>
         <span class="tag-gx">Últimos 7 días</span>
@@ -78,7 +78,7 @@
     <section class="panel" data-enter>
       <div class="panel-header">
         <div>
-          <h2 class="section-title">Actividad de la red</h2>
+          <h2 class="section-title"><gx-icon name="activity" [size]="15" />Actividad de la red</h2>
           <p class="page-sub">
             Últimos movimientos registrados en la API
             @if (store.updatedAt(); as t) { · {{ t | date: 'HH:mm:ss' }} }
@@ -113,7 +113,7 @@
     <section class="panel" data-enter>
       <div class="panel-header">
         <div>
-          <h2 class="section-title">Stock por sede</h2>
+          <h2 class="section-title"><gx-icon name="warehouse" [size]="15" />Stock por sede</h2>
           <p class="page-sub">Unidades disponibles · se reordena cuando cambia el inventario</p>
         </div>
         <a routerLink="/sedes" class="btn-secundario sm">Ver sedes</a>
@@ -147,7 +147,7 @@
     <section class="panel" data-enter>
       <div class="panel-header">
         <div>
-          <h2 class="section-title">Servicios y conexión</h2>
+          <h2 class="section-title"><gx-icon name="server" [size]="15" />Servicios y conexión</h2>
           <p class="page-sub">Estado informado por el servidor</p>
         </div>
       </div>

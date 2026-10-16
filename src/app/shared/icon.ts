@@ -45,6 +45,15 @@ import {
   LucideSlidersHorizontal,
   LucidePlug,
   LucideRefreshCw,
+  LucideDatabase,
+  LucideFileText,
+  LucideServer,
+  LucideChartColumn,
+  LucideBadgeCheck,
+  LucideScanLine,
+  LucideCircleCheckBig,
+  LucideWaypoints,
+  LucideStore,
 } from '@lucide/angular';
 const icons: Record<string, any> = {
   activity: LucideActivity,
@@ -91,6 +100,15 @@ const icons: Record<string, any> = {
   adjust: LucideSlidersHorizontal,
   plug: LucidePlug,
   refresh: LucideRefreshCw,
+  database: LucideDatabase,
+  doc: LucideFileText,
+  server: LucideServer,
+  chart: LucideChartColumn,
+  verified: LucideBadgeCheck,
+  scanline: LucideScanLine,
+  done: LucideCircleCheckBig,
+  route: LucideWaypoints,
+  store: LucideStore,
 };
 @Component({
   selector: 'gx-icon',

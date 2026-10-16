@@ -71,10 +71,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  font:
-    9px 'JetBrains Mono',
-    monospace;
-  letter-spacing: 0.6px;
+  font: 500 10px var(--font-data);
+  letter-spacing: 0.12em;
   padding: 12px;
   background: #0a0d18;
   border-bottom: 1px solid #1a2034;
@@ -96,9 +94,7 @@
   white-space: pre-wrap;
   overflow: auto;
   max-height: 330px;
-  font:
-    11px/1.8 'JetBrains Mono',
-    monospace;
+  font: 500 11px/1.8 var(--font-data);
   padding: 16px;
   margin: 0;
 }

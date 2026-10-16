@@ -39,18 +39,21 @@
   line-height: 1;
 }
 .wordmark b {
-  font: 700 18px 'Space Grotesk', var(--font-sans);
-  letter-spacing: 0.02em;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  font-stretch: var(--stretch-wordmark);
+  letter-spacing: 0.06em;
 }
 .wordmark small {
-  font: 600 8px var(--gx-mono);
-  letter-spacing: 0.24em;
+  font: 500 8px var(--font-data);
+  letter-spacing: 0.26em;
   color: #34d399;
   margin-top: 4px;
 }
 .rail-label {
   padding: 10px 10px 6px;
-  font: 10px var(--gx-mono);
+  font: 500 10px var(--font-data);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--gx-dim);
@@ -94,6 +97,7 @@
   color: var(--gx-muted);
   font-size: 13.5px;
   font-weight: 500;
+  letter-spacing: 0.005em;
   width: 100%;
   background: none;
   border: 0;

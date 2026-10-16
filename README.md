@@ -46,7 +46,15 @@ unidades disponibles que devuelve la API; no hay datos simulados en la aplicaci�
 `NetActivity` registra las solicitudes reales a `/api`: alimenta la barra de carga del
 encabezado y el indicador de la última respuesta (método, ruta, estado y tiempo).
 
-El isotipo (`src/app/shared/gx-isotype.ts`) es una G geométrica dentro de las cuatro esquinas de un visor de scanner; su travesaño es la línea láser verde de lectura. Tipografías: Space Grotesk (títulos), Plus Jakarta Sans (texto) y JetBrains Mono (seriales, EAN y KPIs).
+El isotipo (`src/app/shared/gx-isotype.ts`) es una G geométrica dentro de las cuatro esquinas de un visor de scanner; su travesaño es la línea láser verde de lectura. Sistema tipográfico de tres capas (tokens en `src/styles.css`):
+
+| Capa | Familia | Uso |
+| --- | --- | --- |
+| Display | Archivo variable, ancho 112 % (wordmark 125 %) | Títulos de página, secciones, modales y tarjetas |
+| Interfaz | IBM Plex Sans 400/500/600 | Texto, formularios, botones, navegación y tablas |
+| Datos | IBM Plex Mono 400/500/600 | Seriales, EAN-13, SKU, KPIs, horarios y etiquetas meta |
+
+No se usan Inter, Roboto, Arial ni fuentes del sistema. Los íconos son siempre de Lucide (`<gx-icon>`); no se usan emojis ni símbolos de texto como íconos. Un test e2e verifica ambas reglas.
 
 Las animaciones usan Anime.js (`src/app/shared/anim.ts`): apertura del login, entrada
 de vistas, contadores, barras, reordenamiento del stock por sede, expansión de sedes,
