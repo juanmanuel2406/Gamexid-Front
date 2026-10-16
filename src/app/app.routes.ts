@@ -1,6 +1,9 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 export const routes: Routes = [
+  { path: 'inicio', pathMatch: 'full', redirectTo: '' },
+  { path: 'flujo', loadComponent: () => import('./features/flow/flow').then(m => m.Flow) },
+  { path: 'marca', loadComponent: () => import('./features/brand/brand').then(m => m.Brand) },
   {
     path: '',
     pathMatch: 'full',

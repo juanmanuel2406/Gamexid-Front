@@ -1,6 +1,6 @@
 import { Component, ElementRef, inject, signal, afterNextRender } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { animate, stagger } from 'animejs';
 import { GxIsotype } from '../../shared/gx-isotype';
 import { Icon } from '../../shared/icon';
@@ -19,6 +19,7 @@ export class Login {
   private data = inject(GamexidService);
   private workspace = inject(Workspace);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private host = inject(ElementRef<HTMLElement>);
   email = '';
   password = '';
@@ -86,7 +87,8 @@ export class Login {
         this.granted.set(true);
         const go = () => {
           this.busy.set(false);
-          this.router.navigateByUrl('/dashboard');
+          const target = this.route.snapshot.queryParamMap.get('returnUrl');
+          this.router.navigateByUrl(target?.startsWith('/') && !target.startsWith('//') && !target.startsWith('/login') ? target : '/dashboard');
         };
         if (reducedMotion()) return go();
         animate(this.el('.login-wrap'), { opacity: [1, 0], scale: [1, 0.98], duration: 380, delay: 250, ease: 'inQuad', onComplete: go });

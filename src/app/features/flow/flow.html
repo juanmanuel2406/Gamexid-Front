@@ -1,0 +1,15 @@
+<gx-public-nav /><main class="wrap sec"><h1>Flujo</h1><div class="arch glass"><svg viewBox="0 0 960 300" role="img" aria-label="Remito PDF y scanner envían datos a Gamexid.Api, que se conecta con Aiven MySQL y Productos">
+        <defs>
+          <linearGradient id="home-arch-g" x1="0" x2="1"><stop offset="0" stop-color="#8b5cf6" /><stop offset="1" stop-color="#10b981" /></linearGradient>
+        </defs>
+        <path class="architecture-path" d="M210 80 C 290 80, 300 150, 380 150" stroke="url(#home-arch-g)" />
+        <path class="architecture-path" d="M210 220 C 290 220, 300 150, 380 150" stroke="url(#home-arch-g)" />
+        <path class="architecture-path" d="M580 150 C 660 150, 670 80, 750 80" stroke="url(#home-arch-g)" />
+        <path class="architecture-path" d="M580 150 C 660 150, 670 220, 750 220" stroke="url(#home-arch-g)" />
+        <g class="node"><rect x="20" y="48" width="190" height="64" rx="12" /><text x="40" y="78">Remito PDF</text><text class="sub" x="40" y="98">PdfPig · extracción</text></g>
+        <g class="node"><rect x="20" y="188" width="190" height="64" rx="12" /><text x="40" y="218">Scanner</text><text class="sub" x="40" y="238">EAN-13 · serial</text></g>
+        <g class="node api"><rect x="380" y="110" width="200" height="80" rx="14" /><text x="400" y="145">Gamexid.Api</text><text class="sub" x="400" y="167">.NET 9 · cookies · X-Gamexid</text></g>
+        <g class="node db"><rect x="750" y="48" width="190" height="64" rx="12" /><text x="770" y="78">Aiven MySQL</text><text class="sub" x="770" y="98">TLS · VerifyFull</text></g>
+        <g class="node"><rect x="750" y="188" width="190" height="64" rx="12" /><text x="770" y="218">Productos</text><text class="sub" x="770" y="238">GamingCity · lectura</text></g>
+        <g class="packets"></g>
+      </svg></div></main>
