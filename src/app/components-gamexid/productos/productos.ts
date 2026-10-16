@@ -1,4 +1,5 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Catalogo } from './catalogo';
 import { FormsModule } from '@angular/forms';
@@ -18,15 +19,13 @@ import { enterStagger, growBars } from '../../shared/anim';
   templateUrl: './productos.html',
   styleUrl: './productos.css',
 })
-export class Productos implements OnInit {
+export class Productos {
   private data = inject(GamexidService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   readonly inventory = signal(this.route.snapshot.queryParamMap.get('vista') === 'inventario');
   selectInventory(value: boolean) {
-    this.inventory.set(value);
     void this.router.navigate([], { relativeTo: this.route, queryParams: { vista: value ? 'inventario' : null }, replaceUrl: true });
-    if (value) this.load();
   }
   readonly workspace = inject(Workspace);
   private store = inject(InventoryStore);
@@ -51,8 +50,12 @@ export class Productos implements OnInit {
       [p.name, p.sku, p.ean].some((v) => v.toLowerCase().includes(q)),
     );
   });
-  ngOnInit() {
-    if (this.inventory()) this.load();
+  constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      const inventory = params.get('vista') === 'inventario';
+      this.inventory.set(inventory);
+      if (inventory) this.load();
+    });
   }
   load() {
     this.data.getProductos().subscribe({
