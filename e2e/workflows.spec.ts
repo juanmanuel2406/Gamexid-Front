@@ -366,7 +366,7 @@ test('home pública: hero, KPIs animados, arquitectura y acceso al login', async
   await expect(page.locator('.kpi-counter-3')).toHaveText('1');
   await page.locator('.arch').scrollIntoViewIfNeeded();
   await expect(page.locator('.architecture-path')).toHaveCount(4);
-  await page.locator('gx-public-nav').getByRole('link', { name: 'Entrar', exact: true }).click();
+  await page.locator('.nav').getByRole('link', { name: 'Entrar', exact: true }).click();
   await expect(page).toHaveURL(/login/);
   await page.getByRole('link', { name: 'Volver al inicio' }).click();
   await expect(page).toHaveURL(/\/$/);

@@ -6,7 +6,6 @@ import {
   OnDestroy,
   inject,
 } from '@angular/core';
-import { PublicNav } from '../../shared/public-nav';
 import { RouterLink } from '@angular/router';
 import { animate, spring, stagger, svg, utils } from 'animejs';
 import { GxIsotype } from '../../shared/gx-isotype';
@@ -30,7 +29,7 @@ const CHECK_SVG =
 @Component({
   selector: 'gx-home',
   standalone: true,
-  imports: [RouterLink, GxIsotype, Icon, PublicNav],
+  imports: [RouterLink, GxIsotype, Icon],
   templateUrl: './home.html',
   styleUrl: './home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

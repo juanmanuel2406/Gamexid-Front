@@ -1,6 +1,16 @@
 <div class="atmo" aria-hidden="true"></div>
 
-<gx-public-nav />
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="gx-logo" routerLink="/" aria-label="Gamexid, inicio">
+      <gx-isotype [compact]="true" [animated]="true" [loop]="true" style="--gx-iso-size: 36px" />
+      <span class="gx-word"><b>GAMEXID</b><small>SERIAL TRACKING</small></span>
+    </a>
+    <div class="nav-right">
+      <a class="btn primary" routerLink="/login">Entrar <gx-icon name="trend" [size]="16" /></a>
+    </div>
+  </div>
+</header>
 
 <main>
 
@@ -15,7 +25,7 @@
 
         <div class="ctas">
           <a class="btn primary" routerLink="/login">Entrar al workspace <gx-icon name="arrow" [size]="17" /></a>
-          <a class="btn" routerLink="/flujo"><gx-icon name="route" [size]="17" /> Flujo</a>
+          <a class="btn" href="#arquitectura"><gx-icon name="route" [size]="17" /> Ver la arquitectura</a>
         </div>
       </div>
 
@@ -143,7 +153,7 @@
         <span class="gx-logo"><gx-isotype [compact]="true" style="--gx-iso-size: 32px" /><span class="gx-word"><b>GAMEXID</b><small>SERIAL TRACKING</small></span></span>
 
       </div>
-      <div><h4>Producto</h4><ul><li><a routerLink="/">Inicio</a></li><li><a routerLink="/flujo">Arquitectura</a></li></ul></div>
+      <div><h4>Producto</h4><ul><li><a routerLink="/">Inicio</a></li><li><a href="#arquitectura">Arquitectura</a></li></ul></div>
       <div><h4>Plataforma</h4><ul><li>Gamexid.Api · .NET 9</li><li>Aiven MySQL</li></ul></div>
       <div><h4>Acceso</h4><ul><li><a routerLink="/login">Entrar</a></li></ul></div>
     </div>

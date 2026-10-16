@@ -55,13 +55,10 @@ export class App {
 
   readonly login = computed(() => {
     const path = this.url().split(/[?#]/)[0];
-    return ['/', '', '/inicio', '/flujo', '/marca'].includes(path) || path.startsWith('/login');
+    return path === '/' || path === '' || path.startsWith('/login');
   });
   private introPlayed = false;
   readonly navigation: NavItem[] = [
-    { url: '/inicio', icon: 'dashboard', name: 'Inicio', short: 'Inicio', key: '0' },
-    { url: '/flujo', icon: 'route', name: 'Flujo', short: 'Flujo', key: '8' },
-    { url: '/marca', icon: 'scan', name: 'Marca', short: 'Marca', key: '9' },
     { url: '/dashboard', icon: 'dashboard', name: 'Centro de operaciones', short: 'Operaciones', key: '1' },
     { url: '/ingresos', icon: 'scan', name: 'Ingreso de mercadería', short: 'Ingresos', key: '2' },
     { url: '/productos', icon: 'package', name: 'Catálogo de productos', short: 'Productos', key: '3' },
@@ -170,7 +167,7 @@ export class App {
 
   private isPublic(url: string) {
     const path = url.split(/[?#]/)[0];
-    return ['/', '', '/inicio', '/flujo', '/marca'].includes(path) || path.startsWith('/login');
+    return path === '/' || path === '' || path.startsWith('/login');
   }
   netOk() {
     const s = this.net.last()?.status || 0;
