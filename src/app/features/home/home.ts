@@ -5,11 +5,8 @@ import {
   ElementRef,
   OnDestroy,
   inject,
-  signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { timeout } from 'rxjs';
 import { animate, spring, stagger, svg, utils } from 'animejs';
 import { GxIsotype } from '../../shared/gx-isotype';
 import { Icon } from '../../shared/icon';
@@ -41,7 +38,6 @@ const CHECK_SVG =
 })
 export class Home implements AfterViewInit, OnDestroy {
   private host = inject(ElementRef<HTMLElement>);
-  private http = inject(HttpClient);
   private anims: Anim[] = [];
   private observers: IntersectionObserver[] = [];
   private cleanups: (() => void)[] = [];
@@ -49,10 +45,9 @@ export class Home implements AfterViewInit, OnDestroy {
   private readonly reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   private readonly spring = spring({ mass: 1, stiffness: 80, damping: 10, velocity: 0 });
 
-  readonly api = signal<'checking' | 'online' | 'preview'>('checking');
   readonly year = new Date().getFullYear();
   readonly kpis: Kpi[] = [
-    { cls: 'kpi-counter-1', label: 'Sedes Gaming City', from: 0, to: 16, note: 'Depósito central + 15 locales conectados', icon: 'pin' },
+    { cls: 'kpi-counter-1', label: 'Sedes GamingCity', from: 0, to: 16, note: '16 sedes conectadas · Morón como depósito', icon: 'pin' },
     { cls: 'kpi-counter-2', label: 'Escaneo por cámara', from: 0, to: 60, unit: 'fps', note: 'Lectura continua del visor', icon: 'scan' },
     { cls: 'kpi-counter-3', label: 'Respuesta Aiven MySQL', from: 100, to: 10, unit: 'ms', note: 'Consulta de serial en la base', icon: 'database' },
   ];
@@ -78,16 +73,6 @@ export class Home implements AfterViewInit, OnDestroy {
     }
     return out;
   })();
-
-  constructor() {
-    this.http
-      .get<{ status?: string }>('/api/access/health')
-      .pipe(timeout(4000))
-      .subscribe({
-        next: (r) => this.api.set(r?.status === 'ok' ? 'online' : 'preview'),
-        error: () => this.api.set('preview'),
-      });
-  }
 
   ngAfterViewInit() {
     this.laser();

@@ -7,9 +7,6 @@
       <span class="gx-word"><b>GAMEXID</b><small>SERIAL TRACKING</small></span>
     </a>
     <div class="nav-right">
-      <span class="status" [class.on]="api() === 'online'" [class.off]="api() === 'preview'">
-        <i></i>{{ api() === 'online' ? 'Sistema en línea' : api() === 'preview' ? 'API sin conexión' : 'Comprobando API' }}
-      </span>
       <a class="btn primary" routerLink="/login">Entrar <gx-icon name="trend" [size]="16" /></a>
     </div>
   </div>
@@ -26,8 +23,8 @@
         </div>
         <h1 id="hero-title">Cada serial, <span class="soft">en la sede correcta.</span></h1>
         <p class="lead">
-          Registro de consolas y accesorios por EAN-13 y número de serie, desde el depósito de Morón
-          hasta los 16 locales de Gaming City. Ingresos verificados, stock por sede y auditoría en
+          Registro de consolas y accesorios por EAN-13 y número de serie, en las 16 sedes de GamingCity,
+          con Morón como depósito central. Ingresos verificados, stock por sede y auditoría en
           tiempo real.
         </p>
         <div class="ctas">
@@ -148,7 +145,7 @@
         <g class="node"><rect x="20" y="188" width="190" height="64" rx="12" /><text x="40" y="218">Scanner</text><text class="sub" x="40" y="238">EAN-13 · serial</text></g>
         <g class="node api"><rect x="380" y="110" width="200" height="80" rx="14" /><text x="400" y="145">Gamexid.Api</text><text class="sub" x="400" y="167">.NET 9 · cookies · X-Gamexid</text></g>
         <g class="node db"><rect x="750" y="48" width="190" height="64" rx="12" /><text x="770" y="78">Aiven MySQL</text><text class="sub" x="770" y="98">TLS · VerifyFull</text></g>
-        <g class="node"><rect x="750" y="188" width="190" height="64" rx="12" /><text x="770" y="218">GC-API</text><text class="sub" x="770" y="238">Gaming City · lectura</text></g>
+        <g class="node"><rect x="750" y="188" width="190" height="64" rx="12" /><text x="770" y="218">GC-API</text><text class="sub" x="770" y="238">GamingCity · lectura</text></g>
         <g class="packets"></g>
       </svg>
     </div>
@@ -160,12 +157,12 @@
     <div class="foot-grid">
       <div>
         <span class="gx-logo"><gx-isotype [compact]="true" style="--gx-iso-size: 32px" /><span class="gx-word"><b>GAMEXID</b><small>SERIAL TRACKING</small></span></span>
-        <p>Control de inventario serializado para la red Gaming City.</p>
+        <p>Control de inventario serializado para la red GamingCity.</p>
       </div>
       <div><h4>Producto</h4><ul><li><a routerLink="/">Inicio</a></li><li><a href="#arquitectura">Arquitectura</a></li></ul></div>
-      <div><h4>Plataforma</h4><ul><li>Gamexid.Api · .NET 9</li><li>Aiven MySQL</li><li>GC-API solo lectura</li></ul></div>
+      <div><h4>Plataforma</h4><ul><li>Gamexid.Api · .NET 9</li><li>Aiven MySQL</li></ul></div>
       <div><h4>Acceso</h4><ul><li><a routerLink="/login">Entrar</a></li></ul></div>
     </div>
-    <div class="foot-bottom"><span>© {{ year }} Gamexid · Análisis de Sistemas II</span><span>EAN-13 · SERIAL · VERIFICADO</span></div>
+    <div class="foot-bottom"><span>© {{ year }} Gamexid</span><span>EAN-13 · SERIAL · VERIFICADO</span></div>
   </div>
 </footer>

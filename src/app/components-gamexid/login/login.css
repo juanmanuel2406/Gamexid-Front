@@ -102,19 +102,6 @@
   color: var(--gx-muted);
   max-width: 52ch;
 }
-.brand-code {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font: 11px var(--gx-mono);
-  letter-spacing: 0.1em;
-  color: var(--gx-dim);
-}
-.brand-code span {
-  padding: 4px 8px;
-  border: 1px solid var(--gx-line-2);
-  border-radius: 6px;
-}
 .access-panel {
   display: grid;
   justify-items: center;
@@ -128,18 +115,8 @@
   border: 1px solid var(--gx-line);
   border-radius: 16px;
 }
-.access-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font: 10.5px var(--gx-mono);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--gx-muted);
-}
 .login-card h2 {
   font-size: 22px;
-  margin-top: 10px;
 }
 .login-sub {
   margin-bottom: 18px;
