@@ -108,23 +108,73 @@ test('pedido manual: persiste y permite recepción parcial', async ({ page }) =>
   await page.goto('/sucursales');
   await page.getByRole('button', { name: 'Nuevo pedido' }).click();
   await page.getByLabel('Referencia del pedido').fill('QA-PEDIDO');
+  await page.getByLabel('Proveedor', { exact: true }).fill('Proveedor QA');
   await page.getByLabel('Sucursal de destino').selectOption({ label: 'Belgrano' });
   await page.getByRole('button', { name: 'Agregar producto manualmente' }).click();
   await page.getByLabel('EAN', { exact: true }).fill('7790000000011');
   await page.getByLabel('EAN', { exact: true }).blur();
   await expect(page.getByLabel('Producto', { exact: true })).toHaveValue('Notebook 14" 8GB');
   await page.getByLabel('Pedido', { exact: true }).fill('3');
-  await page.getByLabel('Recibido', { exact: true }).fill('1');
   await page.getByRole('button', { name: 'Guardar pedido' }).click();
+  await page.getByLabel('EAN o SKU del pedido').fill('7790000000011');
+  await page.getByRole('button', { name: 'Seleccionar producto', exact: true }).click();
+  await page.getByLabel('Serial', { exact: true }).fill('ORDER-001');
+  await page.getByLabel('Serial', { exact: true }).press('Enter');
+  await expect(page.getByLabel('Recibido', { exact: true })).toHaveValue('1');
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
   await expect(page.getByText('1 productos · 2 unidades pendientes')).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: 'Controlar recepción' }).click();
   await expect(page.getByLabel('Recibido', { exact: true })).toHaveValue('1');
-  await page.getByLabel('Llegó todo').check();
-  await page.getByRole('button', { name: 'Guardar pedido' }).click();
+  await page.getByLabel('EAN o SKU del pedido').fill('7790000000011');
+  await page.getByRole('button', { name: 'Seleccionar producto', exact: true }).click();
+  for (const sn of ['ORDER-002', 'ORDER-003']) {
+    await page.getByLabel('Serial', { exact: true }).fill(sn);
+    await page.getByLabel('Serial', { exact: true }).press('Enter');
+    await expect(page.getByLabel('Serial', { exact: true })).toHaveValue('');
+  }
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
   await expect(page.getByText('1 productos · 0 unidades pendientes')).toBeVisible();
 });
-test('navegación: atajos, menú móvil y vista sin desborde', async ({ page }) => {
+test('pedido extraído: conserva borrador al fallar y guarda JSON por API', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/api/orders', async r => {
+    attempts++;
+    const dto = r.request().postDataJSON();
+    expect(dto.supplier).toBe('PDF supplier');
+    expect(dto.lines[0].unitPrice).toBe(1200.5);
+    expect(dto.lines[0].expected).toBe(3);
+    expect(dto.pdf).toBeUndefined();
+    expect(r.request().headers()['x-gamexid']).toBe('1');
+    if (attempts === 1) return r.abort('failed');
+    return r.fallback();
+  });
+  await page.goto('/sucursales');
+  await page.getByRole('button', { name: 'Nuevo pedido' }).click();
+  await page.getByLabel('Proveedor', { exact: true }).fill('PDF supplier');
+  await page.getByLabel('Referencia del pedido').fill('PDF-001');
+  await page.getByLabel('Sucursal de destino').selectOption({ label: 'Belgrano' });
+  await page.locator('#pedido-pdf').setInputFiles({ name: 'order.pdf', mimeType: 'application/pdf', buffer: invoicePdf() });
+  await page.getByRole('button', { name: 'Extraer con PdfPig' }).click();
+  await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('3');
+  await page.getByRole('button', { name: 'Guardar pedido' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'No se pudo confirmar' })).toBeVisible();
+  await expect(page.getByLabel('Proveedor', { exact: true })).toHaveValue('PDF supplier');
+  await page.getByRole('button', { name: 'Guardar pedido' }).click();
+  await expect(page.getByLabel('EAN o SKU del pedido')).toBeVisible();
+  await page.getByLabel('EAN o SKU del pedido').fill('7790000000011');
+  await page.getByRole('button', { name: 'Seleccionar producto', exact: true }).click();
+  let scanAttempts = 0;
+  await page.route('**/api/orders/*/serials', r => ++scanAttempts === 1 ? r.abort('failed') : r.fallback());
+  await page.getByLabel('Serial', { exact: true }).fill('RETRY-001');
+  await page.getByRole('button', { name: 'Guardar serial', exact: true }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'No se pudo confirmar' })).toBeVisible();
+  await expect(page.getByLabel('Serial', { exact: true })).toHaveValue('RETRY-001');
+  await page.getByRole('button', { name: 'Guardar serial', exact: true }).click();
+  await expect(page.getByLabel('Recibido', { exact: true })).toHaveValue('1');
+});
+
+test('menú hover, logo visible y vista móvil sin desborde', async ({ page }) => {
   await page.goto('/dashboard');
   await expect(page.locator('.nav-item.active')).toHaveText(/Operaciones/);
   await page.locator('.page-title').click();
@@ -312,8 +362,8 @@ test('home pública: hero, KPIs animados, arquitectura y acceso al login', async
   await expect(page.locator('.laser-line')).toBeVisible();
   await page.locator('.kpis').scrollIntoViewIfNeeded();
   await expect(page.locator('.kpi-counter-1')).toHaveText('16');
-  await expect(page.locator('.kpi-counter-2')).toHaveText('60');
-  await expect(page.locator('.kpi-counter-3')).toHaveText('10');
+  await expect(page.locator('.kpi-counter-2')).toHaveText('3');
+  await expect(page.locator('.kpi-counter-3')).toHaveText('1');
   await page.locator('.arch').scrollIntoViewIfNeeded();
   await expect(page.locator('.architecture-path')).toHaveCount(4);
   await page.locator('.nav').getByRole('link', { name: 'Entrar', exact: true }).click();

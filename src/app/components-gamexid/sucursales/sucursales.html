@@ -9,11 +9,21 @@
 <div class="notice">
   <gx-icon name="lock" />
   <p>
-    Los pedidos se guardan en este navegador. Conservá el PDF original hasta conectar la base
-    compartida.
+    Pedidos y seriales se guardan en MySQL mediante la API. Conservá el PDF original:
+    se almacena su información revisada, no el archivo. Los pedidos antiguos del navegador no se importan automáticamente.
   </p>
 </div>
-@if (loading()) {
+<div class="flex flex-wrap gap-3 my-4">
+  <input class="form-control" aria-label="Buscar pedidos" placeholder="Documento o proveedor" maxlength="100" [(ngModel)]="search" (keydown.enter)="load()" />
+  <select class="form-control" aria-label="Estado del pedido" [(ngModel)]="statusFilter" (change)="load()">
+    <option value="">Todos los estados</option><option value="Pending">Pendiente</option>
+    <option value="Partial">Parcial</option><option value="Received">Recibido</option>
+  </select>
+  <button class="btn-secundario" (click)="load()" [disabled]="loading()">Buscar / actualizar</button>
+</div>
+@if (listError()) {
+  <p class="notice status-error" role="alert">{{ listError() }}</p>
+} @else if (loading()) {
   <p-skeleton height="210px" />
 } @else {
   @for (p of filtered(); track p.id) {
@@ -43,6 +53,11 @@
     </section>
   }
 }
+<div class="flex items-center gap-3 my-4">
+  <button class="btn-secundario" (click)="load(page() - 1)" [disabled]="loading() || page() <= 1">Anterior</button>
+  <span>Página {{ page() }} · {{ total() }} pedidos</span>
+  <button class="btn-secundario" (click)="load(page() + 1)" [disabled]="loading() || page() * 20 >= total()">Siguiente</button>
+</div>
 <p-dialog
   header="Pedido a sucursal"
   [visible]="!!draft()"
@@ -53,6 +68,10 @@
   [closable]="!busy()"
 >
   @if (draft(); as d) {
+    <fieldset [disabled]="busy() || !!d.status">
+    <label><span class="form-label">Proveedor</span>
+      <input class="form-control" [(ngModel)]="d.supplier" maxlength="160" />
+    </label>
     <div class="order-fields">
       <label
         ><span class="form-label">Referencia del pedido</span
@@ -74,11 +93,11 @@
         <p class="muted text-sm mb-4">{{ branch.address }}</p>
       }
     }
-    <gx-intake [products]="products()" (parsed)="parsed($event)" />
+    @if (!d.status) { <gx-intake [products]="products()" (parsed)="parsed($event)" /> }
     @if (d.fileName) {
       <div class="flex items-center gap-3 mb-5">
         <span class="code-pill">{{ d.fileName }}</span
-        ><button class="btn-secundario" (click)="descargar()">
+        ><button class="btn-secundario" (click)="descargar()" [disabled]="!d.pdf">
           <gx-icon name="download" />Descargar original
         </button>
       </div>
@@ -97,7 +116,9 @@
             (blur)="relacionar(line)"
             maxlength="14"
             inputmode="numeric" /></label
-        ><label
+        ><label><span class="form-label">SKU</span>
+          <input class="form-control mono" [(ngModel)]="line.sku" maxlength="40" placeholder="Opcional: usa EAN si es nuevo" />
+        </label><label
           ><span class="form-label">Producto</span
           ><input class="form-control" [(ngModel)]="line.name" maxlength="180" /></label
         ><label
@@ -113,7 +134,8 @@
           ><input
             type="number"
             class="form-control mono"
-            [(ngModel)]="line.received"
+            [ngModel]="line.received"
+            readonly
             min="0"
             [max]="line.expected || 0"
             step="1" /></label
@@ -125,14 +147,7 @@
           <select class="form-control" aria-label="Moneda" [(ngModel)]="line.currency">
             <option [ngValue]="null">Revisar</option><option value="ARS">ARS</option><option value="USD">USD</option>
           </select>
-        </label><label class="form-check"
-          ><input
-            type="checkbox"
-            [disabled]="!line.expected"
-            [checked]="!!line.expected && line.expected === line.received"
-            (change)="marcar(line, $event)"
-          />Llegó todo</label
-        ><button class="icon-button" aria-label="Quitar línea" (click)="d.lines.splice($index, 1)">
+        </label><button class="icon-button" aria-label="Quitar línea" (click)="d.lines.splice($index, 1)">
           <gx-icon name="trash" />
         </button>
       </div>
@@ -140,14 +155,37 @@
     <button class="btn-secundario mt-4" (click)="agregar()">
       <gx-icon name="plus" />Agregar producto manualmente
     </button>
+    </fieldset>
+    @if (d.status) {
+      <section class="panel p-4 mt-4">
+        <h2 class="section-title">Recepción · EAN/SKU → Serial</h2>
+        <p>Escaneá o escribí el EAN/SKU del producto; luego cada serial y Enter.</p>
+        <label><span class="form-label">EAN o SKU del pedido</span>
+          <input class="form-control mono" [(ngModel)]="scanCode" (ngModelChange)="selectedLine.set(null)" [disabled]="busy()" (keydown.enter)="selectProduct(); selectedLine() && serialInput.focus()" />
+        </label>
+        <button class="btn-secundario" (click)="selectProduct(); selectedLine() && serialInput.focus()" [disabled]="busy()">Seleccionar producto</button>
+        <label><span class="form-label">Serial</span>
+          <input #serialInput class="form-control mono" [(ngModel)]="serialCode" maxlength="100" [readOnly]="busy() || !selectedLine()" (keydown.enter)="captureSerial(serialInput)" />
+        </label>
+        <button class="btn-primario" (click)="captureSerial(serialInput)" [disabled]="busy() || !selectedLine() || !serialCode.trim()">
+          {{ busy() ? 'Confirmando en Aiven…' : 'Guardar serial' }}
+        </button>
+        @for (line of d.lines; track line.id) {
+          @if (line.id === selectedLine()) {
+            <p>{{ line.name }} · {{ line.received }} / {{ line.expected }} capturados</p>
+            @for (s of line.serials; track s.id) { <span class="code-pill">{{ s.serial }}</span> }
+          }
+        }
+      </section>
+    }
     @if (error()) {
       <p class="notice status-error" role="alert">{{ error() }}</p>
     }
     <div class="modal-foot mt-6">
       <button class="btn-secundario" (click)="draft.set(null)" [disabled]="busy()">Cancelar</button
-      ><button class="btn-primario" (click)="guardar()" [disabled]="busy()">
+      >@if (!d.status) { <button class="btn-primario" (click)="guardar()" [disabled]="busy()">
         {{ busy() ? 'Guardando…' : 'Guardar pedido' }}
-      </button>
+      </button> }
     </div>
   }
 </p-dialog>

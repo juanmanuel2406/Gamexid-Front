@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
@@ -25,6 +25,32 @@ export class Sucursales implements OnInit {
   readonly loading = signal(true);
   readonly busy = signal(false);
   readonly error = signal('');
+  readonly listError = signal('');
+  readonly page = signal(1);
+  readonly total = signal(0);
+  search = '';
+  statusFilter = '';
+  scanCode = '';
+  serialCode = '';
+  readonly selectedLine = signal<number | null>(null);
+  private loadVersion = 0;
+  constructor() {
+    effect(() => { const branch = this.workspace.branchId(); void this.load(1, branch); });
+  }
+  async load(page = 1, branch = this.workspace.branchId()) {
+    const version = ++this.loadVersion;
+    this.loading.set(true);
+    this.listError.set('');
+    try {
+      const result = await this.orders.list(branch, page, this.search, this.statusFilter);
+      if (version !== this.loadVersion) return;
+      this.pedidos.set(result.items);
+      this.page.set(result.page);
+      this.total.set(result.total);
+    } catch (e) {
+      if (version === this.loadVersion) this.listError.set(this.orders.message(e));
+    } finally { if (version === this.loadVersion) this.loading.set(false); }
+  }
   readonly branches = computed(() =>
     this.workspace
       .branches()
@@ -39,19 +65,17 @@ export class Sucursales implements OnInit {
     this.pedidos().filter((p) => p.branchId === this.workspace.branchId()),
   );
   async ngOnInit() {
-    this.data.getProductos().subscribe((p) => this.products.set(p));
-    try {
-      this.pedidos.set(await this.orders.list());
-    } catch {
-      this.workspace.notify('No se pudieron cargar los pedidos.', 'error');
-    } finally {
-      this.loading.set(false);
-    }
+    this.data.getProductos().subscribe({ next: p => this.products.set(p),
+      error: () => this.workspace.notify('No se pudo cargar el catálogo.', 'error') });
   }
   nuevo() {
     this.error.set('');
+    this.selectedLine.set(null);
+    this.scanCode = '';
+    this.serialCode = '';
     this.draft.set({
       id: crypto.randomUUID(),
+      supplier: '',
       reference: '',
       branchId: this.branches().some((b) => b.id === this.workspace.branchId())
         ? this.workspace.branchId()
@@ -63,6 +87,9 @@ export class Sucursales implements OnInit {
   }
   editar(order: BranchOrder) {
     this.error.set('');
+    this.selectedLine.set(null);
+    this.scanCode = '';
+    this.serialCode = '';
     this.draft.set(structuredClone(order));
   }
   agregar() {
@@ -112,10 +139,30 @@ export class Sucursales implements OnInit {
   }
   relacionar(line: OrderLine) {
     const p = this.products().find((p) => p.ean === line.ean.trim());
-    if (p) line.name = p.name;
+    if (p) { line.name = p.name; line.sku = p.sku; }
   }
-  marcar(line: OrderLine, event: Event) {
-    line.received = (event.target as HTMLInputElement).checked ? line.expected || 0 : 0;
+  selectProduct() {
+    const code = this.scanCode.trim().toUpperCase();
+    const line = this.draft()?.lines.find(l => l.ean === code || l.sku?.toUpperCase() === code);
+    this.selectedLine.set(line?.id ?? null);
+    this.error.set(line ? '' : 'Ese EAN/SKU no pertenece al pedido.');
+  }
+  async captureSerial(input: HTMLInputElement) {
+    const order = this.draft();
+    const id = this.selectedLine();
+    if (!order?.status || !id || this.busy()) return;
+    this.busy.set(true);
+    this.error.set('');
+    try {
+      const saved = await this.orders.saveSerial(order.id, { orderItemId: id, serial: this.serialCode });
+      this.draft.set(saved);
+      this.pedidos.update(all => all.map(p => p.id === saved.id ? saved : p));
+      this.serialCode = '';
+      this.workspace.notify('Serial y recepción guardados en Aiven.');
+    } catch (e) {
+      this.error.set(this.orders.message(e));
+      this.workspace.notify('No se confirmó la recepción. Conservamos el serial para reintentar.', 'error');
+    } finally { this.busy.set(false); setTimeout(() => input.focus()); }
   }
   faltantes(p: BranchOrder) {
     return p.lines.reduce((n, l) => n + Math.max(0, (l.expected || 0) - l.received), 0);
@@ -130,13 +177,13 @@ export class Sucursales implements OnInit {
     try {
       if (!this.branches().some((b) => b.id === d.branchId))
         throw new Error('Seleccioná una sucursal activa.');
-      await this.orders.save(d);
-      this.pedidos.set(await this.orders.list());
+      const saved = await this.orders.save(d);
+      this.draft.set(saved);
       this.workspace.select(d.branchId);
-      this.draft.set(null);
-      this.workspace.notify('Pedido guardado. Podés volver a abrirlo para controlar la recepción.');
+      this.workspace.notify('Pedido guardado en Aiven. Ya podés escanear sus productos y seriales.');
+      await this.load(1, d.branchId);
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'No se pudo guardar el pedido.');
+      this.error.set(this.orders.message(e));
     } finally {
       this.busy.set(false);
     }

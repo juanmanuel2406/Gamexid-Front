@@ -5,7 +5,6 @@ export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)'
 
 type Anim = { pause: () => unknown };
 
-/** Staggered entrance for a set of elements. Elements stay visible if motion is reduced. */
 export function enterStagger(targets: Element[] | NodeListOf<Element>, start = 0, step = 50): Anim | undefined {
   const list = Array.from(targets);
   if (!list.length || reducedMotion()) return;
@@ -41,7 +40,6 @@ export function flash(el?: Element | null, color = 'rgba(155,56,238,.22)') {
   animate(el, { backgroundColor: [color, 'rgba(0,0,0,0)'], duration: 1200, ease: 'outQuad' });
 }
 
-/** Unfold a newly inserted element from 0 height (feed items, result panels). */
 export function unfold(el?: HTMLElement | null) {
   if (!el || reducedMotion()) return;
   const h = el.scrollHeight;
@@ -54,7 +52,6 @@ export function unfold(el?: HTMLElement | null) {
   });
 }
 
-/** A label that flies from one rect to another (e.g. "added to receipt"). */
 export function flyChip(from: DOMRect, to: DOMRect, label: string): Promise<void> {
   if (reducedMotion()) return Promise.resolve();
   const g = document.createElement('div');
@@ -73,7 +70,6 @@ export function flyChip(from: DOMRect, to: DOMRect, label: string): Promise<void
   });
 }
 
-/** Floating "+N" over an element after a successful write. */
 export function burst(rect: DOMRect, text: string) {
   if (reducedMotion()) return;
   const el = document.createElement('div');
@@ -91,7 +87,6 @@ export function burst(rect: DOMRect, text: string) {
   });
 }
 
-/** FLIP: call before a list re-renders, then call the returned function after it did. */
 export function flipList(container: HTMLElement | null | undefined, key: string) {
   if (!container || reducedMotion()) return () => {};
   const before = new Map(
@@ -107,7 +102,6 @@ export function flipList(container: HTMLElement | null | undefined, key: string)
   };
 }
 
-/** Animated number: `<span [gxCount]="value"></span>`. Counts from the previous value. */
 @Directive({ selector: '[gxCount]', standalone: true })
 export class CountUp implements OnDestroy {
   readonly gxCount = input<number>(0);

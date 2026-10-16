@@ -9,7 +9,6 @@ export interface RequestTrace {
   ms: number;
 }
 
-/** Tracks real HTTP traffic to /api so the shell can show a load bar and the last request. */
 @Injectable({ providedIn: 'root' })
 export class NetActivity {
   readonly pending = signal(0);

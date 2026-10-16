@@ -1,4 +1,4 @@
-/* Home: Slate 950/900, hairline white borders, emerald (scan/verified) + electric violet (brand/action). */
+
 :host {
   --slate-950: #080c14;
   --slate-900: #0f172a;
@@ -12,7 +12,7 @@
   --emerald-2: #34d399;
   --violet: #8b5cf6;
   --violet-2: #a78bfa;
-  /* Global type layers (styles.css): Archivo · IBM Plex Sans · IBM Plex Mono */
+
   --display: var(--font-display);
   --body: var(--font-ui);
   --mono: var(--font-data);
@@ -125,7 +125,7 @@ main, .nav, .footer { position: relative; z-index: 1; }
 .kpi b { font: 500 clamp(38px, 4vw, 50px) var(--mono); letter-spacing: -0.04em; line-height: 1.05; margin-top: 6px; font-variant-numeric: tabular-nums slashed-zero; }
 .kpi b small { font: 400 0.36em var(--mono); color: var(--muted); margin-left: 8px; letter-spacing: 0.04em; }
 .kpi .note { font-size: 14px; color: var(--muted); }
-/* Icon tile: hairline square with a violet wash; holds a Lucide line icon */
+
 .ico { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line-2); background: linear-gradient(180deg, rgba(139, 92, 246, 0.18), rgba(139, 92, 246, 0.03)); color: #c4b5fd; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
 .ico.em { background: linear-gradient(180deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.03)); color: var(--emerald-2); }
 .kpi .ico { width: 30px; height: 30px; border-radius: 9px; }

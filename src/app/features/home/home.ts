@@ -23,8 +23,6 @@ interface Kpi {
   icon: 'pin' | 'scan' | 'database';
 }
 
-/** Public landing page (route "/"). Every animation lives in ngAfterViewInit and is released in ngOnDestroy. */
-/** Lucide `check` path, inlined because serial pills are created imperatively by the scan loop. */
 const CHECK_SVG =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 
@@ -48,8 +46,8 @@ export class Home implements AfterViewInit, OnDestroy {
   readonly year = new Date().getFullYear();
   readonly kpis: Kpi[] = [
     { cls: 'kpi-counter-1', label: 'Sedes GamingCity', from: 0, to: 16, note: '16 sedes conectadas · Morón como depósito', icon: 'pin' },
-    { cls: 'kpi-counter-2', label: 'Escaneo por cámara', from: 0, to: 60, unit: 'fps', note: 'Lectura continua del visor', icon: 'scan' },
-    { cls: 'kpi-counter-3', label: 'Respuesta Aiven MySQL', from: 100, to: 10, unit: 'ms', note: 'Consulta de serial en la base', icon: 'database' },
+    { cls: 'kpi-counter-2', label: 'Identificadores', from: 0, to: 3, note: 'EAN, SKU y número de serie', icon: 'scan' },
+    { cls: 'kpi-counter-3', label: 'Base central', from: 0, to: 1, note: 'Inventario y pedidos en MySQL', icon: 'database' },
   ];
   readonly stock = [
     { name: 'Belgrano', value: 42 },
@@ -59,7 +57,7 @@ export class Home implements AfterViewInit, OnDestroy {
     { name: 'Mendoza', value: 4 },
   ];
   readonly maxStock = Math.max(...this.stock.map((s) => s.value));
-  /** EAN-13 style bars for the viewfinder (guard bars are taller). */
+
   readonly bars = (() => {
     const out: { x: number; w: number; h: number }[] = [];
     const W = [2, 2, 4, 6, 2, 4, 2, 3, 2, 5];
@@ -110,7 +108,6 @@ export class Home implements AfterViewInit, OnDestroy {
     return new Promise((r) => setTimeout(r, ms));
   }
 
-  /** A. Laser sweeping the hero viewfinder. */
   private laser() {
     if (this.reduced) return;
     const travel = this.one('.viewfinder').clientHeight - 30;
@@ -127,7 +124,6 @@ export class Home implements AfterViewInit, OnDestroy {
     );
   }
 
-  /** Live scanning demo: EAN typed in, match card, three serials verified, toast. */
   private async scanLoop(t: number) {
     const EAN = '7798114620015';
     const SERIALS = ['PS5A0001', 'PS5A0002', 'PS5A0003'];
@@ -181,7 +177,6 @@ export class Home implements AfterViewInit, OnDestroy {
     } while (t === this.token);
   }
 
-  /** B. KPI counters when the row enters the viewport. */
   private counters() {
     this.whenVisible(this.one('.kpis'), () => {
       this.kpis.forEach((k, i) => {
@@ -194,7 +189,6 @@ export class Home implements AfterViewInit, OnDestroy {
     });
   }
 
-  /** C. Architecture: draw connections, then send readings along them. */
   private architecture() {
     this.whenVisible(this.one('.arch'), () => {
       if (this.reduced) return;
@@ -227,7 +221,6 @@ export class Home implements AfterViewInit, OnDestroy {
     });
   }
 
-  /** D. Bento cards and buttons: spring scale + glow on hover. */
   private microInteractions() {
     const bind = (el: HTMLElement, enter: Record<string, unknown>, leave: Record<string, unknown>, hot = false) => {
       const on = () => { if (hot) el.classList.add('hot'); if (!this.reduced) animate(el, { ...enter, duration: 700, ease: this.spring }); };

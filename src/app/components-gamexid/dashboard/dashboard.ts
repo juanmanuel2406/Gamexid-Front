@@ -15,7 +15,7 @@ export const MOVEMENT_META: Record<string, { icon: string; tone: string }> = {
   Devolución: { icon: 'out', tone: 'bad' },
   Ajuste: { icon: 'adjust', tone: '' },
 };
-/** Sedes below this many available units are flagged for restock. */
+
 export const LOW_STOCK = 5;
 
 @Component({
@@ -84,7 +84,7 @@ export class Dashboard {
   });
 
   constructor() {
-    // First data → entrance; later data → animate only what changed.
+
     effect(() => {
       const loaded = this.store.loaded();
       const top = this.store.movements()[0]?.id ?? 0;
@@ -97,7 +97,7 @@ export class Dashboard {
           queueMicrotask(() => this.entrance());
           return;
         }
-        // Component effects run before the template refreshes: capture rows now, slide after render.
+
         const slide = flipList(this.q('.stock-list')[0], 'data-row');
         const fresh = !!top && top !== this.seenTop;
         this.seenTop = top;

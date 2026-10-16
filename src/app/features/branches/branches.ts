@@ -8,7 +8,6 @@ import { InventoryStore } from '../../core/inventory-store';
 import { Icon } from '../../shared/icon';
 import { CountUp, enterStagger, growBars, reducedMotion, shake } from '../../shared/anim';
 
-/** Red de sedes: stock por sede calculado desde las unidades de la API, con detalle expandible. */
 @Component({
   selector: 'gx-branches',
   standalone: true,
@@ -72,7 +71,6 @@ export class Branches {
     return Array.from((this.host.nativeElement as HTMLElement).querySelectorAll<HTMLElement>(sel));
   }
 
-  /** Expands the clicked card into a centered panel (FLIP), then fades its content in. */
   open(branch: Branch, card: HTMLElement) {
     this.sourceCard = card;
     this.selected.set(branch);

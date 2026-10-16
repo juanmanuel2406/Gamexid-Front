@@ -36,7 +36,7 @@ export class Ingresos implements OnDestroy {
   private store = inject(InventoryStore);
   private laser = viewChild<ElementRef<HTMLElement>>('laser');
   private laserAnim?: { pause: () => unknown };
-  /** Scanner readout: idle → reading → match/miss, mirrors the lookup request. */
+
   readonly scanState = signal<'idle' | 'reading' | 'match' | 'miss'>('idle');
   readonly scanLabel = signal('LISTO PARA ESCANEAR');
   readonly bars = Array.from({ length: 46 }, (_, i) => {
@@ -83,7 +83,7 @@ export class Ingresos implements OnDestroy {
   get depot() { return this.workspace.branches().find(b => b.code === 'DEP-CENTRAL') ?? this.data.getDeposito(); }
   constructor() {
     this.load();
-    // The laser speeds up while the API lookup is in flight.
+
     effect(() => {
       const fast = this.lookingUp();
       const el = this.laser()?.nativeElement;

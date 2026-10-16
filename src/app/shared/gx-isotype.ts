@@ -11,14 +11,6 @@ import { createTimeline, svg, utils } from 'animejs';
 
 let sequence = 0;
 
-/**
- * Gamexid isotype: a geometric "G" inside the four corners of a scanner viewfinder,
- * whose crossbar is the emerald reading laser. 64×64 grid.
- *
- *  - `animated`: draws itself on init (corners snap in → G draws → laser opens).
- *  - `loop`: after drawing, the laser blinks like a reader every few seconds.
- *  - `compact`: heavier strokes and no faint trace line, for 16–36 px use.
- */
 @Component({
   selector: 'gx-isotype',
   standalone: true,
@@ -69,7 +61,6 @@ export class GxIsotype implements AfterViewInit, OnDestroy {
     this.anims.splice(0).forEach((a) => a.pause());
   }
 
-  /** Replays the drawing sequence. Safe to call repeatedly. */
   draw() {
     this.stop();
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;

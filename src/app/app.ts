@@ -52,7 +52,7 @@ export class App {
   private loadbar = viewChild<ElementRef<HTMLElement>>('loadbar');
   readonly url = signal(this.router.url);
   readonly open = signal(false);
-  /** Public pages (landing and login) render without the workspace shell. */
+
   readonly login = computed(() => {
     const path = this.url().split(/[?#]/)[0];
     return path === '/' || path === '' || path.startsWith('/login');
@@ -89,7 +89,7 @@ export class App {
         this.workspace.refreshStatus();
         this.store.start();
         if (innerWidth < 1024) this.open.set(false);
-        // Wait for the shell and routerLinkActive to render before measuring.
+
         afterNextRender(
           () => {
             this.movePill(this.isPublic(previous) || !this.introPlayed);
@@ -104,7 +104,7 @@ export class App {
       .subscribe(() => {
         if (!this.login()) this.workspace.refreshStatus();
       });
-    // Load bar follows real pending /api requests.
+
     effect(() => {
       const busy = this.net.busy();
       const bar = this.loadbar()?.nativeElement;
@@ -142,7 +142,7 @@ export class App {
   private playIntro() {
     this.introPlayed = true;
     if (reducedMotion()) return;
-    // Inline transforms are cleared afterwards so the CSS mobile drawer keeps control of the rail.
+
     const tl = createTimeline({
       defaults: { ease: 'outExpo' },
       onComplete: () =>

@@ -20,7 +20,7 @@ export class Productos implements OnInit {
   private data = inject(GamexidService);
   readonly workspace = inject(Workspace);
   private store = inject(InventoryStore);
-  /** Available units per product, from the shared inventory store. */
+
   readonly stock = computed(() => {
     const map = new Map<number, number>();
     for (const u of this.store.available()) map.set(u.productId, (map.get(u.productId) || 0) + 1);

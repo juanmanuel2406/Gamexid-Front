@@ -10,7 +10,6 @@ import { MOVEMENT_META } from '../../components-gamexid/dashboard/dashboard';
 
 type Scope = 'sede' | 'red';
 
-/** Auditoría de movimientos: línea de tiempo de /api/inventory/movements con filtros. */
 @Component({
   selector: 'gx-movements',
   standalone: true,

@@ -7,11 +7,6 @@ import {
   SerializedUnit,
 } from '../services-gamexid/gamexid-service';
 
-/**
- * Shared inventory state read by the dashboard, sedes and movement views.
- * Movements are polled often (cheap, one request); units are refreshed when the
- * movement list changes, because the API exposes units per product only.
- */
 @Injectable({ providedIn: 'root' })
 export class InventoryStore {
   private data = inject(GamexidService);
@@ -34,7 +29,6 @@ export class InventoryStore {
     return map;
   });
 
-  /** Full reload: products, movements and every product's units. */
   refresh() {
     if (this.loading()) return;
     this.loading.set(true);
@@ -65,7 +59,6 @@ export class InventoryStore {
       });
   }
 
-  /** Light poll: fetch movements; if a new one appeared, reload units too. */
   poll() {
     if (this.loading()) return;
     this.data.getMovimientos().subscribe({

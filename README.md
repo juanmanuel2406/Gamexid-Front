@@ -1,4 +1,4 @@
-# Gamexid Front
+# Gamex ID Front
 
 Interfaz Angular standalone para el piloto de inventario Gamexid.
 
@@ -13,9 +13,13 @@ Interfaz Angular standalone para el piloto de inventario Gamexid.
 - `npm run test:ui`: ejecución interactiva de las pruebas.
 
 Productos, sucursales, unidades e ingresos usan la API con MySQL en Aiven.
-Los pedidos y controles de auditoría todavía se guardan localmente; no borrar los
-datos del navegador sin respaldarlos. Los almacenes del piloto anterior se conservan
-separados: no se vinculan sus IDs automáticamente con los de la nueva base.
+Los pedidos y seriales también usan MySQL: lista paginada por sucursal, proveedor/documento
+y estado; creación con revisión humana; recepción EAN/SKU + serial por REST.
+Los controles de auditoría/linaje siguen locales. Los datos históricos del navegador
+se conservan, pero no se importan automáticamente ni se vuelven a escribir en IndexedDB.
+Conservar los PDF originales: se guarda el JSON revisado y el nombre del archivo, no el PDF.
+Ante un corte, el formulario conserva los datos mientras permanece abierto; reintentar
+el mismo pedido o serial no duplica la operación. No hay guardado offline.
 
 PdfPig extrae el PDF en el backend al pulsar el botón correspondiente. PDF.js se
 mantiene para la vista previa. No se envían documentos a Google.
@@ -28,20 +32,20 @@ y tener la API local conectada a Aiven. No guardar ese valor en el repositorio.
 
 | Pantalla | Ruta | Datos |
 | --- | --- | --- |
-| Inicio (pública) | `/` | `GET /api/access/health`; landing con terminal de escaneo, KPIs, funciones y arquitectura |
+| Inicio (pública) | `/` | Portada con demostración visual, funciones y acceso al sistema |
 | Operaciones | `/dashboard` | `GET /api/products`, `/api/products/{id}/units`, `/api/inventory/movements`, `/api/access/health`, `/api/access/integrations`, `/api/access/gc/status` |
 | Ingresos | `/ingresos` | `GET /api/products/lookup`, `POST /api/products`, `POST /api/inventory/receipts` (destino: Depósito Central) |
 | Productos | `/productos` | `GET/POST /api/products`, unidades por producto |
 | Sedes | `/sedes` | `GET /api/branches`; `POST /api/branches` solo para administradores |
 | Movimientos | `/movimientos` | `GET /api/inventory/movements` con filtros por tipo, sede y texto |
-| Pedidos | `/sucursales` | Pedidos locales (IndexedDB) y `POST /api/documents/extract` (PdfPig) |
+| Pedidos | `/sucursales` | `GET/POST /api/orders`, recepción de seriales y `POST /api/documents/extract` (PdfPig) |
 | Linaje | `/auditoria` | Controles locales de gabinete y componentes |
 | GC-API | `/integracion` | `GET /api/access/gc/*`, solo lectura |
 
 `InventoryStore` (src/app/core) concentra productos, unidades y movimientos. Consulta
 movimientos cada 15 segundos mientras la pestaña está visible y vuelve a leer las
 unidades solo cuando aparece un movimiento nuevo. El stock por sede se calcula con las
-unidades disponibles que devuelve la API; no hay datos simulados en la aplicación.
+unidades disponibles que devuelve la API; la portada pública muestra ejemplos ilustrativos, separados de los datos operativos.
 
 `NetActivity` registra las solicitudes reales a `/api`: alimenta la barra de carga del
 encabezado y el indicador de la última respuesta (método, ruta, estado y tiempo).
@@ -61,4 +65,8 @@ de vistas, contadores, barras, reordenamiento del stock por sede, expansión de 
 láser del scanner y confirmación de ingresos. Con movimiento reducido se desactivan.
 Atajos de teclado: 1 a 8 para cambiar de pantalla.
 
-Consultar [el plan, los cambios y la reversión](REFACTOR-GAMEXID.md) antes de publicar esta rama experimental.
+Consultar [las notas de mantenimiento](REFACTOR-GAMEXID.md) antes de publicar.
+
+La credencial de Gaming City se configura exclusivamente en el servidor mediante `GamingCitySaaS:Iue`. Nunca debe incluirse en Angular ni en el repositorio.
+
+Revisión del 16/10/2026: se actualizaron dependencias compatibles. Persisten 7 avisos de npm (2 moderados y 5 altos): herramientas de desarrollo y un aviso del router aplicable a SSR, que este frontend estático no utiliza. Evitar `npm audit fix --force`: propone cambios incompatibles.

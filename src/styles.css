@@ -1,9 +1,4 @@
-/*
- * Gamexid typographic system: three layers, no generic faces.
- *  1. Display   Archivo (variable, wdth 62-125): semi-expanded grotesque for titles; expanded for the wordmark.
- *  2. Interface IBM Plex Sans: engineered neo-grotesque for UI, forms, tables and long text.
- *  3. Data      IBM Plex Mono: serials, EAN-13, SKUs, KPIs, timestamps and meta labels.
- */
+
 @import '@fontsource-variable/archivo/wdth.css';
 @import '@fontsource/ibm-plex-sans/latin-400.css';
 @import '@fontsource/ibm-plex-sans/latin-500.css';
@@ -35,7 +30,7 @@
     --accent-soft: #d6a8ff;
     --green: #2fd59a;
     --red: #ff4d6a;
-    /* Gamexid deck tokens: brand gradient taken from the logo */
+
     --gx-bg: #07090f;
     --gx-rail: #090c16;
     --gx-surface: #0e1220;
@@ -52,16 +47,16 @@
     --gx-warn: #ffb547;
     --gx-bad: #ff4d6a;
     --gx-grad: linear-gradient(90deg, #8b5cf6, #6d5df5 45%, #10b981);
-    /* Type layers */
+
     --font-display: 'Archivo Variable', 'IBM Plex Sans', sans-serif;
     --font-ui: 'IBM Plex Sans', sans-serif;
     --font-data: 'IBM Plex Mono', monospace;
     --gx-mono: var(--font-data);
-    /* Width axis of Archivo: titles run semi-expanded, the wordmark fully expanded */
+
     --stretch-title: 112%;
     --stretch-heading: 106%;
     --stretch-wordmark: 125%;
-    /* Scale (1.25 major third around a 14px UI base) */
+
     --fs-hero: clamp(40px, 5.2vw, 64px);
     --fs-display: clamp(28px, 3.2vw, 40px);
     --fs-title: clamp(24px, 2.4vw, 30px);
@@ -196,7 +191,7 @@
     line-height: 1.55;
     max-width: 68ch;
   }
-  /* Meta label: mono, tracked uppercase, never coloured loud. Page-level ones carry a hairline. */
+
   .eyebrow {
     display: flex;
     align-items: center;
@@ -227,7 +222,7 @@
     gap: 10px;
     align-items: center;
   }
-  /* Icon chip used next to section and card titles */
+
   .section-title > .gx-icon,
   .title-icon {
     width: 28px;
@@ -708,7 +703,7 @@
     }
   }
 }
-/* ---------- Gamexid deck refinements (new visual layer) ---------- */
+
 @layer components {
   .panel,
   .card-gamexid {
@@ -860,7 +855,7 @@
   .p-tag {
     font-family: var(--font-ui);
   }
-  /* Serif/mono fallbacks PrimeNG ships for editors are replaced by our layers */
+
   code,
   kbd,
   pre,

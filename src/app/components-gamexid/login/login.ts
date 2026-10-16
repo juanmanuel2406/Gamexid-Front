@@ -33,7 +33,7 @@ export class Login {
   private el<T extends Element = HTMLElement>(sel: string) {
     return Array.from((this.host.nativeElement as HTMLElement).querySelectorAll<T>(sel));
   }
-  /** Curtain opening: a gradient seam fills, then both halves part. */
+
   private opening() {
     const curtain = this.el('.curtain')[0];
     if (!curtain) return;

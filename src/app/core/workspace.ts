@@ -85,7 +85,7 @@ export class Workspace {
           this.database.set(r?.database === 'connected' ? 'ok' : 'down');
         },
         error: (e) => {
-          // 503 means the API answered but MySQL is not ready.
+
           this.connection.set(e?.status === 503 ? 'online' : 'offline');
           this.database.set('down');
         },
