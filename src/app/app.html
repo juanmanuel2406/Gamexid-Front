@@ -69,13 +69,6 @@
           }}</strong>
         </div>
         <div class="topbar-right">
-          @if (net.last(); as req) {
-            <div class="netchip" title="Última solicitud al servidor">
-              <span class="m">{{ req.method }}</span><span class="p">{{ req.path }}</span
-              ><span [class.ok]="netOk()" [class.bad]="!netOk()">{{ req.status || 'ERR' }}</span
-              ><span>{{ req.ms }}ms</span>
-            </div>
-          }
           <label class="branch-switch"
             ><gx-icon name="warehouse" /><select
               aria-label="Sucursal de trabajo"

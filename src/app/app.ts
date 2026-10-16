@@ -169,10 +169,6 @@ export class App {
     const path = url.split(/[?#]/)[0];
     return path === '/' || path === '' || path.startsWith('/login');
   }
-  netOk() {
-    const s = this.net.last()?.status || 0;
-    return s >= 200 && s < 400;
-  }
   @HostListener('document:keydown', ['$event'])
   shortcut(e: KeyboardEvent) {
     if (this.login() || e.ctrlKey || e.metaKey || e.altKey) return;
