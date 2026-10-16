@@ -2,10 +2,15 @@
   <div>
     <p class="eyebrow">CATÁLOGO / PRODUCTOS</p>
     <h1 class="page-title">Productos</h1>
-    <p class="page-sub">{{ productos().length }} referencias · Catálogo global</p>
+
   </div>
-  <button class="btn-primario" (click)="abrirAlta()"><gx-icon name="plus" />Nuevo producto</button>
+  @if (inventory()) { <button class="btn-primario" (click)="abrirAlta()"><gx-icon name="plus" />Nuevo producto</button> }
 </div>
+<div class="catalog-tabs" role="group" aria-label="Vista de productos">
+  <button class="btn-secundario" [attr.aria-pressed]="!inventory()" (click)="selectInventory(false)">Catálogo</button>
+  <button class="btn-secundario" [attr.aria-pressed]="inventory()" (click)="selectInventory(true)">Inventario</button>
+</div>
+@if (!inventory()) { <gx-catalogo /> } @else {
 <section class="panel">
   <div class="panel-header">
     <label class="search-field"
@@ -80,6 +85,7 @@
     >
   </p-table>
 </section>
+}
 <p-dialog
   header="Nuevo producto"
   [visible]="mostrarAlta()"

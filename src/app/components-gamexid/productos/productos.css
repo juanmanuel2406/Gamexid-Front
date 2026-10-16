@@ -13,3 +13,6 @@
     max-width: none;
   }
 }
+
+.catalog-tabs { display:flex; gap:12px; margin-bottom:24px; }
+.catalog-tabs [aria-pressed="true"] { border-color:#8b5cf6; color:#fff; background:#8b5cf622; }

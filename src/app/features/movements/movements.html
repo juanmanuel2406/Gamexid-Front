@@ -2,7 +2,7 @@
   <div>
     <p class="eyebrow">Trazabilidad / {{ scope() === 'red' ? 'Toda la red' : workspace.branch()?.name }}</p>
     <h1 class="page-title">Auditoría de movimientos</h1>
-    
+
   </div>
   <button class="btn-secundario" (click)="store.refresh()" [disabled]="store.loading()">
     <gx-icon name="refresh" />{{ store.loading() ? 'Actualizando…' : 'Actualizar' }}

@@ -49,7 +49,7 @@ test('sesión inválida redirige al login y logo responsive', async ({ page }) =
     route.fulfill({ json: { pdfPig: true } }),
   );
   await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
-  await page.goto('/productos');
+  await page.goto('/productos?vista=inventario');
   await expect(page).toHaveURL(/login/);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.gamexid-logo svg')).toBeVisible();
@@ -67,7 +67,7 @@ test.beforeEach(async ({ page }) => {
   );
 });
 test('productos: formulario visible, validación, guardar y Escape', async ({ page }) => {
-  await page.goto('/productos');
+  await page.goto('/productos?vista=inventario');
   await page.getByRole('button', { name: 'Nuevo producto' }).click();
   await expect(page.locator('.p-dialog')).toBeVisible();
   await page.getByRole('button', { name: 'Guardar', exact: true }).click();
@@ -187,7 +187,7 @@ test('menú hover, logo visible y vista móvil sin desborde', async ({ page }) =
   await page.getByRole('link', { name: 'Red de sedes' }).click();
   await expect(page).toHaveURL(/sedes/);
   await expect(page.locator('.shell')).not.toHaveClass(/menu-abierto/);
-  await page.goto('/productos');
+  await page.goto('/productos?vista=inventario');
   await page.getByRole('button', { name: 'Nuevo producto' }).click();
   await expect(page.locator('.p-dialog')).toBeVisible();
   expect(
@@ -298,7 +298,7 @@ test('conserva los datos locales sin importarlos silenciosamente a MySQL', async
     localStorage.setItem('fs_products', JSON.stringify([{ id: 999, name: 'Legacy-only' }]));
     localStorage.setItem('fs_units', JSON.stringify([{ id: 999, serialNumber: 'LEGACY-99' }]));
   });
-  await page.goto('/productos');
+  await page.goto('/productos?vista=inventario');
   await expect(page.getByRole('cell', { name: 'Notebook 14" 8GB', exact: true })).toBeVisible();
   await expect(page.getByText('Legacy-only', { exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('fs_units')!)[0].serialNumber)).toBe('LEGACY-99');
@@ -366,7 +366,7 @@ test('home pública: hero, KPIs animados, arquitectura y acceso al login', async
   await expect(page.locator('.kpi-counter-3')).toHaveText('1');
   await page.locator('.arch').scrollIntoViewIfNeeded();
   await expect(page.locator('.architecture-path')).toHaveCount(4);
-  await page.locator('.nav').getByRole('link', { name: 'Entrar', exact: true }).click();
+  await page.locator('gx-public-nav').getByRole('link', { name: 'Entrar', exact: true }).click();
   await expect(page).toHaveURL(/login/);
   await page.getByRole('link', { name: 'Volver al inicio' }).click();
   await expect(page).toHaveURL(/\/$/);

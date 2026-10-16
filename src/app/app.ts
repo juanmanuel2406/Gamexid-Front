@@ -69,7 +69,6 @@ export class App {
     { url: '/movimientos', icon: 'history', name: 'Auditoría de movimientos', short: 'Movimientos', key: '5' },
     { url: '/sucursales', icon: 'file', name: 'Pedidos e ingesta de remitos', short: 'Pedidos', key: '6' },
     { url: '/auditoria', icon: 'shield', name: 'Linaje y devoluciones', short: 'Linaje', key: '7' },
-    { url: '/integracion', icon: 'plug', name: 'Integración GamingCity', short: 'GC-API', key: '8' },
   ];
   readonly current = computed(() => this.navigation.find((n) => this.url().startsWith(n.url)));
   readonly title = computed(() => this.current()?.name || 'Gamexid');

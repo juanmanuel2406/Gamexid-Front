@@ -18,7 +18,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     canActivateChild: [AuthGuard],
     children: [
-      { path: 'integracion', loadComponent: () => import('./features/integration/integration').then((m) => m.Integration) },
+      { path: 'integracion', pathMatch: 'full', redirectTo: 'productos' },
       {
         path: 'dashboard',
         loadComponent: () =>

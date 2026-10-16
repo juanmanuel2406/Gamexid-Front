@@ -2,7 +2,7 @@
   <div>
     <p class="eyebrow">TRAZABILIDAD / CONTROL DE DEVOLUCIONES</p>
     <h1 class="page-title">Linaje digital</h1>
-    
+
   </div>
   <p-tag value="Registro local de prueba" severity="secondary" />
 </div>
@@ -30,13 +30,7 @@
     </button>
   </section>
 }
-<div class="notice">
-  <gx-icon name="shield" />
-  <p>
-    La comparación usa el serial registrado. Este piloto no consulta el ERP ni modifica stock al
-    verificar una devolución.
-  </p>
-</div>
+
 <section class="panel">
   <div class="panel-header">
     <label class="search-field"
@@ -137,7 +131,7 @@
       maxlength="120"
       (keyup.enter)="saveLink()"
   /></label>
-  <p class="muted text-xs mt-3">La asociación se conserva como referencia del linaje.</p>
+
   @if (formError()) {
     <p class="notice status-error" role="alert">{{ formError() }}</p>
   }
@@ -158,7 +152,7 @@
       autocomplete="off"
       (keyup.enter)="verify()"
   /></label>
-  <p class="muted text-xs mt-3">Escaneá el código físico. Se compara con el registro original.</p>
+
   @if (formError()) {
     <p class="notice status-error" role="alert">{{ formError() }}</p>
   }

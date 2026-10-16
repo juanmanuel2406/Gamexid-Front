@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { OFFICIAL_BRANCHES } from '../src/app/services-gamexid/branches';
+import { OFFICIAL_BRANCHES } from './fixtures/branches';
 
 export async function mockInventory(page: Page) {
   await page.route('**/api/access/gc/status', r => r.fulfill({ json: { configured: false, connected: false } }));

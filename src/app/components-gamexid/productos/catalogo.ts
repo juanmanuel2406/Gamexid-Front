@@ -11,18 +11,12 @@ interface CatalogProduct {
 interface Catalog { products: CatalogProduct[]; total: number; truncated: boolean; }
 
 @Component({
+  selector: 'gx-catalogo',
   standalone: true,
   imports: [FormsModule, DecimalPipe],
   template: `
     <section class="space-y-6 max-w-5xl">
-      <header><p class="text-violet-400 text-sm">GAMING CITY / CATÁLOGO</p>
-        <h1 class="text-3xl font-semibold mt-2">Integración empresarial</h1></header>
-      <div class="border border-slate-800 rounded-xl p-6 bg-slate-900">
-        <h2 class="text-xl font-medium">{{ checking() ? 'Comprobando configuración…' : connected() ? 'Conexión verificada con Gaming City' : configured() ? 'Credencial configurada · conexión por verificar' : 'Faltan credenciales de GamingCity' }}</h2>
-        <p class="text-slate-400 mt-3">Consultá productos de Gaming City por nombre, código o ID.</p>
-        <p class="text-amber-400 mt-3">El stock del catálogo pertenece a Gaming City. El inventario de Gamexid se administra por separado.</p>
-        <p class="text-slate-400 mt-3">Las consultas no modifican ni importan productos o existencias.</p>
-      </div>
+      <div role="status" class="text-sm text-slate-400">{{ checking() ? 'Conectando…' : connected() ? 'Conectado' : configured() ? 'Catálogo disponible' : 'Catálogo no configurado' }}</div>
       <form (ngSubmit)="query()" class="flex flex-wrap items-end gap-3">
         <label class="flex-1 min-w-48">Buscar producto o código
           <input class="block w-full mt-2 bg-slate-900 border border-slate-700 rounded-lg p-3" name="search" [(ngModel)]="search" minlength="3" maxlength="80" placeholder="Nombre o código del producto" />
@@ -40,9 +34,9 @@ interface Catalog { products: CatalogProduct[]; total: number; truncated: boolea
       @if (result(); as catalog) {
         <section aria-label="Resultados del catálogo">
           <h2 class="text-lg mb-3">{{ catalog.total }} productos encontrados</h2>
-          @if (detail()) { <p class="text-slate-400 mb-3">Stock informado para el depósito 1 de Gaming City.</p> }
-          @if (catalog.truncated) { <p class="text-amber-400 mb-3">Se muestran los primeros 100 productos. Afiná la búsqueda para ver los restantes.</p> }
-          @if (!catalog.products.length) { <p>No se encontraron productos para esta búsqueda.</p> }
+          @if (detail()) { <p class="text-slate-400 mb-3">Stock proveedor · depósito 1</p> }
+          @if (catalog.truncated) { <p class="text-amber-400 mb-3">Primeros 100 resultados</p> }
+          @if (!catalog.products.length) { <p>Sin resultados</p> }
           <div class="space-y-3">
             @for (product of catalog.products; track product.id) {
               <article class="bg-slate-900 p-4 border border-slate-800 rounded-lg break-words">
@@ -53,7 +47,7 @@ interface Catalog { products: CatalogProduct[]; total: number; truncated: boolea
                   <div><dt class="text-slate-400">Código de proveedor</dt><dd>{{ product.supplierCode || 'No informado' }}</dd></div>
                   <div><dt class="text-slate-400">SKU</dt><dd>{{ product.sku || 'No informado' }}</dd></div>
                   <div><dt class="text-slate-400">Precio informado</dt><dd>{{ product.price === null ? 'No informado' : (product.price | number:'1.2-2') }}</dd></div>
-                  <div><dt class="text-slate-400">Stock informado</dt><dd>{{ product.stock === null ? 'No informado' : (product.stock | number:'1.0-2') }}</dd></div>
+                  <div><dt class="text-slate-400">Stock proveedor</dt><dd>{{ product.stock === null ? 'No informado' : (product.stock | number:'1.0-2') }}</dd></div>
                 </dl>
               </article>
             }
@@ -62,7 +56,7 @@ interface Catalog { products: CatalogProduct[]; total: number; truncated: boolea
       }
     </section>`,
 })
-export class Integration {
+export class Catalogo {
   private http = inject(HttpClient);
   readonly configured = signal(false);
   readonly checking = signal(true);

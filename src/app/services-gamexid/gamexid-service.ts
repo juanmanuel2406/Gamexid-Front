@@ -89,9 +89,6 @@ export class GamexidService {
   getProductos(): Observable<Product[]> {
     return this.http.get<Product[]>('/api/products').pipe(timeout(15000));
   }
-  buscarProductoPorEan(ean: string): Observable<Product | null> {
-    return this.http.get<Product>('/api/products/ean/' + encodeURIComponent(ean.trim()));
-  }
   buscarProductoPorCodigo(code: string): Observable<ProductLookup> {
     return this.http.get<ProductLookup>('/api/products/lookup', { params: { code: code.trim() } }).pipe(timeout(15000));
   }

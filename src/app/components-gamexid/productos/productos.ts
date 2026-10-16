@@ -1,4 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Catalogo } from './catalogo';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
@@ -12,12 +14,20 @@ import { enterStagger, growBars } from '../../shared/anim';
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [FormsModule, TableModule, DialogModule, TagModule, TooltipModule, Icon],
+  imports: [FormsModule, TableModule, DialogModule, TagModule, TooltipModule, Icon, Catalogo],
   templateUrl: './productos.html',
   styleUrl: './productos.css',
 })
 export class Productos implements OnInit {
   private data = inject(GamexidService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  readonly inventory = signal(this.route.snapshot.queryParamMap.get('vista') === 'inventario');
+  selectInventory(value: boolean) {
+    this.inventory.set(value);
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { vista: value ? 'inventario' : null }, replaceUrl: true });
+    if (value) this.load();
+  }
   readonly workspace = inject(Workspace);
   private store = inject(InventoryStore);
 
@@ -42,7 +52,7 @@ export class Productos implements OnInit {
     );
   });
   ngOnInit() {
-    this.load();
+    if (this.inventory()) this.load();
   }
   load() {
     this.data.getProductos().subscribe({
