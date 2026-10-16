@@ -1,10 +1,9 @@
-import { Component, input, output, inject, signal, computed, OnDestroy } from '@angular/core';
+import { Component, output, inject, signal, computed, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom, timeout } from 'rxjs';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
-import { Product } from '../../services-gamexid/gamexid-service';
 import { Workspace } from '../../core/workspace';
 import { Icon } from '../../shared/icon';
 import { Motion } from '../../shared/motion';
@@ -34,7 +33,6 @@ export interface Extraction {
   styleUrl: './intake.css',
 })
 export class Intake implements OnDestroy {
-  products = input<Product[]>([]);
   parsed = output<Extraction>();
   readonly workspace = inject(Workspace);
   private http = inject(HttpClient);

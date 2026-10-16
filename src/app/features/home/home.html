@@ -22,11 +22,7 @@
           <span class="gx-word"><b>GAMEXID</b><small>SERIAL TRACKING</small></span>
         </div>
         <h1 id="hero-title">Cada serial, <span class="soft">en la sede correcta.</span></h1>
-        <p class="lead">
-          Registro de consolas y accesorios por EAN-13 y número de serie, en las 16 sedes de GamingCity,
-          con Morón como depósito central. Ingresos verificados, stock por sede y auditoría en
-          tiempo real.
-        </p>
+        
         <div class="ctas">
           <a class="btn primary" routerLink="/login">Entrar al workspace <gx-icon name="arrow" [size]="17" /></a>
           <a class="btn" href="#arquitectura"><gx-icon name="route" [size]="17" /> Ver la arquitectura</a>
@@ -86,12 +82,12 @@
     <div class="sec-head">
       <div class="eyebrow"><span class="idx">01</span><span class="rule"></span>Funciones</div>
       <h2 id="bento-t">Lo que el equipo usa todos los días.</h2>
-      <p>Pantallas para operar rápido con teclado o lector.</p>
+      
     </div>
     <div class="bento">
       <article class="card glass span-4">
         <div class="card-head"><span class="ico"><gx-icon name="warehouse" [size]="18" /></span><h3>Stock por sede · ejemplo</h3></div>
-        <p>Unidades disponibles por local, calculadas desde los seriales. Las sedes por debajo del mínimo se marcan para reponer.</p>
+        
         <div class="mini-bars">
           @for (s of stock; track s.name) {
             <div [class.low]="s.value < 5">
@@ -102,11 +98,11 @@
       </article>
       <article class="card glass span-2">
         <div class="card-head"><span class="ico em"><gx-icon name="scan" [size]="18" /></span><h3>Scanner integrado</h3></div>
-        <p>Lectores USB o Bluetooth en modo teclado. Enter confirma cada lectura.</p>
+        
       </article>
       <article class="card glass span-3">
         <div class="card-head"><span class="ico"><gx-icon name="history" [size]="18" /></span><h3>Auditoría de movimientos</h3></div>
-        <p>Ingresos, transferencias y ventas con fecha, usuario y seriales.</p>
+        
         <div class="tl">
           <div><b>Ingreso #128</b><span class="ok">Morón · 3 u.</span></div>
           <div><b>Ingreso #127</b><span>Morón · 12 u.</span></div>
@@ -115,7 +111,7 @@
       </article>
       <article class="card glass span-3">
         <div class="card-head"><span class="ico"><gx-icon name="doc" [size]="18" /></span><h3>Remitos en PDF</h3></div>
-        <p>PdfPig lee el remito en el servidor y propone productos y cantidades para revisar.</p>
+        
         <div class="tl">
           <div><b>R-4821-07.pdf</b><span>4 líneas detectadas</span></div>
           <div><b>Revisión</b><span>pendiente</span></div>
@@ -128,7 +124,7 @@
     <div class="sec-head">
       <div class="eyebrow"><span class="idx">02</span><span class="rule"></span>Arquitectura</div>
       <h2 id="arch-t">De la lectura a la base, sin pasos intermedios.</h2>
-      <p>Cada lectura viaja a la API .NET, que valida contra Aiven MySQL y consulta GC-API en modo solo lectura.</p>
+      
     </div>
     <div class="arch glass">
       <svg viewBox="0 0 960 300" role="img" aria-label="Remito PDF y scanner envían datos a Gamexid.Api, que se conecta con Aiven MySQL y GC-API">
@@ -155,7 +151,7 @@
     <div class="foot-grid">
       <div>
         <span class="gx-logo"><gx-isotype [compact]="true" style="--gx-iso-size: 32px" /><span class="gx-word"><b>GAMEXID</b><small>SERIAL TRACKING</small></span></span>
-        <p>Control de inventario serializado para la red GamingCity.</p>
+        
       </div>
       <div><h4>Producto</h4><ul><li><a routerLink="/">Inicio</a></li><li><a href="#arquitectura">Arquitectura</a></li></ul></div>
       <div><h4>Plataforma</h4><ul><li>Gamexid.Api · .NET 9</li><li>Aiven MySQL</li></ul></div>

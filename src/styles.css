@@ -8,8 +8,6 @@
 @import '@fontsource/ibm-plex-mono/latin-600.css';
 @layer theme, base, primeng, components, utilities;
 @import 'tailwindcss';
-@plugin "@tailwindcss/typography";
-@plugin "tailwind-scrollbar";
 @theme {
   --color-slate-950: #07090f;
   --color-tech: #9b38ee;

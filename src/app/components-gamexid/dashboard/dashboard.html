@@ -114,7 +114,7 @@
       <div class="panel-header">
         <div>
           <h2 class="section-title"><gx-icon name="warehouse" [size]="15" />Stock por sede</h2>
-          <p class="page-sub">Unidades disponibles · se reordena cuando cambia el inventario</p>
+          
         </div>
         <a routerLink="/sedes" class="btn-secundario sm">Ver sedes</a>
       </div>
@@ -148,7 +148,7 @@
       <div class="panel-header">
         <div>
           <h2 class="section-title"><gx-icon name="server" [size]="15" />Servicios y conexión</h2>
-          <p class="page-sub">Estado informado por el servidor</p>
+          
         </div>
       </div>
       <div class="services">
@@ -169,7 +169,7 @@
           <span class="tag-gx" [class.ok]="workspace.pdfPig()"><span class="dot"></span>{{ workspace.pdfPig() ? 'Listo' : 'No disponible' }}</span>
         </div>
         <div class="svc">
-          <div><strong>GamingCity · GC-API</strong><span>Consultas de solo lectura</span></div>
+          <div><strong>GamingCity</strong><span>Consultas de solo lectura</span></div>
           <span class="tag-gx {{ serviceTag(workspace.gamingCity()) }}"
             ><span class="dot"></span>{{ workspace.gamingCity() === 'ok' ? 'Configurada' : workspace.gamingCity() === 'pending' ? 'Sin credencial' : workspace.gamingCity() === 'checking' ? 'Comprobando' : 'No disponible' }}</span
           >

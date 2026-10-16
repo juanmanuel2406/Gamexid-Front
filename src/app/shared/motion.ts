@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { animate } from 'animejs';
-import { gsap } from 'gsap';
+import { shake } from './anim';
 @Injectable({ providedIn: 'root' })
 export class Motion {
   private audio?: AudioContext;
@@ -38,12 +38,7 @@ export class Motion {
     }
   }
   discrepancy(element: HTMLElement) {
-    if (!this.reduced())
-      gsap.fromTo(
-        element,
-        { x: -4 },
-        { x: 0, duration: 0.1, repeat: 3, yoyo: true, clearProps: 'transform' },
-      );
+    shake(element);
   }
   laser(element: HTMLElement) {
     return this.reduced()

@@ -1,5 +1,3 @@
-import type { Branch } from './gamexid-service';
-
 export const OFFICIAL_BRANCHES = [
   ['DEP-CENTRAL', 'Morón (Depósito Central)', 'Av. Rivadavia 17939, Morón, PBA'],
   ['GX-UNICENTER', 'Unicenter Shopping', 'Paraná 3745, Martínez, PBA'],
@@ -22,30 +20,3 @@ export const OFFICIAL_BRANCHES = [
     'Av. Raúl Alfonsín 3525 (Local 108, Shopping Centenario), Corrientes',
   ],
 ] as const;
-
-export function reconcileBranches(previous: Branch[]): Branch[] {
-  const remaining = [...previous];
-  let nextId = Math.max(2, ...previous.map((branch) => branch.id)) + 1;
-  const official = OFFICIAL_BRANCHES.map(([code, name, address]) => {
-    const existing = remaining.find(
-      (branch) =>
-        branch.code === code ||
-        branch.name === name ||
-        (code === 'DEP-CENTRAL' && /dep[oó]sito/i.test(branch.name)),
-    );
-    if (existing) remaining.splice(remaining.indexOf(existing), 1);
-    return {
-      id:
-        existing?.id ??
-        (code === 'DEP-CENTRAL' && !previous.some((b) => b.id === 2) ? 2 : nextId++),
-      code,
-      name,
-      address,
-      isActive: true,
-    };
-  });
-  return [
-    ...official,
-    ...remaining.map((branch) => ({ ...branch, isActive: false, isLegacy: true })),
-  ];
-}

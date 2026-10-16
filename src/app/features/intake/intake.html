@@ -33,13 +33,6 @@
       <gx-icon name="file" />{{ busy() ? 'Procesando…' : 'Extraer con PdfPig' }}
     </button>
   </div>
-  <div class="prose prose-invert prose-sm max-w-none mb-4 text-slate-400">
-    <p>
-      PdfPig procesa el documento en el servidor de Gamexid, sin enviarlo a Google ni consumir
-      créditos de IA. Necesita texto seleccionable: las imágenes escaneadas requieren OCR.
-      Revisá los datos obtenidos antes de guardar.
-    </p>
-  </div>
   @if (!workspace.pdfPig()) {
     <p class="muted text-xs mb-4">La extracción de PDF no está disponible. Revisá la conexión con la API.</p>
   }
@@ -74,7 +67,7 @@
         </div>
       } @else {
         <pre
-          class="scrollbar-thin scrollbar-thumb-slate-700"
+          
         ><code>@for(token of tokens();track $index){<span [class]="token.kind">{{token.value}}</span>}</code></pre>
       }
       <div class="confidence-list">
@@ -82,11 +75,7 @@
           <div>
             <span class="code-pill">{{ line.ean || line.sku }}</span
             ><p-tag
-              [value]="
-                line.confidence === null
-                  ? 'Revisión manual'
-                  : 'Revisión manual'
-              "
+              value="Revisión manual"
               [severity]="line.confidence !== null && line.confidence >= 0.9 ? 'success' : 'warn'"
             />
           </div>

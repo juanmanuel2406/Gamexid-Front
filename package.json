@@ -37,7 +37,6 @@
     "@lucide/angular": "1.48.0",
     "@primeuix/themes": "^1.2.3",
     "animejs": "^4.5.0",
-    "gsap": "^3.13.0",
     "pdfjs-dist": "^6.3.289",
     "primeng": "20.4.0",
     "rxjs": "~7.8.0",
@@ -50,10 +49,8 @@
     "@angular/compiler-cli": "20.3.30",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
-    "@tailwindcss/typography": "^0.5.20",
     "postcss": "^8.5.28",
     "prettier": "^3.9.9",
-    "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.2"
   }

@@ -2,7 +2,7 @@
   <div>
     <p class="eyebrow">Trazabilidad / {{ scope() === 'red' ? 'Toda la red' : workspace.branch()?.name }}</p>
     <h1 class="page-title">Auditoría de movimientos</h1>
-    <p class="page-sub">Registro de la API ordenado por fecha, más recientes primero · se actualiza cada 15 s</p>
+    
   </div>
   <button class="btn-secundario" (click)="store.refresh()" [disabled]="store.loading()">
     <gx-icon name="refresh" />{{ store.loading() ? 'Actualizando…' : 'Actualizar' }}

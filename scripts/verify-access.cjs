@@ -1,4 +1,3 @@
-// Run manually after deployment. Read the password from stdin, never from a file or argument.
 const { chromium, request } = require('@playwright/test');
 const readline = require('node:readline/promises');
 const assert = require('node:assert/strict');

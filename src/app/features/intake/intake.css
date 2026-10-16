@@ -91,6 +91,8 @@
   padding: 14px;
 }
 .json-pane pre {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
   white-space: pre-wrap;
   overflow: auto;
   max-height: 330px;
