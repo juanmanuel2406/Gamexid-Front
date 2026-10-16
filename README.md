@@ -28,6 +28,7 @@ y tener la API local conectada a Aiven. No guardar ese valor en el repositorio.
 
 | Pantalla | Ruta | Datos |
 | --- | --- | --- |
+| Inicio (pública) | `/` | `GET /api/access/health`; landing con terminal de escaneo, KPIs, funciones y arquitectura |
 | Operaciones | `/dashboard` | `GET /api/products`, `/api/products/{id}/units`, `/api/inventory/movements`, `/api/access/health`, `/api/access/integrations`, `/api/access/gc/status` |
 | Ingresos | `/ingresos` | `GET /api/products/lookup`, `POST /api/products`, `POST /api/inventory/receipts` (destino: Depósito Central) |
 | Productos | `/productos` | `GET/POST /api/products`, unidades por producto |
@@ -44,6 +45,8 @@ unidades disponibles que devuelve la API; no hay datos simulados en la aplicaci�
 
 `NetActivity` registra las solicitudes reales a `/api`: alimenta la barra de carga del
 encabezado y el indicador de la última respuesta (método, ruta, estado y tiempo).
+
+El isotipo (`src/app/shared/gx-isotype.ts`) es una G geométrica dentro de las cuatro esquinas de un visor de scanner; su travesaño es la línea láser verde de lectura. Tipografías: Space Grotesk (títulos), Plus Jakarta Sans (texto) y JetBrains Mono (seriales, EAN y KPIs).
 
 Las animaciones usan Anime.js (`src/app/shared/anim.ts`): apertura del login, entrada
 de vistas, contadores, barras, reordenamiento del stock por sede, expansión de sedes,

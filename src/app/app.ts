@@ -18,7 +18,7 @@ import { animate, stagger, createTimeline } from 'animejs';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { Icon } from './shared/icon';
-import { GamexidLogo } from './shared/logo';
+import { GxIsotype } from './shared/gx-isotype';
 import { Workspace } from './core/workspace';
 import { NetActivity } from './core/net-activity';
 import { InventoryStore } from './core/inventory-store';
@@ -36,7 +36,7 @@ interface NavItem {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, ToastModule, TooltipModule, Icon, GamexidLogo],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, ToastModule, TooltipModule, Icon, GxIsotype],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -52,7 +52,11 @@ export class App {
   private loadbar = viewChild<ElementRef<HTMLElement>>('loadbar');
   readonly url = signal(this.router.url);
   readonly open = signal(false);
-  readonly login = computed(() => this.url().startsWith('/login'));
+  /** Public pages (landing and login) render without the workspace shell. */
+  readonly login = computed(() => {
+    const path = this.url().split(/[?#]/)[0];
+    return path === '/' || path === '' || path.startsWith('/login');
+  });
   private introPlayed = false;
   readonly navigation: NavItem[] = [
     { url: '/dashboard', icon: 'dashboard', name: 'Centro de operaciones', short: 'Operaciones', key: '1' },
@@ -88,7 +92,7 @@ export class App {
         // Wait for the shell and routerLinkActive to render before measuring.
         afterNextRender(
           () => {
-            this.movePill(previous.startsWith('/login') || !this.introPlayed);
+            this.movePill(this.isPublic(previous) || !this.introPlayed);
             if (!this.introPlayed) this.playIntro();
             else this.enterContent();
           },
@@ -162,6 +166,10 @@ export class App {
     animate(page, { opacity: [0, 1], translateY: [10, 0], duration: 450, delay: start, ease: 'outExpo' });
   }
 
+  private isPublic(url: string) {
+    const path = url.split(/[?#]/)[0];
+    return path === '/' || path === '' || path.startsWith('/login');
+  }
   netOk() {
     const s = this.net.last()?.status || 0;
     return s >= 200 && s < 400;

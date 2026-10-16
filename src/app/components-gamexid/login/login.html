@@ -3,9 +3,13 @@
   <div class="half bot"></div>
   <div class="seam"><i></i></div>
 </div>
+<a class="back" routerLink="/">← Volver al inicio</a>
 <main class="login-wrap">
   <section class="brand-panel">
-    <gx-logo class="gamexid-logo" />
+    <div class="gx-lockup gamexid-logo" data-in>
+      <gx-isotype [animated]="true" [loop]="true" label="Gamexid" />
+      <span class="gx-word"><b>GAMEXID</b><small>SERIAL TRACKING</small></span>
+    </div>
     <p class="eyebrow" data-in>Inventario serializado · red de sedes</p>
     <h1 data-in>Cada consola, cada serial, en la sede correcta.</h1>
     <p class="brand-description" data-in>

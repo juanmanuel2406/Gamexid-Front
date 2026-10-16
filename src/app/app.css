@@ -32,16 +32,21 @@
   color: var(--gx-text);
 }
 .brand-symbol {
-  width: 50px;
-  height: 40px;
+  --gx-iso-size: 36px;
 }
 .wordmark {
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  display: grid;
+  line-height: 1;
 }
 .wordmark b {
-  color: var(--gx-mag);
+  font: 700 18px 'Space Grotesk', var(--font-sans);
+  letter-spacing: 0.02em;
+}
+.wordmark small {
+  font: 600 8px var(--gx-mono);
+  letter-spacing: 0.24em;
+  color: #34d399;
+  margin-top: 4px;
 }
 .rail-label {
   padding: 10px 10px 6px;

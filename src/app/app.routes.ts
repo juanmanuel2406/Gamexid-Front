@@ -2,6 +2,11 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 export const routes: Routes = [
   {
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () => import('./features/home/home').then((m) => m.Home),
+  },
+  {
     path: 'login',
     loadComponent: () => import('./components-gamexid/login/login').then((m) => m.Login),
   },
@@ -11,7 +16,6 @@ export const routes: Routes = [
     canActivateChild: [AuthGuard],
     children: [
       { path: 'integracion', loadComponent: () => import('./features/integration/integration').then((m) => m.Integration) },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'dashboard',
         loadComponent: () =>

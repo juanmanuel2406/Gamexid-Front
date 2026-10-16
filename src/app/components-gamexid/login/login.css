@@ -1,6 +1,7 @@
 :host {
   display: block;
   min-height: 100dvh;
+  position: relative;
 }
 .curtain {
   position: fixed;
@@ -52,9 +53,36 @@
   gap: 18px;
   min-width: 0;
 }
-.gamexid-logo {
-  width: min(340px, 80%);
-  aspect-ratio: 444 / 440;
+.gx-lockup {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  --gx-iso-size: 88px;
+}
+.gx-word {
+  display: grid;
+  line-height: 1;
+}
+.gx-word b {
+  font: 700 34px 'Space Grotesk', var(--font-sans);
+  letter-spacing: 0.02em;
+}
+.gx-word small {
+  font: 600 11px var(--gx-mono);
+  letter-spacing: 0.24em;
+  color: #34d399;
+  margin-top: 6px;
+}
+.back {
+  position: absolute;
+  top: calc(20px + env(safe-area-inset-top, 0px));
+  left: max(16px, 5vw);
+  z-index: 2;
+  font-size: 14px;
+  color: var(--gx-muted);
+}
+.back:hover {
+  color: var(--gx-text);
 }
 .brand-panel .eyebrow {
   margin: 0;
@@ -178,8 +206,14 @@
     align-content: start;
     padding-block: 32px;
   }
-  .gamexid-logo {
-    width: 190px;
+  .gx-lockup {
+    --gx-iso-size: 64px;
+  }
+  .gx-word b {
+    font-size: 26px;
+  }
+  .login-wrap {
+    padding-top: 64px;
   }
   .login-card {
     padding: 22px;

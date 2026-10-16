@@ -20,6 +20,6 @@ test('capturas de demostración para la presentación', async ({ page }) => {
   await expect(page.locator('.p-dialog')).toHaveCSS('opacity', '1');
   await page.screenshot({path: 'test-results/current-orders.png', animations: 'disabled'});
   await page.goto('/login');
-  await expect(page.locator('.gamexid-logo .ltr')).toHaveCount(7);
+  await expect(page.locator('.gamexid-logo .corner')).toHaveCount(4);
   await page.screenshot({path: 'test-results/current-login.png'});
 });

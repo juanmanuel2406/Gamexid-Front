@@ -278,32 +278,46 @@ test('scanner recupera el botón cuando falla la API', async ({ page }) => {
   await expect(page.getByText('MySQL no disponible').first()).toBeVisible();
 });
 
-test('logo conserva espacio en la barra lateral y anima en login', async ({ page }) => {
+test('isotipo en la barra lateral y en login, con referencias SVG válidas', async ({ page }) => {
   await page.goto('/dashboard');
   const dimensions = await page.locator('.brand-symbol').boundingBox();
-  expect(dimensions?.width).toBe(50);
-  expect(dimensions?.height).toBe(40);
+  expect(dimensions?.width).toBeCloseTo(36, 0);
+  expect(dimensions?.height).toBeCloseTo(36, 0);
   await expect(page.locator('.rail')).toHaveCSS('width', '232px');
-  await expect(page.locator('.brand-symbol .head').last()).toHaveCSS('opacity', '1');
-  await page.screenshot({ path: 'test-results/sidebar-logo.png' });
+  await expect(page.locator('.brand-symbol .corner')).toHaveCount(4);
   await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
   await page.goto('/login');
   await expect(page.locator('.gamexid-logo')).toHaveCSS('opacity', '1');
-  await expect
-    .poll(async () =>
-      page.locator('.gamexid-logo .head').first().evaluate((el) => getComputedStyle(el).transform),
-    )
-    .not.toBe('none');
-  await expect(page.locator('.gamexid-logo .ltr').last()).toHaveCSS('opacity', '1');
-  await page.screenshot({path:'test-results/vector-login-desktop.png',fullPage:true});
+  await expect(page.locator('.gamexid-logo .laser')).toHaveAttribute('draw', '0 1');
+  await expect(page.locator('.gamexid-logo .corner').last()).toHaveCSS('opacity', '1');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.reload();
-  await expect(page.locator('.gamexid-logo .head').first()).toHaveCSS('transform', 'none');
-  await expect(page.locator('.gamexid-logo .ltr')).toHaveCount(7);
-  await expect(page.locator('.gamexid-logo .bone')).toHaveCount(34);
-  expect(await page.locator('.gamexid-logo svg').evaluate(svg=>
-    Array.from(svg.querySelectorAll('[fill^="url("]')).every(el=>{
-      const id=el.getAttribute('fill')!.slice(5,-1);
-      return !!svg.querySelector('[id="'+id+'"]');
-    }))).toBe(true);
+  await expect(page.locator('.gamexid-logo .corner')).toHaveCount(4);
+  expect(
+    await page.locator('.gamexid-logo svg').evaluate((svg) =>
+      Array.from(svg.querySelectorAll('[stroke^="url("]')).every((el) => {
+        const id = el.getAttribute('stroke')!.slice(5, -1);
+        return !!svg.querySelector('[id="' + id + '"]');
+      }),
+    ),
+  ).toBe(true);
+});
+
+test('home pública: hero, KPIs animados, arquitectura y acceso al login', async ({ page }) => {
+  await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator('.shell')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Cada serial, en la sede correcta.' })).toBeVisible();
+  await expect(page.locator('.laser-line')).toBeVisible();
+  await page.locator('.kpis').scrollIntoViewIfNeeded();
+  await expect(page.locator('.kpi-counter-1')).toHaveText('16');
+  await expect(page.locator('.kpi-counter-2')).toHaveText('60');
+  await expect(page.locator('.kpi-counter-3')).toHaveText('10');
+  await page.locator('.arch').scrollIntoViewIfNeeded();
+  await expect(page.locator('.architecture-path')).toHaveCount(4);
+  await page.locator('.nav').getByRole('link', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveURL(/login/);
+  await page.getByRole('link', { name: '← Volver al inicio' }).click();
+  await expect(page).toHaveURL(/\/$/);
 });

@@ -1,8 +1,8 @@
 import { Component, ElementRef, inject, signal, afterNextRender } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { animate, stagger } from 'animejs';
-import { GamexidLogo } from '../../shared/logo';
+import { GxIsotype } from '../../shared/gx-isotype';
 import { Icon } from '../../shared/icon';
 import { GamexidService } from '../../services-gamexid/gamexid-service';
 import { Workspace } from '../../core/workspace';
@@ -11,7 +11,7 @@ import { reducedMotion, shake } from '../../shared/anim';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, Icon, GamexidLogo],
+  imports: [FormsModule, RouterLink, Icon, GxIsotype],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

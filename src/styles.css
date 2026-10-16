@@ -4,6 +4,14 @@
 @import '@fontsource/inter/latin-700.css';
 @import '@fontsource/jetbrains-mono/latin-400.css';
 @import '@fontsource/jetbrains-mono/latin-500.css';
+@import '@fontsource/jetbrains-mono/latin-600.css';
+@import '@fontsource/space-grotesk/latin-500.css';
+@import '@fontsource/space-grotesk/latin-600.css';
+@import '@fontsource/space-grotesk/latin-700.css';
+@import '@fontsource/plus-jakarta-sans/latin-400.css';
+@import '@fontsource/plus-jakarta-sans/latin-500.css';
+@import '@fontsource/plus-jakarta-sans/latin-600.css';
+@import '@fontsource/plus-jakarta-sans/latin-700.css';
 @layer theme, base, primeng, components, utilities;
 @import 'tailwindcss';
 @plugin "@tailwindcss/typography";
@@ -11,7 +19,8 @@
 @theme {
   --color-slate-950: #07090f;
   --color-tech: #9b38ee;
-  --font-sans: 'Inter', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 @layer base {
@@ -43,14 +52,14 @@
     --gx-ok: #2fd59a;
     --gx-warn: #ffb547;
     --gx-bad: #ff4d6a;
-    --gx-grad: linear-gradient(90deg, #ff00e6, #9b38ee 45%, #3f6ee0);
+    --gx-grad: linear-gradient(90deg, #8b5cf6, #6d5df5 45%, #10b981);
     --gx-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   }
   html,
   body {
     margin: 0;
     min-height: 100%;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
     background: var(--bg);
     background-image:
       radial-gradient(1000px 600px at 85% -10%, rgba(63, 110, 224, 0.1), transparent 60%),
@@ -73,6 +82,7 @@
   h2,
   h3 {
     text-wrap: balance;
+    font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
   }
   button,
   input,
