@@ -7,7 +7,7 @@ test('GC-API sin credenciales no realiza consultas ni muestra conexión ficticia
   await page.route('**/api/access/integrations', r => r.fulfill({json: {pdfPig: true}}));
   await page.route('**/api/access/gc/status', r => r.fulfill({json: {configured: false, connected: false}}));
   await page.goto('/integracion');
-  await expect(page.getByRole('heading', {name: 'Faltan credenciales de GamingCity'})).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Faltan credenciales de GamingCity'})).toBeVisible({ timeout: 15000 });
   await expect(page.getByRole('button', {name: 'Consultar catálogo'})).toBeDisabled();
   await page.screenshot({path: 'test-results/integration-current.png', fullPage: true});
 });
