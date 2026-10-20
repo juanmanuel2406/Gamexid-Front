@@ -22,6 +22,8 @@ export interface Product {
   isActive: boolean;
 }
 
+export interface BranchStock extends Product { branchId: number; stock: number }
+
 export type UnitStatus = 'Available' | 'Sold' | 'Transferred' | 'Returned';
 
 export interface SerializedUnit {
@@ -89,6 +91,9 @@ export class GamexidService {
   getProductos(): Observable<Product[]> {
     return this.http.get<Product[]>('/api/products').pipe(timeout(15000));
   }
+  getStock(branchId: number, search = ''): Observable<BranchStock[]> {
+    return this.http.get<BranchStock[]>('/api/inventory/stock', { params: { branchId, search } }).pipe(timeout(15000));
+  }
   buscarProductoPorCodigo(code: string): Observable<ProductLookup> {
     return this.http.get<ProductLookup>('/api/products/lookup', { params: { code: code.trim() } }).pipe(timeout(15000));
   }
@@ -105,8 +110,8 @@ export class GamexidService {
   crearSucursal(dto: { code: string; name: string; address?: string }): Observable<Branch> {
     return this.http.post<Branch>('/api/branches', dto);
   }
-  getUnidadesDeProducto(productId: number): Observable<SerializedUnit[]> {
-    return this.http.get<SerializedUnit[]>('/api/products/' + productId + '/units');
+  getUnidadesDeProducto(productId: number, branchId?: number): Observable<SerializedUnit[]> {
+    return this.http.get<SerializedUnit[]>('/api/products/' + productId + '/units', { params: branchId ? { branchId } : {} });
   }
   getMovimientos(): Observable<InventoryMovement[]> {
     return this.http.get<InventoryMovement[]>('/api/inventory/movements').pipe(timeout(15000));

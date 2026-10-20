@@ -16,13 +16,14 @@
     <label class="search-field"
       ><gx-icon name="search" /><input
         aria-label="Buscar productos"
-        placeholder="Buscar por nombre, SKU o EAN..."
+        placeholder="Buscar por nombre, EAN o serial..."
         [ngModel]="filtro()"
         (ngModelChange)="filtro.set($event)" /></label
     ><span class="muted text-xs">{{ filtered().length }} resultados</span>
   </div>
   <p-table
     [value]="filtered()"
+    [loading]="loading()"
     [paginator]="filtered().length > 15"
     [rows]="15"
     [scrollable]="true"
@@ -34,7 +35,7 @@
         <th>Producto</th>
         <th>EAN</th>
         <th>Validación</th>
-        <th class="num">Stock red</th>
+        <th class="num">Stock en {{ workspace.branch()?.name }}</th>
         <th style="width: 120px">Distribución</th>
         <th>Estado</th>
         <th>Acciones</th>

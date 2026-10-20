@@ -103,6 +103,14 @@
         <p class="muted text-xs mt-3">
           Lector USB/Bluetooth en modo teclado o carga manual. Enter confirma la lectura.
         </p>
+        @if (suggestions().length) {
+          <div class="notice" role="status">
+            <strong>Productos similares</strong>
+            @for (p of suggestions(); track p.id) {
+              <button class="btn-secundario" (click)="confirmSuggestion(p)">Confirmar {{ p.name }} · {{ p.sku }}</button>
+            }
+          </div>
+        }
         @if (unknown()) {
           <div class="notice status-warn">
             <p>Producto no registrado.</p>

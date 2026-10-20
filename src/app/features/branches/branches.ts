@@ -122,12 +122,13 @@ export class Branches {
     this.close();
   }
   openCreate() {
+    if (!this.workspace.isAdmin()) return;
     this.draft = { code: '', name: '', address: '' };
     this.formError.set('');
     this.creating.set(true);
   }
   create() {
-    if (this.saving()) return;
+    if (this.saving() || !this.workspace.isAdmin()) return;
     const code = this.draft.code.trim().toUpperCase();
     const name = this.draft.name.trim();
     if (!code || !name || code.length > 20 || name.length > 120) {

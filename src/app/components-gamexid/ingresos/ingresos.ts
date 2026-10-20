@@ -57,6 +57,7 @@ export class Ingresos implements OnDestroy {
   readonly identified = signal<ProductLookup | null>(null);
   readonly confirm = signal(false);
   readonly newProduct = signal(false);
+  readonly suggestions = signal<Product[]>([]);
   readonly unknown = signal(false);
   readonly scanMode = signal<'ean' | 'serial'>('ean');
   readonly activeProduct = signal<number | null>(null);
@@ -110,6 +111,7 @@ export class Ingresos implements OnDestroy {
   iniciarIngreso() {
     if (!this.depot.id) { this.fail('Esperá la conexión con el depósito central.'); return; }
     this.identified.set(null);
+    this.suggestions.set([]);
     this.creating.set(true);
     this.items.set([]);
     this.ean = '';
@@ -124,6 +126,7 @@ export class Ingresos implements OnDestroy {
     this.error.set('');
     this.unknown.set(false);
     this.identified.set(null);
+    this.suggestions.set([]);
     const code = this.ean.trim();
     if (!code) {
       this.fail('No se recibió una lectura del scanner. Podés escribir EAN, SKU o serial manualmente y presionar Agregar.');
@@ -157,6 +160,7 @@ export class Ingresos implements OnDestroy {
         this.add(result.product);
       },
       error: (e) => {
+        this.suggestions.set(e.status === 404 ? (e.error?.suggestions || []).map((s: { product: Product }) => s.product) : []);
         this.scanState.set('miss');
         this.scanLabel.set(e.status === 404 ? 'SIN COINCIDENCIA' : e.status === 409 ? 'CÓDIGO AMBIGUO' : 'ERROR DE CONEXIÓN');
         shake(document.querySelector('.scanner'));
@@ -164,6 +168,18 @@ export class Ingresos implements OnDestroy {
         this.fail(e.error?.mensaje || 'No se pudo consultar el catálogo. Revisá la conexión con la API.');
       },
     });
+  }
+  confirmSuggestion(p: Product) {
+    if (!this.suggestions().some(s => s.id === p.id)) return;
+    this.suggestions.set([]);
+    this.unknown.set(false);
+    this.error.set('');
+    if (this.items().some(i => i.product.id === p.id)) {
+      this.activeProduct.set(p.id);
+      this.scanMode.set(p.requiresSerialNumber ? 'serial' : 'ean');
+      return;
+    }
+    this.add(p);
   }
   add(p: Product) {
     const from = document.querySelector('.scan-input')?.getBoundingClientRect();

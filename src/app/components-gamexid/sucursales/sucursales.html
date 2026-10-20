@@ -14,7 +14,7 @@
   </p>
 </div>
 <div class="flex flex-wrap gap-3 my-4">
-  <input class="form-control" aria-label="Buscar pedidos" placeholder="Documento o proveedor" maxlength="100" [(ngModel)]="search" (keydown.enter)="load()" />
+  <input class="form-control" aria-label="Buscar pedidos" placeholder="Referencia del pedido" maxlength="100" [(ngModel)]="search" (keydown.enter)="load()" />
   <select class="form-control" aria-label="Estado del pedido" [(ngModel)]="statusFilter" (change)="load()">
     <option value="">Todos los estados</option><option value="Pending">Pendiente</option>
     <option value="Partial">Parcial</option><option value="Received">Recibido</option>
@@ -69,9 +69,6 @@
 >
   @if (draft(); as d) {
     <fieldset [disabled]="busy() || !!d.status">
-    <label><span class="form-label">Proveedor</span>
-      <input class="form-control" [(ngModel)]="d.supplier" maxlength="160" />
-    </label>
     <div class="order-fields">
       <label
         ><span class="form-label">Referencia del pedido</span

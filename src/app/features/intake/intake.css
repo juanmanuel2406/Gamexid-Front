@@ -51,7 +51,7 @@
 }
 .document-split {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   border: 1px solid #1a2034;
   border-radius: 8px;
   overflow: hidden;
@@ -60,11 +60,6 @@
 .document-pane {
   background: #172031;
   min-width: 0;
-}
-.json-pane {
-  background: #07090f;
-  min-width: 0;
-  border-left: 1px solid #1a2034;
 }
 .pane-header {
   display: flex;
@@ -90,37 +85,11 @@
   object-fit: contain;
   padding: 14px;
 }
-.json-pane pre {
-  scrollbar-width: thin;
-  scrollbar-color: #334155 transparent;
-  white-space: pre-wrap;
-  overflow: auto;
-  max-height: 330px;
-  font: 500 11px/1.8 var(--font-data);
-  padding: 16px;
-  margin: 0;
-}
-.confidence-list {
-  padding: 12px;
-  border-top: 1px solid #1a2034;
-  display: grid;
-  gap: 8px;
-}
-.confidence-list > div {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
-}
 @media (max-width: 700px) {
   .document-split {
     grid-template-columns: 1fr;
   }
-  .json-pane {
-    border-left: 0;
-    border-top: 1px solid #1a2034;
-  }
-  .intake-toolbar {
+    .intake-toolbar {
     flex-wrap: wrap;
   }
   .intake-toolbar .code-pill {

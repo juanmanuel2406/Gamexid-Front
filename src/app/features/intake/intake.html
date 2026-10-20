@@ -52,35 +52,6 @@
         <p-skeleton height="300px" />
       }
     </section>
-    <section class="json-pane">
-      <div class="pane-header">
-        <span>02 / DATOS ESTRUCTURADOS</span
-        ><p-tag [value]="source() === 'pdfpig' ? 'PdfPig' : 'Vista previa'" severity="info" />
-      </div>
-      @if (busy()) {
-        <div class="p-4">
-          <p-skeleton height="18px" styleClass="mb-3" /><p-skeleton
-            height="18px"
-            width="75%"
-            styleClass="mb-3"
-          /><p-skeleton height="18px" width="60%" />
-        </div>
-      } @else {
-        <pre
 
-        ><code>@for(token of tokens();track $index){<span [class]="token.kind">{{token.value}}</span>}</code></pre>
-      }
-      <div class="confidence-list">
-        @for (line of lines(); track $index) {
-          <div>
-            <span class="code-pill">{{ line.ean || line.sku }}</span
-            ><p-tag
-              value="Revisión manual"
-              [severity]="line.confidence !== null && line.confidence >= 0.9 ? 'success' : 'warn'"
-            />
-          </div>
-        }
-      </div>
-    </section>
   </div>
 }

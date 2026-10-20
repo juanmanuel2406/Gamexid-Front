@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Catalogo } from './catalogo';
@@ -7,7 +7,7 @@ import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { GamexidService, Product, SerializedUnit } from '../../services-gamexid/gamexid-service';
+import { GamexidService, Product, BranchStock, SerializedUnit } from '../../services-gamexid/gamexid-service';
 import { Workspace } from '../../core/workspace';
 import { Icon } from '../../shared/icon';
 import { InventoryStore } from '../../core/inventory-store';
@@ -31,35 +31,44 @@ export class Productos {
   private store = inject(InventoryStore);
 
   readonly stock = computed(() => {
-    const map = new Map<number, number>();
-    for (const u of this.store.available()) map.set(u.productId, (map.get(u.productId) || 0) + 1);
-    return map;
+    return new Map(this.productos().map(p => [p.id, p.stock]));
   });
   readonly maxStock = computed(() => Math.max(1, ...this.stock().values()));
   private entered = false;
-  readonly productos = signal<Product[]>([]);
+  readonly productos = signal<BranchStock[]>([]);
   readonly filtro = signal('');
   readonly mostrarAlta = signal(false);
   readonly saving = signal(false);
   readonly detalle = signal<Product | null>(null);
   readonly units = signal<SerializedUnit[]>([]);
   draft = { sku: '', name: '', ean: '', requiresSerialNumber: false };
-  readonly filtered = computed(() => {
-    const q = this.filtro().trim().toLowerCase();
-    return this.productos().filter((p) =>
-      [p.name, p.sku, p.ean].some((v) => v.toLowerCase().includes(q)),
-    );
-  });
+  readonly filtered = computed(() => this.productos());
+  private loadVersion = 0;
+  readonly loading = signal(false);
   constructor() {
+    effect(onCleanup => {
+      const branch = this.workspace.branchId();
+      const search = this.filtro();
+      const visible = this.inventory();
+      untracked(() => { this.productos.set([]); this.units.set([]); this.detalle.set(null); ++this.loadVersion; });
+      if (!visible || !branch) return;
+      const timer = setTimeout(() => this.load(branch, search), 200);
+      onCleanup(() => clearTimeout(timer));
+    });
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
       const inventory = params.get('vista') === 'inventario';
       this.inventory.set(inventory);
-      if (inventory) this.load();
+
     });
   }
-  load() {
-    this.data.getProductos().subscribe({
+  load(branch = this.workspace.branchId(), search = this.filtro()) {
+    if (!branch) return;
+    const version = ++this.loadVersion;
+    this.loading.set(true);
+    this.data.getStock(branch, search).subscribe({
       next: (p) => {
+        if (version !== this.loadVersion) return;
+        this.loading.set(false);
         this.productos.set(p);
         if (!this.entered) {
           this.entered = true;
@@ -69,7 +78,7 @@ export class Productos {
           });
         }
       },
-      error: () => this.workspace.notify('No se pudo cargar el catálogo.', 'error'),
+      error: () => { if (version === this.loadVersion) { this.loading.set(false); this.productos.set([]); this.workspace.notify('No se pudo cargar el stock de la sucursal.', 'error'); } },
     });
   }
   abrirAlta() {
@@ -99,6 +108,11 @@ export class Productos {
   }
   verSeriales(p: Product) {
     this.detalle.set(p);
-    this.data.getUnidadesDeProducto(p.id).subscribe((u) => this.units.set(u));
+    this.units.set([]);
+    const branch = this.workspace.branchId();
+    this.data.getUnidadesDeProducto(p.id, branch).subscribe({
+      next: u => { if (this.detalle()?.id === p.id && this.workspace.branchId() === branch) this.units.set(u); },
+      error: () => this.workspace.notify('No se pudieron cargar los seriales.', 'error'),
+    });
   }
 }

@@ -75,7 +75,6 @@ export class Sucursales implements OnInit {
     this.serialCode = '';
     this.draft.set({
       id: crypto.randomUUID(),
-      supplier: '',
       reference: '',
       branchId: this.branches().some((b) => b.id === this.workspace.branchId())
         ? this.workspace.branchId()
@@ -134,7 +133,7 @@ export class Sucursales implements OnInit {
           existing.add(key);
         }
       }
-      return { ...d, pdf: result.file, fileName: result.file.name, lines };
+      return { ...d, reference: result.source === 'pdfpig' ? (result.reference || '') : d.reference, pdf: result.file, fileName: result.file.name, lines };
     });
   }
   relacionar(line: OrderLine) {

@@ -1,4 +1,4 @@
-import { Component, output, inject, signal, computed, OnDestroy } from '@angular/core';
+import { Component, output, inject, signal, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom, timeout } from 'rxjs';
@@ -17,11 +17,11 @@ export interface ExtractionLine {
   total?: number | null;
   currency?: string | null;
   page?: number;
-  rawText?: string;
   warnings?: string[];
 }
 export interface Extraction {
   file: File;
+  reference?: string | null;
   lines: ExtractionLine[];
   source: 'preview' | 'pdfpig';
 }
@@ -46,28 +46,6 @@ export class Intake implements OnDestroy {
   readonly source = signal<'preview' | 'pdfpig'>('preview');
   readonly pageCount = signal(0);
   readonly page = signal(1);
-  readonly tokens = computed(() =>
-    JSON.stringify(
-      {
-        source: this.source() === 'pdfpig' ? 'PdfPig · revisión manual' : 'Vista previa',
-        products: this.lines(),
-      },
-      null,
-      2,
-    )
-      .split(/("(?:[^"\\]|\\.)*"\s*:|"(?:[^"\\]|\\.)*"|\b\d+(?:\.\d+)?\b|\bnull\b)/g)
-      .filter(Boolean)
-      .map((value) => ({
-        value,
-        kind: value.endsWith(':')
-          ? 'json-key'
-          : value.startsWith('"')
-            ? 'json-value'
-            : /^\d/.test(value)
-              ? 'json-number'
-              : '',
-      })),
-  );
   private task: any;
   private document: any;
   private laser?: ReturnType<Motion['laser']>;
@@ -154,7 +132,7 @@ export class Intake implements OnDestroy {
       form.append('file', file);
       const result = await firstValueFrom(
         this.http
-          .post<{ lines: ExtractionLine[]; warnings: string[]; requiresOcr: boolean }>('/api/documents/extract', form, {
+          .post<{ reference: string | null; lines: ExtractionLine[]; warnings: string[]; requiresOcr: boolean }>('/api/documents/extract', form, {
             headers: { 'X-Gamexid': '1' },
           })
           .pipe(timeout(65000)),
@@ -162,7 +140,7 @@ export class Intake implements OnDestroy {
       if (this.destroyed) return;
       this.lines.set(result.lines);
       this.source.set('pdfpig');
-      this.parsed.emit({ file, lines: result.lines, source: 'pdfpig' });
+      this.parsed.emit({ file, reference: result.reference, lines: result.lines, source: 'pdfpig' });
       this.message.set(result.warnings.join(' '));
     } catch (e: any) {
       this.message.set(

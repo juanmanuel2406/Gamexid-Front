@@ -16,7 +16,6 @@ export interface OrderLine {
 }
 export interface BranchOrder {
   id: string;
-  supplier: string;
   reference: string;
   branchId: number;
   created: string;
@@ -27,7 +26,6 @@ export interface BranchOrder {
 }
 export interface CreateOrderDto {
   id: string;
-  supplier: string;
   reference: string;
   branchId: number;
   created: string;
@@ -51,12 +49,13 @@ export class OrdersService {
     return firstValueFrom(this.http.get<OrderPageDto>('/api/orders', { params }).pipe(timeout(30000)));
   }
   save(order: BranchOrder): Promise<OrderResponseDto> {
-    if (!order.supplier.trim() || !order.reference.trim() || !order.branchId || !order.lines.length ||
+    if (!order.reference.trim() || !order.branchId || !order.lines.length ||
         order.lines.some(l => !/^(?:\d{8}|\d{12,14})$/.test(l.ean) || !l.name.trim() ||
-          !Number.isSafeInteger(l.expected) || l.expected! < 1))
-      throw new Error('Revisá proveedor, referencia, sucursal, EAN y cantidades.');
+          !Number.isSafeInteger(l.expected) || l.expected! < 1 ||
+          ((l.unitPrice != null || l.total != null) && l.currency !== 'ARS' && l.currency !== 'USD')))
+      throw new Error('Revisá referencia, sucursal, EAN, cantidades y moneda.');
     const dto: CreateOrderDto = {
-      id: order.id, supplier: order.supplier, reference: order.reference, branchId: order.branchId,
+      id: order.id, reference: order.reference, branchId: order.branchId,
       created: order.created, fileName: order.fileName,
       lines: order.lines.map(l => ({ ean: l.ean, sku: l.sku || null, name: l.name, expected: l.expected!,
         unitPrice: l.unitPrice ?? null, total: l.total ?? null, currency: l.currency || null })),

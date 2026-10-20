@@ -108,7 +108,6 @@ test('pedido manual: persiste y permite recepción parcial', async ({ page }) =>
   await page.goto('/sucursales');
   await page.getByRole('button', { name: 'Nuevo pedido' }).click();
   await page.getByLabel('Referencia del pedido').fill('QA-PEDIDO');
-  await page.getByLabel('Proveedor', { exact: true }).fill('Proveedor QA');
   await page.getByLabel('Sucursal de destino').selectOption({ label: 'Belgrano' });
   await page.getByRole('button', { name: 'Agregar producto manualmente' }).click();
   await page.getByLabel('EAN', { exact: true }).fill('7790000000011');
@@ -136,12 +135,14 @@ test('pedido manual: persiste y permite recepción parcial', async ({ page }) =>
   await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
   await expect(page.getByText('1 productos · 0 unidades pendientes')).toBeVisible();
 });
-test('pedido extraído: conserva borrador al fallar y guarda JSON por API', async ({ page }) => {
+test('pedido extraído: conserva borrador al fallar y guarda únicamente los campos del pedido', async ({ page }) => {
   let attempts = 0;
   await page.route('**/api/orders', async r => {
     attempts++;
     const dto = r.request().postDataJSON();
-    expect(dto.supplier).toBe('PDF supplier');
+    expect(dto.supplier).toBeUndefined();
+    expect(dto.reference).toBe('00012345');
+    expect(dto.json).toBeUndefined();
     expect(dto.lines[0].unitPrice).toBe(1200.5);
     expect(dto.lines[0].expected).toBe(3);
     expect(dto.pdf).toBeUndefined();
@@ -151,7 +152,6 @@ test('pedido extraído: conserva borrador al fallar y guarda JSON por API', asyn
   });
   await page.goto('/sucursales');
   await page.getByRole('button', { name: 'Nuevo pedido' }).click();
-  await page.getByLabel('Proveedor', { exact: true }).fill('PDF supplier');
   await page.getByLabel('Referencia del pedido').fill('PDF-001');
   await page.getByLabel('Sucursal de destino').selectOption({ label: 'Belgrano' });
   await page.locator('#pedido-pdf').setInputFiles({ name: 'order.pdf', mimeType: 'application/pdf', buffer: invoicePdf() });
@@ -159,7 +159,6 @@ test('pedido extraído: conserva borrador al fallar y guarda JSON por API', asyn
   await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('3');
   await page.getByRole('button', { name: 'Guardar pedido' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'No se pudo confirmar' })).toBeVisible();
-  await expect(page.getByLabel('Proveedor', { exact: true })).toHaveValue('PDF supplier');
   await page.getByRole('button', { name: 'Guardar pedido' }).click();
   await expect(page.getByLabel('EAN o SKU del pedido')).toBeVisible();
   await page.getByLabel('EAN o SKU del pedido').fill('7790000000011');

@@ -16,7 +16,7 @@ export async function mockInventory(page: Page) {
     const size = Number(q.get('pageSize') || 20);
     const filtered = orders.filter(o => o.branchId === Number(q.get('branchId')) &&
       (!q.get('status') || o.status === q.get('status')) &&
-      (!q.get('search') || (o.reference + o.supplier).includes(q.get('search'))));
+      (!q.get('search') || o.reference.includes(q.get('search'))));
     return r.fulfill({ json: { items: filtered.slice((pageNumber - 1) * size, pageNumber * size),
       total: filtered.length, page: pageNumber, pageSize: size } });
   });
@@ -52,7 +52,7 @@ export async function mockInventory(page: Page) {
       await r.fulfill({ status: 201, json: product });
     } else await r.fulfill({ json: products });
   });
-  await page.route('**/api/products/*/units', r => {
+  await page.route('**/api/products/*/units**', r => {
     const id = Number(new URL(r.request().url()).pathname.split('/')[3]);
     return r.fulfill({ json: units.filter(u => u.productId === id) });
   });
@@ -64,6 +64,14 @@ export async function mockInventory(page: Page) {
       ? r.fulfill({ json: { product, unit, matchedBy: unit ? 'serial' : product.ean === code ? 'ean' : 'sku', alreadyInInventory: !!unit } })
       : r.fulfill({ status: 404, json: { mensaje: 'Código sin relación registrada.' } });
   });
+  await page.route('**/api/inventory/stock?*', r => {
+    const params = new URL(r.request().url()).searchParams;
+    const branchId = Number(params.get('branchId'));
+    const search = (params.get('search') || '').toLowerCase();
+    return r.fulfill({ json: products.filter(p => [p.name, p.ean, p.sku].some(v => v.toLowerCase().includes(search)) ||
+      units.some(u => u.productId === p.id && u.currentBranchId === branchId && u.serialNumber.toLowerCase().includes(search)))
+      .map(p => ({ ...p, branchId, stock: units.filter(u => u.productId === p.id && u.currentBranchId === branchId && u.status === 'Available').length })) });
+  });
   await page.route('**/api/inventory/movements', r => r.fulfill({ json: movements }));
   await page.route('**/api/inventory/receipts', r => {
     const body = r.request().postDataJSON();
@@ -72,6 +80,6 @@ export async function mockInventory(page: Page) {
     return r.fulfill({ json: movement });
   });
   await page.route('**/api/documents/extract', r => r.fulfill({
-    json: { source: 'pdfpig', lines: [{ ean: '7790000000011', name: 'Notebook 14" 8GB', expected: 3, unitPrice: 1200.5, total: 3601.5, currency: 'ARS', confidence: null }], warnings: ['Revisá las líneas contra el PDF.'], requiresOcr: false },
+    json: { source: 'pdfpig', reference: '00012345', lines: [{ ean: '7790000000011', name: 'Notebook 14" 8GB', expected: 3, unitPrice: 1200.5, total: 3601.5, currency: 'ARS', confidence: null }], warnings: ['Revisá las líneas contra el PDF.'], requiresOcr: false },
   }));
 }
