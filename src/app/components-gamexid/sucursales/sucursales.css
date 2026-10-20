@@ -59,3 +59,23 @@
     width: 100%;
   }
 }
+
+/* Order reference provenance */
+.ref-label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ref-input { font-size: 15px; letter-spacing: 0.04em; }
+
+/* Currency: ARS (sky) vs USD (emerald) is visible on every amount */
+.money { position: relative; display: flex; align-items: stretch; }
+.money .cur { display: grid; place-items: center; min-width: 48px; padding: 0 8px; border: 1px solid var(--gx-line-2); border-right: 0; border-radius: 10px 0 0 10px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--gx-dim); background: var(--gx-surface-2); transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease; }
+.money .form-control { border-radius: 0 10px 10px 0; }
+.money[data-cur='ARS'] .cur { color: #7dd3fc; background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.45); }
+.money[data-cur='USD'] .cur { color: #6ee7b7; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.45); }
+.money[data-cur='none'] .cur { color: var(--gx-warn); border-color: rgba(255, 181, 71, 0.4); }
+.cur-field { display: grid; align-content: end; }
+.cur-toggle { display: inline-grid; grid-template-columns: 1fr 1fr; padding: 3px; gap: 3px; min-height: 44px; border: 1px solid var(--gx-line-2); border-radius: 10px; background: #07090f; }
+.cur-toggle button { border: 0; border-radius: 7px; background: transparent; color: var(--gx-muted); font: 600 12px var(--font-data); letter-spacing: 0.06em; transition: color 160ms ease, background-color 160ms ease; }
+.cur-toggle button[aria-checked='true']:first-child { color: #0b1a24; background: #7dd3fc; }
+.cur-toggle button[aria-checked='true']:last-child { color: #062419; background: #6ee7b7; }
+.cur-toggle[data-cur='none'] { border-color: rgba(255, 181, 71, 0.45); }
+.cur-hint { margin-top: 4px; font-size: 11px; color: var(--gx-warn); }

@@ -34,7 +34,7 @@ test('API real: sesión, Aiven, sucursales y PdfPig desde Angular, sin guardar d
   await expect(page.getByLabel('Destino: Depósito')).toHaveValue('Morón (Depósito Central)');
   await page.locator('#ean-scanner-input').fill('GX-UNKNOWN-' + Date.now());
   await page.getByRole('button', { name: 'Agregar', exact: true }).click();
-  await expect(page.getByText('Código sin relación registrada.', { exact: false }).first()).toBeVisible({ timeout: 20000 });
+  await expect(page.getByText('Código sin coincidencia exacta.', { exact: false }).first()).toBeVisible({ timeout: 20000 });
   await page.goto('/sucursales');
   await page.getByRole('button', { name: 'Nuevo pedido' }).click();
   await page.locator('#pedido-pdf').setInputFiles({ name: 'qa.pdf', mimeType: 'application/pdf', buffer: invoice() });
@@ -42,7 +42,7 @@ test('API real: sesión, Aiven, sucursales y PdfPig desde Angular, sin guardar d
   await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('2', { timeout: 30000 });
   await expect(page.getByLabel('Precio unitario', { exact: true })).toHaveValue('100');
   await expect(page.getByLabel('Importe', { exact: true })).toHaveValue('200');
-  await expect(page.getByLabel('Moneda', { exact: true })).toHaveValue('ARS');
+  await expect(page.getByRole('radio', { name: 'ARS' })).toHaveAttribute('aria-checked', 'true');
   await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
   expect(errors).toEqual([]);
 });

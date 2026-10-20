@@ -22,6 +22,8 @@ export interface BranchOrder {
   fileName: string;
   status?: string;
   pdf?: Blob;
+  /** UI only: where the reference number came from (never sent to the API). */
+  referenceSource?: 'pdf' | 'missing' | 'manual';
   lines: OrderLine[];
 }
 export interface CreateOrderDto {

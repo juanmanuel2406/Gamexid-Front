@@ -133,7 +133,12 @@ export class Sucursales implements OnInit {
           existing.add(key);
         }
       }
-      return { ...d, reference: result.source === 'pdfpig' ? (result.reference || '') : d.reference, pdf: result.file, fileName: result.file.name, lines };
+      const detected = result.source === 'pdfpig' ? result.reference?.trim() || '' : '';
+      const sameFile = d.pdf === result.file;
+      const manual = d.referenceSource === 'manual' || (!d.referenceSource && !!d.reference.trim());
+      const reference = detected || (manual || (sameFile && result.source !== 'pdfpig') ? d.reference : '');
+      const referenceSource: BranchOrder['referenceSource'] = detected ? 'pdf' : reference.trim() ? (manual ? 'manual' : d.referenceSource) : 'missing';
+      return { ...d, reference, referenceSource, pdf: result.file, fileName: result.file.name, lines };
     });
   }
   relacionar(line: OrderLine) {

@@ -157,6 +157,10 @@ test('pedido extraído: conserva borrador al fallar y guarda únicamente los cam
   await page.locator('#pedido-pdf').setInputFiles({ name: 'order.pdf', mimeType: 'application/pdf', buffer: invoicePdf() });
   await page.getByRole('button', { name: 'Extraer con PdfPig' }).click();
   await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('3');
+  await expect(page.getByLabel('Referencia del pedido')).toHaveValue('00012345');
+  await expect(page.getByText('Detectada en el PDF')).toBeVisible();
+  await expect(page.locator('.money').first()).toHaveAttribute('data-cur', 'ARS');
+  await expect(page.getByRole('radio', { name: 'ARS' })).toHaveAttribute('aria-checked', 'true');
   await page.getByRole('button', { name: 'Guardar pedido' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'No se pudo confirmar' })).toBeVisible();
   await page.getByRole('button', { name: 'Guardar pedido' }).click();
@@ -243,23 +247,21 @@ test('PdfPig requiere botón explícito y completa cantidades sin duplicar líne
   await page.getByRole('button', { name: 'Extraer con PdfPig' }).click();
   await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('3');
   await expect(page.getByLabel('EAN', { exact: true })).toHaveCount(1);
+  // No reference/currency detected: the form flags both instead of guessing.
+  await expect(page.getByText('Verificá el número bajo PEDIDO SUCURSAL')).toBeVisible();
+  await expect(page.locator('.money').first()).toHaveAttribute('data-cur', 'none');
+  await expect(page.getByText('Elegí la moneda')).toBeVisible();
+  await page.getByRole('radio', { name: 'USD' }).click();
+  await expect(page.locator('.money .cur').first()).toHaveText('US$');
+  await page.getByRole('radio', { name: 'ARS' }).click();
+  await expect(page.locator('.money .cur').first()).toHaveText('AR$');
   expect(sent).toBe(1);
   await page.screenshot({ path: 'test-results/intake-desktop.png', fullPage: true });
 });
-test('auditoría: asociación, discrepancia persistente y búsqueda segura', async ({ page }) => {
+test('linaje oculto: sin acceso en la navegación y /auditoria redirige', async ({ page }) => {
   await page.goto('/auditoria');
-  await page.getByRole('button', { name: 'Asociar gabinete' }).first().click();
-  await page.getByLabel('Serial del gabinete').fill('CASE-QA-001');
-  await page.getByRole('button', { name: 'Guardar asociación' }).click();
-  await page.getByRole('button', { name: 'Verificar devolución' }).first().click();
-  await page.getByLabel('Serial observado en la unidad recibida').fill('SERIAL-INCORRECTO');
-  await page.getByRole('button', { name: 'Verificar serial', exact: true }).click();
-  await expect(page.locator('#fraud-alert')).toBeVisible();
-  await page.screenshot({ path: 'test-results/audit-desktop.png', fullPage: true });
-  await page.reload();
-  await page.getByLabel('Buscar linaje').fill('CASE-QA');
-  await expect(page.locator('mark')).toHaveText('CASE-QA');
-  await expect(page.getByText('Discrepancia', { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/dashboard/);
+  await expect(page.locator('.nav-item', { hasText: 'Linaje' })).toHaveCount(0);
 });
 test('todas las pantallas se adaptan a móvil y no tienen errores de ejecución', async ({
   page,
@@ -269,7 +271,7 @@ test('todas las pantallas se adaptan a móvil y no tienen errores de ejecución'
   await page.goto('/dashboard');
   await page.screenshot({ path: 'test-results/dashboard-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const route of ['dashboard', 'productos', 'ingresos', 'sucursales', 'auditoria']) {
+  for (const route of ['dashboard', 'productos', 'ingresos', 'sucursales', 'sedes']) {
     await page.goto('/' + route);
     await expect(page.locator('h1')).toBeVisible();
     expect(
@@ -412,4 +414,15 @@ test('textos finales: GamingCity en una palabra y sin elementos retirados', asyn
   await page.goto('/login');
   await expect(page.getByText('Acceso operativo')).toHaveCount(0);
   await expect(page.locator('.brand-code')).toHaveCount(0);
+});
+
+test('otro PDF no conserva una referencia detectada del documento anterior', async ({ page }) => {
+  await page.goto('/sucursales');
+  await page.getByRole('button', { name: 'Nuevo pedido' }).click();
+  await page.locator('#pedido-pdf').setInputFiles({ name: 'primero.pdf', mimeType: 'application/pdf', buffer: invoicePdf() });
+  await page.getByRole('button', { name: 'Extraer con PdfPig' }).click();
+  await expect(page.getByLabel('Referencia del pedido')).toHaveValue('00012345');
+  await page.locator('#pedido-pdf').setInputFiles({ name: 'segundo.pdf', mimeType: 'application/pdf', buffer: invoicePdf() });
+  await expect(page.getByLabel('Referencia del pedido')).toHaveValue('');
+  await expect(page.getByText('Detectada en el PDF')).toHaveCount(0);
 });

@@ -65,7 +65,7 @@ export class App {
     { url: '/sedes', icon: 'pin', name: 'Red de sedes', short: 'Sedes', key: '4' },
     { url: '/movimientos', icon: 'history', name: 'Auditoría de movimientos', short: 'Movimientos', key: '5' },
     { url: '/sucursales', icon: 'file', name: 'Pedidos e ingesta de remitos', short: 'Pedidos', key: '6' },
-    { url: '/auditoria', icon: 'shield', name: 'Linaje y devoluciones', short: 'Linaje', key: '7' },
+    // Linaje (/auditoria) hidden: browser-only data, no backend tables (see Gamexid-Back docs/revision-linaje-20261020.md).
   ];
   readonly current = computed(() => this.navigation.find((n) => this.url().startsWith(n.url)));
   readonly title = computed(() => this.current()?.name || 'Gamexid');

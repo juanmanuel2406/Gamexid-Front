@@ -5,7 +5,7 @@
       <h1 class="page-title">Ingresos de mercadería</h1>
 
     </div>
-    <button class="btn-primario" (click)="iniciarIngreso()" [disabled]="!depot.id">
+    <button class="btn-primario btn-cta" (click)="iniciarIngreso()" [disabled]="!depot.id">
       <gx-icon name="scan" />Nuevo ingreso
     </button>
   </div>
@@ -104,12 +104,45 @@
           Lector USB/Bluetooth en modo teclado o carga manual. Enter confirma la lectura.
         </p>
         @if (suggestions().length) {
-          <div class="notice" role="status">
-            <strong>Productos similares</strong>
-            @for (p of suggestions(); track p.id) {
-              <button class="btn-secundario" (click)="confirmSuggestion(p)">Confirmar {{ p.name }} · {{ p.sku }}</button>
-            }
-          </div>
+          <section class="suggest" role="region" aria-labelledby="suggest-title">
+            <header class="suggest-head">
+              <span class="suggest-ico"><gx-icon name="search" [size]="16" /></span>
+              <div>
+                <h3 id="suggest-title">¿Es alguno de estos productos?</h3>
+                <p>Sin coincidencia exacta para <span class="code-pill">{{ suggestedFor() }}</span>. Confirmá manualmente antes de continuar.</p>
+              </div>
+            </header>
+            <ul class="suggest-list">
+              @for (s of suggestions(); track s.product.id; let i = $index) {
+                <li class="suggest-item" [style.--i]="i">
+                  <div class="suggest-info">
+                    <strong>{{ s.product.name }}</strong>
+                    <span class="suggest-codes"
+                      ><span class="code-pill">{{ s.product.sku }}</span><span class="code-pill">{{ s.product.ean }}</span
+                      ><span class="tag-gx" [class.vio]="s.product.requiresSerialNumber">{{ s.product.requiresSerialNumber ? 'EAN + serial' : 'EAN' }}</span></span
+                    >
+                  </div>
+                  <div class="suggest-score" [attr.aria-label]="'Similitud ' + (s.score * 100 | number: '1.0-0') + '%'">
+                    <span class="mono">{{ s.score * 100 | number: '1.0-0' }}%</span>
+                    <span class="gx-meter"><i [style.transform]="'scaleX(' + s.score + ')'"></i></span>
+                  </div>
+                  <div class="suggest-actions">
+                    <button type="button" class="btn-secundario btn-reject" (click)="rejectSuggestion(s.product)" [attr.aria-label]="'Rechazar ' + s.product.name">
+                      <gx-icon name="x" [size]="15" />Rechazar
+                    </button>
+                    <button type="button" class="btn-primario btn-accept" (click)="acceptSuggestion(s.product)" [attr.aria-label]="'Aceptar ' + s.product.name">
+                      <gx-icon name="check" [size]="15" />Aceptar
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+            <footer class="suggest-foot">
+              <button type="button" class="btn-enlace" (click)="rejectAllSuggestions()">Ninguno coincide</button>
+            </footer>
+          </section>
+        } @else if (rejectedAll()) {
+          <p class="notice" role="status"><gx-icon name="x" />Sugerencias descartadas. No se agregó ningún producto; escaneá nuevamente o creá el producto.</p>
         }
         @if (unknown()) {
           <div class="notice status-warn">

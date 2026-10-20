@@ -44,10 +44,8 @@ export const routes: Routes = [
         path: 'movimientos',
         loadComponent: () => import('./features/movements/movements').then((m) => m.Movements),
       },
-      {
-        path: 'auditoria',
-        loadComponent: () => import('./features/audit/audit').then((m) => m.Audit),
-      },
+      // Linaje hidden from the workspace until it has persistent backend storage.
+      { path: 'auditoria', pathMatch: 'full', redirectTo: 'dashboard' },
     ],
   },
   { path: '**', redirectTo: '' },

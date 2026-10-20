@@ -4,7 +4,7 @@
     <h1 class="page-title">Productos</h1>
 
   </div>
-  @if (inventory()) { <button class="btn-primario" (click)="abrirAlta()"><gx-icon name="plus" />Nuevo producto</button> }
+  @if (inventory()) { <button class="btn-primario btn-cta" (click)="abrirAlta()"><gx-icon name="plus" />Nuevo producto</button> }
 </div>
 <div class="catalog-tabs" role="group" aria-label="Vista de productos">
   <button class="btn-secundario" [attr.aria-pressed]="!inventory()" (click)="selectInventory(false)">Catálogo</button>
@@ -12,15 +12,71 @@
 </div>
 @if (!inventory()) { <gx-catalogo /> } @else {
 <section class="panel">
-  <div class="panel-header">
-    <label class="search-field"
-      ><gx-icon name="search" /><input
-        aria-label="Buscar productos"
-        placeholder="Buscar por nombre, EAN o serial..."
-        [ngModel]="filtro()"
-        (ngModelChange)="filtro.set($event)" /></label
-    ><span class="muted text-xs">{{ filtered().length }} resultados</span>
+  <div class="inv-toolbar">
+    <label class="branch-field" [class.missing]="!stockBranch()">
+      <span class="form-label">Sede <b aria-hidden="true">*</b></span>
+      <span class="select-wrap"
+        ><gx-icon name="pin" [size]="16" /><select
+          class="form-control"
+          aria-label="Sede del inventario"
+          required
+          [ngModel]="stockBranchId()"
+          (ngModelChange)="selectBranch($event)"
+        >
+          <option [ngValue]="0" disabled>Seleccioná una sede</option>
+          @for (b of activeBranches(); track b.id) {
+            <option [ngValue]="b.id">{{ b.name }}</option>
+          }
+        </select></span
+      >
+    </label>
+    <label class="search-field unified">
+      <span class="form-label">Buscar</span>
+      <span class="search-wrap"
+        ><gx-icon name="search" /><input
+          aria-label="Buscar por nombre, EAN o serial"
+          placeholder="Nombre, EAN o serial…"
+          maxlength="100"
+          [disabled]="!stockBranch()"
+          [ngModel]="filtro()"
+          (ngModelChange)="filtro.set($event)" />@if (filtro()) {
+          <button class="clear" type="button" aria-label="Limpiar búsqueda" (click)="filtro.set('')"><gx-icon name="x" [size]="14" /></button>
+        }</span
+      >
+    </label>
+    @if (stockBranch(); as b) {
+      <div class="inv-summary" aria-live="polite">
+        <span class="k">Disponible en {{ b.name }}</span>
+        <span class="v mono">{{ totalUnits() }}<small>u.</small></span>
+        <span class="k">{{ filtered().length }} productos</span>
+      </div>
+    }
   </div>
+  @if (!stockBranch()) {
+    <div class="empty">
+      <gx-icon name="pin" [size]="28" />
+      <h3>Elegí una sede</h3>
+      <p>El stock se calcula por sede. Seleccioná una para consultar productos, EAN o seriales.</p>
+    </div>
+  } @else {
+  @if (spotlight().length) {
+    <div class="spotlight">
+      @for (p of spotlight(); track p.id; let i = $index) {
+        <article class="spot" [attr.data-level]="stockLevel(p.stock)" [style.--i]="i">
+          <div class="spot-main">
+            <span class="eyebrow">{{ p.requiresSerialNumber ? 'EAN + serial' : 'EAN' }}</span>
+            <h3>{{ p.name }}</h3>
+            <span class="code-pill">{{ p.ean }}</span>
+          </div>
+          <div class="spot-stock">
+            <b class="mono">{{ p.stock }}</b>
+            <span>{{ p.stock <= 0 ? 'Sin stock' : p.stock === 1 ? 'unidad disponible' : 'unidades disponibles' }}</span>
+            <small>en {{ stockBranch()?.name }}</small>
+          </div>
+        </article>
+      }
+    </div>
+  }
   <p-table
     [value]="filtered()"
     [loading]="loading()"
@@ -35,7 +91,7 @@
         <th>Producto</th>
         <th>EAN</th>
         <th>Validación</th>
-        <th class="num">Stock en {{ workspace.branch()?.name }}</th>
+        <th class="num">Stock en {{ stockBranch()?.name }}</th>
         <th style="width: 120px">Distribución</th>
         <th>Estado</th>
         <th>Acciones</th>
@@ -53,7 +109,7 @@
         <td>
           <p-tag [value]="p.requiresSerialNumber ? 'EAN + SERIAL' : 'EAN'" severity="secondary" />
         </td>
-        <td class="num mono">{{ stock().get(p.id) || 0 }}</td>
+        <td class="num"><span class="stock-chip mono" [attr.data-level]="stockLevel(p.stock)">{{ p.stock }}</span></td>
         <td>
           <span class="gx-meter"><i [style.width.%]="((stock().get(p.id) || 0) / maxStock()) * 100"></i></span>
         </td>
@@ -85,6 +141,7 @@
       </tr></ng-template
     >
   </p-table>
+  }
 </section>
 }
 <p-dialog

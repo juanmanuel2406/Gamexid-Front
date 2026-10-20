@@ -43,11 +43,32 @@ export class Productos {
   readonly units = signal<SerializedUnit[]>([]);
   draft = { sku: '', name: '', ean: '', requiresSerialNumber: false };
   readonly filtered = computed(() => this.productos());
+  /** Branch chosen inside the inventory view (mandatory for /api/inventory/stock). */
+  readonly stockBranchId = signal(this.workspace.branchId());
+  readonly activeBranches = computed(() => this.workspace.branches().filter((b) => b.isActive));
+  readonly stockBranch = computed(() => this.activeBranches().find((b) => b.id === this.stockBranchId()));
+  readonly totalUnits = computed(() => this.productos().reduce((sum, p) => sum + Math.max(0, p.stock), 0));
+  /** Spotlight cards when the search narrows to a handful of items. */
+  readonly spotlight = computed(() => {
+    const items = this.productos();
+    return this.filtro().trim() && items.length > 0 && items.length <= 3 ? items : [];
+  });
+  stockLevel(n: number) {
+    return n <= 0 ? 'none' : n < 3 ? 'low' : 'ok';
+  }
+  selectBranch(id: number) {
+    this.stockBranchId.set(Number(id) || 0);
+  }
   private loadVersion = 0;
   readonly loading = signal(false);
   constructor() {
+    // Keep the selector in sync with a valid default once branches load.
+    effect(() => {
+      const ws = this.workspace.branchId();
+      if (!untracked(() => this.stockBranch()) && this.activeBranches().some((b) => b.id === ws)) untracked(() => this.stockBranchId.set(ws));
+    });
     effect(onCleanup => {
-      const branch = this.workspace.branchId();
+      const branch = this.stockBranchId();
       const search = this.filtro();
       const visible = this.inventory();
       untracked(() => { this.productos.set([]); this.units.set([]); this.detalle.set(null); ++this.loadVersion; });
@@ -61,7 +82,7 @@ export class Productos {
 
     });
   }
-  load(branch = this.workspace.branchId(), search = this.filtro()) {
+  load(branch = this.stockBranchId(), search = this.filtro()) {
     if (!branch) return;
     const version = ++this.loadVersion;
     this.loading.set(true);
@@ -109,9 +130,9 @@ export class Productos {
   verSeriales(p: Product) {
     this.detalle.set(p);
     this.units.set([]);
-    const branch = this.workspace.branchId();
+    const branch = this.stockBranchId();
     this.data.getUnidadesDeProducto(p.id, branch).subscribe({
-      next: u => { if (this.detalle()?.id === p.id && this.workspace.branchId() === branch) this.units.set(u); },
+      next: u => { if (this.detalle()?.id === p.id && this.stockBranchId() === branch) this.units.set(u); },
       error: () => this.workspace.notify('No se pudieron cargar los seriales.', 'error'),
     });
   }

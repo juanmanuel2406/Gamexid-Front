@@ -4,7 +4,7 @@
     <h1 class="page-title">Pedidos e ingesta</h1>
 
   </div>
-  <button class="btn-primario" (click)="nuevo()"><gx-icon name="plus" />Nuevo pedido</button>
+  <button class="btn-primario btn-cta btn-order" (click)="nuevo()"><gx-icon name="doc" />Nuevo pedido</button>
 </div>
 <div class="notice">
   <gx-icon name="lock" />
@@ -71,8 +71,10 @@
     <fieldset [disabled]="busy() || !!d.status">
     <div class="order-fields">
       <label
-        ><span class="form-label">Referencia del pedido</span
-        ><input class="form-control" [(ngModel)]="d.reference" maxlength="100" /></label
+        ><span class="form-label ref-label">Referencia del pedido
+          @if (d.referenceSource === 'pdf') { <span class="tag-gx ok"><gx-icon name="check" [size]="12" />Detectada en el PDF</span> }
+          @else if (d.referenceSource === 'missing') { <span class="tag-gx warn"><gx-icon name="alert" [size]="12" />Verificá el número bajo PEDIDO SUCURSAL</span> }</span
+        ><input class="form-control mono ref-input" [(ngModel)]="d.reference" (ngModelChange)="d.referenceSource = 'manual'" maxlength="100" placeholder="Ej. 0001-00012345" /></label
       ><label
         ><span class="form-label">Sucursal de destino</span
         ><select class="form-control" [(ngModel)]="d.branchId">
@@ -137,14 +139,20 @@
             [max]="line.expected || 0"
             step="1" /></label
         ><label><span class="form-label">Precio unitario</span>
-          <input class="form-control mono" type="number" min="0" step="0.01" [(ngModel)]="line.unitPrice" />
+          <span class="money" [attr.data-cur]="line.currency || 'none'"
+            ><span class="cur mono">{{ line.currency === 'USD' ? 'US$' : line.currency === 'ARS' ? 'AR$' : '¿?' }}</span
+            ><input class="form-control mono" type="number" min="0" step="0.01" [(ngModel)]="line.unitPrice" /></span>
         </label><label><span class="form-label">Importe</span>
-          <input class="form-control mono" type="number" min="0" step="0.01" [(ngModel)]="line.total" />
-        </label><label><span class="form-label">Moneda</span>
-          <select class="form-control" aria-label="Moneda" [(ngModel)]="line.currency">
-            <option [ngValue]="null">Revisar</option><option value="ARS">ARS</option><option value="USD">USD</option>
-          </select>
-        </label><button class="icon-button" aria-label="Quitar línea" (click)="d.lines.splice($index, 1)">
+          <span class="money" [attr.data-cur]="line.currency || 'none'"
+            ><span class="cur mono">{{ line.currency === 'USD' ? 'US$' : line.currency === 'ARS' ? 'AR$' : '¿?' }}</span
+            ><input class="form-control mono" type="number" min="0" step="0.01" [(ngModel)]="line.total" /></span>
+        </label><div class="cur-field"><span class="form-label">Moneda</span>
+          <div class="cur-toggle" role="radiogroup" aria-label="Moneda" [attr.data-cur]="line.currency || 'none'">
+            <button type="button" role="radio" [attr.aria-checked]="line.currency === 'ARS'" (click)="line.currency = 'ARS'">ARS</button
+            ><button type="button" role="radio" [attr.aria-checked]="line.currency === 'USD'" (click)="line.currency = 'USD'">USD</button>
+          </div>
+          @if (!line.currency && (line.unitPrice != null || line.total != null)) { <span class="cur-hint">Elegí la moneda</span> }
+        </div><button class="icon-button" aria-label="Quitar línea" (click)="d.lines.splice($index, 1)">
           <gx-icon name="trash" />
         </button>
       </div>

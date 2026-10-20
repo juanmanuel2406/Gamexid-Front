@@ -59,8 +59,8 @@ main, .nav, .footer { position: relative; z-index: 1; }
   color: var(--text); text-decoration: none; transition: border-color 0.2s, background 0.2s;
 }
 .btn:hover { border-color: rgba(255, 255, 255, 0.28); background: rgba(255, 255, 255, 0.06); color: var(--text); }
-.btn.primary { border: 0; color: #fff; background: var(--violet); box-shadow: 0 10px 30px -12px rgba(139, 92, 246, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.1) inset; }
-.btn.primary:hover { background: #7c4dff; }
+.btn.primary { border: 0; color: #fff; background: var(--btn-primary); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 0 0 1px var(--btn-primary-ring), var(--btn-primary-glow); transition: box-shadow 160ms ease, filter 160ms ease; }
+.btn.primary:hover { background: var(--btn-primary); filter: brightness(1.08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), 0 0 0 1px rgba(167, 139, 250, 0.8), 0 12px 30px -14px rgba(115, 70, 240, 1); }
 
 .gx-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
 .gx-word { display: grid; line-height: 1; }

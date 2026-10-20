@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, effect, inject, signal, computed, vie
 import { animate } from 'animejs';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { StepperModule } from 'primeng/stepper';
 import { TagModule } from 'primeng/tag';
@@ -27,7 +27,7 @@ interface ScanItem {
 @Component({
   selector: 'app-ingresos',
   standalone: true,
-  imports: [FormsModule, DatePipe, DialogModule, StepperModule, TagModule, Icon, CountUp],
+  imports: [FormsModule, DatePipe, DecimalPipe, DialogModule, StepperModule, TagModule, Icon, CountUp],
   templateUrl: './ingresos.html',
   styleUrl: './ingresos.css',
 })
@@ -57,7 +57,10 @@ export class Ingresos implements OnDestroy {
   readonly identified = signal<ProductLookup | null>(null);
   readonly confirm = signal(false);
   readonly newProduct = signal(false);
-  readonly suggestions = signal<Product[]>([]);
+/** Fuzzy matches returned by /api/products/lookup (404 unknown_code). Nothing is added until the user accepts one. */
+  readonly suggestions = signal<{ product: Product; score: number }[]>([]);
+  readonly suggestedFor = signal('');
+  readonly rejectedAll = signal(false);
   readonly unknown = signal(false);
   readonly scanMode = signal<'ean' | 'serial'>('ean');
   readonly activeProduct = signal<number | null>(null);
@@ -112,6 +115,7 @@ export class Ingresos implements OnDestroy {
     if (!this.depot.id) { this.fail('Esperá la conexión con el depósito central.'); return; }
     this.identified.set(null);
     this.suggestions.set([]);
+    this.rejectedAll.set(false);
     this.creating.set(true);
     this.items.set([]);
     this.ean = '';
@@ -127,6 +131,7 @@ export class Ingresos implements OnDestroy {
     this.unknown.set(false);
     this.identified.set(null);
     this.suggestions.set([]);
+    this.rejectedAll.set(false);
     const code = this.ean.trim();
     if (!code) {
       this.fail('No se recibió una lectura del scanner. Podés escribir EAN, SKU o serial manualmente y presionar Agregar.');
@@ -160,7 +165,10 @@ export class Ingresos implements OnDestroy {
         this.add(result.product);
       },
       error: (e) => {
-        this.suggestions.set(e.status === 404 ? (e.error?.suggestions || []).map((s: { product: Product }) => s.product) : []);
+        const found: { product: Product; score: number }[] = e.status === 404 ? e.error?.suggestions || [] : [];
+        this.suggestions.set(found.filter((s) => s?.product?.id));
+        this.suggestedFor.set(found.length ? code : '');
+        this.rejectedAll.set(false);
         this.scanState.set('miss');
         this.scanLabel.set(e.status === 404 ? 'SIN COINCIDENCIA' : e.status === 409 ? 'CÓDIGO AMBIGUO' : 'ERROR DE CONEXIÓN');
         shake(document.querySelector('.scanner'));
@@ -169,17 +177,38 @@ export class Ingresos implements OnDestroy {
       },
     });
   }
-  confirmSuggestion(p: Product) {
-    if (!this.suggestions().some(s => s.id === p.id)) return;
+  /** User explicitly accepts a suggestion: only then is the product added to the receipt. */
+  acceptSuggestion(p: Product) {
+    if (!this.suggestions().some((s) => s.product.id === p.id)) return;
+    const code = this.suggestedFor().trim();
     this.suggestions.set([]);
+    this.suggestedFor.set('');
     this.unknown.set(false);
     this.error.set('');
-    if (this.items().some(i => i.product.id === p.id)) {
-      this.activeProduct.set(p.id);
-      this.scanMode.set(p.requiresSerialNumber ? 'serial' : 'ean');
-      return;
+    this.scanState.set('match');
+    this.scanLabel.set('ASOCIACIÓN CONFIRMADA');
+    const isProductCode = [p.ean, p.sku].some((v) => v?.toUpperCase() === code.toUpperCase());
+    if (!this.items().some((i) => i.product.id === p.id)) this.add(p);
+    this.activeProduct.set(p.id);
+    this.scanMode.set(p.requiresSerialNumber ? 'serial' : 'ean');
+    // A scanned code that is not the product's EAN/SKU is a new serial for that product.
+    if (p.requiresSerialNumber && code && !isProductCode) {
+      const item = this.items().find((i) => i.product.id === p.id);
+      if (item && !item.serials.some((s) => s.toUpperCase() === code.toUpperCase())) {
+        this.edit(item, [...item.serials, code].join('\n'));
+        this.workspace.notify(`Serial ${code} asociado a ${p.name}. Revisá la cantidad esperada.`, 'info');
+      }
     }
-    this.add(p);
+  }
+  rejectSuggestion(p: Product) {
+    this.suggestions.update((list) => list.filter((s) => s.product.id !== p.id));
+    if (!this.suggestions().length) this.rejectAllSuggestions();
+  }
+  rejectAllSuggestions() {
+    this.suggestions.set([]);
+    this.rejectedAll.set(true);
+    this.scanLabel.set('SUGERENCIAS DESCARTADAS');
+    setTimeout(() => document.getElementById('ean-scanner-input')?.focus());
   }
   add(p: Product) {
     const from = document.querySelector('.scan-input')?.getBoundingClientRect();
