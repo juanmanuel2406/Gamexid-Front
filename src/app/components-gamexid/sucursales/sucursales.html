@@ -64,8 +64,9 @@
   (visibleChange)="!busy() && !$event && draft.set(null)"
   [modal]="true"
   [draggable]="false"
-  [style]="{ width: '1180px' }"
+  [style]="{ width: 'min(1540px, calc(100vw - 32px))', maxHeight: 'calc(100dvh - 32px)' }"
   styleClass="order-dialog"
+  appendTo="body"
   [closable]="!busy()"
 >
   @if (draft(); as d) {

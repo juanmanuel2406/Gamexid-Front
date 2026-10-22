@@ -429,3 +429,31 @@ test('otro PDF no conserva una referencia detectada del documento anterior', asy
   await expect(page.getByLabel('Referencia del pedido')).toHaveValue('');
   await expect(page.getByText('Detectada en el PDF')).toHaveCount(0);
 });
+
+test('PDF adjunto queda dentro de su columna y no tapa los datos del pedido', async ({ page }) => {
+  await page.setViewportSize({width:1258,height:760});
+  await page.goto('/sucursales');
+  await page.getByRole('button', {name:'Nuevo pedido'}).click();
+  await page.getByLabel('Sucursal de destino').selectOption({label:'Belgrano'});
+  await page.locator('#pedido-pdf').setInputFiles({name:'Pedido_Sucursal_A00010-00020177_archivo_con_nombre_largo.pdf',mimeType:'application/pdf',buffer:invoicePdf()});
+  await expect(page.getByAltText('Vista previa de la página del pedido')).toBeVisible();
+  await page.getByRole('button', {name:'Extraer con PdfPig'}).click();
+  await expect(page.getByLabel('Producto',{exact:true})).toHaveValue('Notebook 14" 8GB');
+  for (const width of [1258,1440,390]) {
+    await page.setViewportSize({width,height:760});
+    const layout = await page.evaluate(() => {
+      const doc=document.querySelector('.doc-col') as HTMLElement;
+      const data=document.querySelector('.data-col') as HTMLElement;
+      const dialog=document.querySelector('.order-dialog') as HTMLElement;
+      const d=doc.getBoundingClientRect(), r=data.getBoundingClientRect(), m=dialog.getBoundingClientRect();
+      return {contained:doc.scrollWidth<=doc.clientWidth+1, separated:d.right<=r.left+1 || d.bottom<=r.top+1,
+        fits:m.left>=0 && m.right<=innerWidth+1, body:document.documentElement.scrollWidth<=innerWidth+1};
+    });
+    expect(layout).toEqual({contained:true,separated:true,fits:true,body:true});
+    const scroll=page.locator('.lines-scroll');
+    await scroll.evaluate(e=>e.scrollLeft=e.scrollWidth);
+    await page.getByRole('button',{name:'Quitar línea'}).first().scrollIntoViewIfNeeded();
+    await expect(page.getByRole('button',{name:'Quitar línea'}).first()).toBeInViewport();
+    await page.screenshot({path:`test-results/order-pdf-layout-${width}.png`,fullPage:true,animations:'disabled'});
+  }
+});

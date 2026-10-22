@@ -1,5 +1,7 @@
 :host {
   display: block;
+  min-width: 0;
+  max-width: 100%;
 }
 .dropzone {
   position: relative;
@@ -38,6 +40,7 @@
 }
 /* Once a PDF is loaded the dropzone becomes a slim bar so the document takes the space. */
 .dropzone.compact {
+  flex-wrap: wrap;
   flex-direction: row;
   justify-content: flex-start;
   gap: 12px;
@@ -74,6 +77,7 @@
   opacity: 0.7;
 }
 .intake-toolbar {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -84,7 +88,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 55%;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 140px;
 }
 .document-split {
   border: 1px solid var(--k-line);
@@ -142,6 +148,7 @@
 }
 @media (max-width: 700px) {
   .intake-toolbar {
+  flex-wrap: wrap;
     flex-wrap: wrap;
   }
   .intake-toolbar .code-pill {
@@ -152,4 +159,14 @@
   .sheet {
     animation: none;
   }
+}
+
+.intake-toolbar button {
+  flex: 1 1 180px;
+  white-space: normal;
+}
+
+.notice {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
