@@ -141,6 +141,17 @@ export class Sucursales implements OnInit {
       return { ...d, reference, referenceSource, pdf: result.file, fileName: result.file.name, lines };
     });
   }
+  /** Totals per currency; ARS and USD are never added together. */
+  totales(order: BranchOrder) {
+    const fmt = (n: number) => n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let ars = 0, usd = 0;
+    for (const l of order.lines) {
+      const amount = l.total ?? (l.unitPrice != null && l.expected ? l.unitPrice * l.expected : 0);
+      if (l.currency === 'ARS') ars += amount || 0;
+      else if (l.currency === 'USD') usd += amount || 0;
+    }
+    return { ars: fmt(ars), usd: fmt(usd) };
+  }
   relacionar(line: OrderLine) {
     const p = this.products().find((p) => p.ean === line.ean.trim());
     if (p) { line.name = p.name; line.sku = p.sku; }

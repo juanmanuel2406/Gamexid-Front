@@ -15,7 +15,6 @@
           ><b>GAMEXID</b><small>SERIAL TRACKING</small></span
         ></a
       >
-      <div class="rail-label">Workspace / Inventario</div>
       <nav class="nav">
         <span class="nav-pill" #pill aria-hidden="true"></span>
         @for (item of navigation; track item.url) {
@@ -23,6 +22,7 @@
             [routerLink]="item.url"
             routerLinkActive="active"
             class="nav-item"
+            [style.--acc]="item.accent"
             [attr.aria-label]="item.name"
             (click)="open.set(false)"
           >
@@ -32,28 +32,19 @@
         }
       </nav>
       <div class="rail-foot">
-        <div class="connection">
-          <span
-            class="led"
-            [class.on]="workspace.connection() === 'online' && workspace.database() === 'ok'"
-            [class.off]="workspace.connection() === 'offline'"
-          ></span
-          ><span>{{
-            workspace.connection() === 'checking'
-              ? 'Comprobando API'
-              : workspace.connection() === 'offline'
-                ? 'API sin conexión'
-                : workspace.database() === 'ok'
-                  ? 'API y MySQL · OK'
-                  : 'API activa · MySQL no disponible'
-          }}</span>
+        <div class="me">
+          <span class="avatar">{{ workspace.initials() }}</span
+          ><span class="me-text"><b>{{ workspace.user()?.fullName || 'Operador' }}</b><small>{{ workspace.role() }} · {{ workspace.branch()?.name }}</small></span>
         </div>
+        @if (workspace.connection() === 'offline') {
+          <p class="offline" role="status"><gx-icon name="alert" [size]="14" />Sin conexión con el servidor</p>
+        }
         <button class="nav-item logout" (click)="logout()" aria-label="Cerrar sesión">
           <gx-icon name="logout" /><span>Cerrar sesión</span>
         </button>
       </div>
     </aside>
-    <div class="workspace">
+    <div class="workspace" [style.--acc]="current()?.accent">
       <header class="topbar">
         <button
           class="menu-btn"
@@ -81,16 +72,14 @@
                 </option>
               }
             </select></label
-          ><span class="avatar" [pTooltip]="(workspace.user()?.fullName || 'Operador') + ' · ' + workspace.role()" tooltipPosition="bottom">{{
-            workspace.initials()
-          }}</span>
+          >
         </div>
         <i class="loadbar" #loadbar aria-hidden="true"></i>
       </header>
       <main class="contenido">
         <div class="workspace-content"><router-outlet /></div>
         <footer class="workspace-footer">
-          <span>GAMEXID / CONTROL DE INVENTARIO</span>
+          <span>Gamexid · Control de inventario serializado</span>
         </footer>
       </main>
     </div>

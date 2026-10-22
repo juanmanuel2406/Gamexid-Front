@@ -1,5 +1,6 @@
 <div
   class="dropzone"
+  [class.compact]="!!file()"
   [class.dragging]="dragging()"
   [attr.aria-busy]="busy()"
   (dragover)="$event.preventDefault(); dragging.set(true)"
@@ -7,8 +8,8 @@
   (drop)="onDrop($event)"
 >
   <div #laser class="scan-laser" [class.active]="busy()"></div>
-  <gx-icon name="upload" [size]="26" /><strong>Arrastrá el remito o pedido</strong>
-  <p>PDF · Hasta 10 MB · Máximo 50 páginas</p>
+  <gx-icon name="upload" [size]="22" /><span class="dz-text"><strong>{{ file() ? 'Cambiar PDF' : 'Arrastrá el PDF del pedido' }}</strong>
+  <small>PDF hasta 10 MB y 50 páginas</small></span>
   <label class="btn-secundario" for="pedido-pdf">Seleccionar archivo</label
   ><input
     id="pedido-pdf"
@@ -39,7 +40,7 @@
   <div class="document-split">
     <section class="document-pane">
       <div class="pane-header">
-        <span>01 / DOCUMENTO ORIGINAL</span
+        <span>Página {{ page() }} de {{ pageCount() || 1 }}</span
         ><select aria-label="Página del PDF" [ngModel]="page()" (ngModelChange)="render(+$event)">
           @for (n of [].constructor(pageCount()); track $index) {
             <option [value]="$index + 1">Página {{ $index + 1 }}</option>
@@ -47,7 +48,7 @@
         </select>
       </div>
       @if (preview()) {
-        <img [src]="preview()" alt="Vista previa de la página del remito" class="pdf-preview" />
+        <div class="sheet"><img [src]="preview()" alt="Vista previa de la página del pedido" class="pdf-preview" /></div>
       } @else {
         <p-skeleton height="300px" />
       }

@@ -8,36 +8,37 @@ import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 import { routes } from './app.routes';
 import { netActivityInterceptor } from './core/net-activity';
+/** Kraft palette for PrimeNG: warm paper surfaces, ink text, muted violet as brand. */
 const GamexidTheme = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '#f5f3ff',
-      100: '#ede9fe',
-      200: '#ddd6fe',
-      300: '#c4b5fd',
-      400: '#b77cf5',
-      500: '#9b38ee',
-      600: '#8a2fd6',
-      700: '#6d28d9',
-      800: '#5b21b6',
-      900: '#4c1d95',
-      950: '#2e1065',
+      50: '#f4f1fc',
+      100: '#ebe6f8',
+      200: '#d6cdf2',
+      300: '#b6a7e8',
+      400: '#8d77dc',
+      500: '#5b3fd0',
+      600: '#4a32ad',
+      700: '#3c288c',
+      800: '#2f2070',
+      900: '#241856',
+      950: '#170f38',
     },
     colorScheme: {
-      dark: {
+      light: {
         surface: {
-          0: '#ffffff',
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#2a3150',
-          800: '#1a2034',
-          900: '#0e1220',
-          950: '#07090f',
+          0: '#fffefa',
+          50: '#fbf9f4',
+          100: '#f6f2ea',
+          200: '#ece6da',
+          300: '#e2dacb',
+          400: '#d0c5b0',
+          500: '#a59a85',
+          600: '#7d7464',
+          700: '#655d4e',
+          800: '#3d382e',
+          900: '#2a261f',
+          950: '#1f1c16',
         },
       },
     },

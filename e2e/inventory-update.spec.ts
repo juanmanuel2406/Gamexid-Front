@@ -59,7 +59,7 @@ test('inventario consulta la sede y busca serial sin distinguir mayúsculas', as
   const params = new URL((await request).url()).searchParams;
   expect(params.get('branchId')).toBe('2');
   await expect(page.locator('.prod-row')).toHaveCount(1);
-  await expect(page.locator('.prod-row .num')).toHaveText('1');
+  await expect(page.locator('.prod-row .stock-chip')).toHaveText('1');
   await expect(page.locator('.spot')).toHaveCount(1);
   await expect(page.locator('.spot-stock b')).toHaveText('1');
 });
@@ -85,8 +85,8 @@ test('jerarquía de botones: Nuevo pedido usa el acento propio', async ({ page }
   await page.goto('/sucursales');
   const order = page.getByRole('button', { name: 'Nuevo pedido' });
   await expect(order).toHaveClass(/btn-order/);
-  const bg = await order.evaluate(e => getComputedStyle(e).backgroundImage);
-  expect(bg).toContain('252, 193, 74');
+  const bg = await order.evaluate(e => getComputedStyle(e).backgroundColor);
+  expect(bg).toContain('212, 150, 46');
   await page.goto('/productos?vista=inventario');
   await page.getByRole('button', { name: 'Registros Gamexid', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Nuevo producto' })).toHaveClass(/btn-cta/);
@@ -111,4 +111,35 @@ test('cambiar la sede actualiza el stock y el inventario se adapta a móvil', as
   await expect(page.getByLabel('Sede del inventario')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   await page.screenshot({ path: 'test-results/inventory-ui-mobile.png', fullPage: true });
+});
+
+test('distribución por sede muestra el total y el desglose del producto', async ({ page }) => {
+  await page.goto('/productos?vista=inventario');
+  await page.getByRole('button', {name:'Registros Gamexid',exact:true}).click();
+  await page.getByRole('textbox', {name:'Buscar por nombre, EAN o serial'}).fill('Notebook');
+  await expect(page.locator('.prod-row .net')).toHaveText('1');
+  await page.getByRole('button', {name:'Desplegar sedes de Notebook 14" 8GB',exact:true}).click();
+  await expect(page.locator('.branch-grid .bcell')).toHaveCount(16);
+  await expect(page.locator('.branch-grid .bcell.here b')).toHaveText('1');
+  await page.screenshot({path:'test-results/kraft-network.png',fullPage:true,animations:'disabled'});
+});
+
+test('una sede sin respuesta no se presenta como stock cero y permite reintentar', async ({ page }) => {
+  let fail = true;
+  await page.route('**/api/inventory/stock?*', route => {
+    if (fail && new URL(route.request().url()).searchParams.get('branchId') === '3')
+      return route.fulfill({status:503,json:{mensaje:'Sede no disponible'}});
+    return route.fallback();
+  });
+  await page.goto('/productos?vista=inventario');
+  await page.getByRole('button', {name:'Registros Gamexid',exact:true}).click();
+  await page.getByRole('textbox', {name:'Buscar por nombre, EAN o serial'}).fill('Notebook');
+  await expect(page.locator('.prod-row .net')).toHaveText('—');
+  await page.getByRole('button', {name:'Desplegar sedes de Notebook 14" 8GB',exact:true}).click();
+  await expect(page.getByText('No se pudo consultar el stock de todas las sedes. Volvé a buscar.')).toBeVisible();
+  await expect(page.locator('.branch-grid .bcell')).toHaveCount(0);
+  fail=false;
+  await page.getByRole('textbox', {name:'Buscar por nombre, EAN o serial'}).fill('NOTE-001');
+  await expect(page.locator('.prod-row .net')).toHaveText('1');
+  await expect(page.locator('.branch-grid .bcell')).toHaveCount(16);
 });

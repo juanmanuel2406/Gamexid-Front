@@ -1,4 +1,7 @@
 :host {
+  --acc: var(--k-sec-mov);
+}
+:host {
   display: grid;
   gap: 16px;
 }

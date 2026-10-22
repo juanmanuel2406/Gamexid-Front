@@ -73,7 +73,7 @@
 .gx-word small {
   font: 500 11px var(--font-data);
   letter-spacing: 0.26em;
-  color: #34d399;
+  color: var(--k-ok-fg);
   margin-top: 6px;
 }
 .back {
@@ -116,7 +116,8 @@
   border-radius: 16px;
 }
 .login-card h2 {
-  font-size: 22px;
+  font-size: 26px;
+  margin-bottom: 14px;
 }
 .login-sub {
   margin-bottom: 18px;
@@ -161,7 +162,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--k-line-2);
   border-top-color: #fff;
   animation: login-spin 0.7s linear infinite;
 }

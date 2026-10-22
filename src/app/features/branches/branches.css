@@ -1,4 +1,7 @@
 :host {
+  --acc: var(--k-sec-sedes);
+}
+:host {
   display: grid;
   gap: 16px;
 }
@@ -34,8 +37,8 @@
   transform: translateY(-2px);
 }
 .b-card.depot {
-  border-color: rgba(255, 0, 230, 0.3);
-  background: linear-gradient(135deg, rgba(255, 0, 230, 0.06), var(--gx-surface) 60%);
+  border-color: transparent;
+  background: linear-gradient(135deg, transparent, var(--gx-surface) 60%);
 }
 .b-card.legacy {
   opacity: 0.7;
@@ -70,7 +73,7 @@
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(3, 4, 8, 0.62);
+  background: rgba(243, 239, 231, 0.88);
 }
 .flip-panel {
   position: fixed;
@@ -84,7 +87,7 @@
   transform-origin: 0 0;
   overflow: hidden;
   background: var(--gx-surface);
-  border: 1px solid rgba(155, 56, 238, 0.4);
+  border: 1px solid var(--k-brand-bg);
   border-radius: 14px;
 }
 .flip-inner {

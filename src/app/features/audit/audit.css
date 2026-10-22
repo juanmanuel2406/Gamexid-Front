@@ -1,13 +1,13 @@
 .fraud-alert {
-  border: 1px solid #ff4d6a90;
-  background: #450a0a4d;
+  border: 1px solid var(--k-bad);
+  background: var(--k-bad-bg);
   border-radius: 8px;
   padding: 20px;
   display: flex;
   align-items: flex-start;
   gap: 14px;
   margin-bottom: 24px;
-  color: #fca5a5;
+  color: var(--k-bad-fg);
 }
 .fraud-alert h2 {
   font-size: 16px;

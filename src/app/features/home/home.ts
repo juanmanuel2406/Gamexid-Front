@@ -56,6 +56,21 @@ export class Home implements AfterViewInit, OnDestroy {
     { name: 'La Plata', value: 18 },
     { name: 'Mendoza', value: 4 },
   ];
+  /** Real GamingCity branches (Gamexid-Back BranchCatalog), colored by region. */
+  readonly regions = [
+    { key: 'dep', label: 'Depósito central', color: 'var(--k-brand)' },
+    { key: 'caba', label: 'CABA', color: 'var(--k-sec-prod)' },
+    { key: 'gba', label: 'Gran Buenos Aires', color: 'var(--k-ok)' },
+    { key: 'int', label: 'Interior', color: 'var(--k-warn)' },
+  ];
+  readonly network = [
+    ['DEP-CENTRAL', 'Morón', 'Depósito central', 'dep'], ['GX-UNICENTER', 'Unicenter', 'Martínez', 'gba'], ['GX-LAPLATA', 'La Plata', 'Gonnet', 'gba'],
+    ['GX-SANMIGUEL', 'San Miguel', 'San Miguel', 'gba'], ['GX-SANISIDRO', 'San Isidro', 'San Isidro', 'gba'], ['GX-MERLO', 'Merlo', 'Merlo', 'gba'],
+    ['GX-CATAN1', 'González Catán I', 'González Catán', 'gba'], ['GX-CATAN2', 'González Catán II', 'González Catán', 'gba'], ['GX-BELGRANO', 'Belgrano', 'CABA', 'caba'],
+    ['GX-ABASTO', 'Abasto', 'CABA', 'caba'], ['GX-PALERMO', 'Palermo', 'CABA', 'caba'], ['GX-CABALLITO', 'Caballito', 'CABA', 'caba'],
+    ['GX-LINIERS', 'Liniers', 'CABA', 'caba'], ['GX-MARDELPLATA', 'Mar del Plata', 'Buenos Aires', 'int'], ['GX-MENDOZA', 'Mendoza', 'Mendoza', 'int'],
+    ['GX-CORRIENTES', 'Corrientes', 'Corrientes', 'int'],
+  ].map(([code, name, city, region]) => ({ code, name, city, color: this.regions.find((r) => r.key === region)!.color }));
   readonly maxStock = Math.max(...this.stock.map((s) => s.value));
 
   readonly bars = (() => {
@@ -78,6 +93,8 @@ export class Home implements AfterViewInit, OnDestroy {
     this.counters();
     this.architecture();
     this.microInteractions();
+    this.brandReveal();
+    this.networkReveal();
   }
 
   ngOnDestroy() {
@@ -150,7 +167,7 @@ export class Home implements AfterViewInit, OnDestroy {
         await this.sleep(this.reduced ? 0 : 42);
       }
       if (!this.reduced)
-        animate(this.q('.bars rect'), { fill: [{ to: '#34d399', duration: 120 }, { to: '#e2e8f0', duration: 500 }], delay: stagger(6) });
+        animate(this.q('.bars rect'), { fill: [{ to: '#5fd08f', duration: 120 }, { to: '#e8e1d1', duration: 500 }], delay: stagger(6) });
       await this.sleep(350);
       state.textContent = 'COINCIDENCIA · EAN';
       state.classList.add('ok');
@@ -221,6 +238,28 @@ export class Home implements AfterViewInit, OnDestroy {
     });
   }
 
+  /**
+   * Hero lockup: the isotype draws itself (GxIsotype); the wordmark is revealed left to right right after,
+   * and the tagline fades in. Runs once on load (rare → delight is allowed).
+   */
+  private brandReveal() {
+    if (this.reduced) return;
+    const word = this.q('.hero-brand .gx-word b');
+    const tag = this.q('.hero-brand .gx-word small');
+    this.anims.push(
+      animate(word, { clipPath: ['inset(0 100% 0 0)', 'inset(0 0% 0 0)'], duration: 700, delay: 900, ease: 'outQuart' }),
+      animate(tag, { opacity: [0, 1], translateY: [4, 0], duration: 400, delay: 1400, ease: 'outQuart' }),
+    );
+  }
+  /** Network grid: branches appear in order with a short stagger when the section scrolls in. */
+  private networkReveal() {
+    const items = this.q('.red-grid .sede');
+    if (this.reduced || !items.length) return;
+    items.forEach((el) => (el.style.opacity = '0'));
+    this.whenVisible(this.one('.red-grid'), () => {
+      this.anims.push(animate(items, { opacity: [0, 1], translateY: [8, 0], duration: 420, delay: stagger(40), ease: 'outQuart' }));
+    });
+  }
   private microInteractions() {
     const bind = (el: HTMLElement, enter: Record<string, unknown>, leave: Record<string, unknown>, hot = false) => {
       const on = () => { if (hot) el.classList.add('hot'); if (!this.reduced) animate(el, { ...enter, duration: 700, ease: this.spring }); };
@@ -240,7 +279,7 @@ export class Home implements AfterViewInit, OnDestroy {
       });
     };
     this.q('.card').forEach((c) => bind(c, { scale: 1.02, translateY: -4 }, { scale: 1, translateY: 0 }, true));
-    this.q('.btn').forEach((b) => bind(b, { scale: 1.04 }, { scale: 1 }));
+    this.q('.btn').forEach((b) => bind(b, { scale: 1.02 }, { scale: 1 }));
     if (!this.reduced) this.anims.push(animate(this.q('.mini-bars .tr i'), { scaleX: [0, 1], delay: stagger(80, { start: 600 }), duration: 900, ease: 'outExpo' }));
   }
 }

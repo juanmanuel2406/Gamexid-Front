@@ -6,14 +6,16 @@
   </div>
   @if (inventory() && localInventory()) { <button class="btn-primario btn-cta" (click)="abrirAlta()"><gx-icon name="plus" />Nuevo producto</button> }
 </div>
-<div class="catalog-tabs" role="group" aria-label="Vista de productos">
-  <button class="btn-secundario" [attr.aria-pressed]="!inventory()" (click)="selectInventory(false)">Catálogo</button>
-  <button class="btn-secundario" [attr.aria-pressed]="inventory()" (click)="selectInventory(true)">Inventario</button>
+<div class="catalog-tabs" role="group" aria-label="Vista de productos" [attr.data-at]="inventory() ? 1 : 0">
+  <i class="tab-pill" aria-hidden="true"></i>
+  <button type="button" [attr.aria-pressed]="!inventory()" (click)="selectInventory(false)">Catálogo</button>
+  <button type="button" [attr.aria-pressed]="inventory()" (click)="selectInventory(true)">Inventario</button>
 </div>
 @if (!inventory()) { <gx-catalogo /> } @else {
-<div class="catalog-tabs" role="group" aria-label="Origen del inventario">
-  <button class="btn-secundario" [attr.aria-pressed]="!localInventory()" (click)="localInventory.set(false)">Gaming City</button>
-  <button class="btn-secundario" [attr.aria-pressed]="localInventory()" (click)="localInventory.set(true)">Registros Gamexid</button>
+<div class="catalog-tabs sub" role="group" aria-label="Origen del inventario" [attr.data-at]="localInventory() ? 1 : 0">
+  <i class="tab-pill" aria-hidden="true"></i>
+  <button type="button" [attr.aria-pressed]="!localInventory()" (click)="localInventory.set(false)">GamingCity</button>
+  <button type="button" [attr.aria-pressed]="localInventory()" (click)="localInventory.set(true)">Registros Gamexid</button>
 </div>
 @if (!localInventory()) { <gx-catalogo [inventory]="true" /> } @else {
 <section class="panel">
@@ -89,6 +91,7 @@
     [rows]="15"
     [scrollable]="true"
     dataKey="id"
+    [expandedRowKeys]="expanded()"
   >
     <ng-template #header
       ><tr>
@@ -97,12 +100,12 @@
         <th>EAN</th>
         <th>Validación</th>
         <th class="num">Stock en {{ stockBranch()?.name }}</th>
-        <th style="width: 120px">Distribución</th>
-        <th>Estado</th>
-        <th>Acciones</th>
+        <th class="num">Red</th>
+        <th style="width: 210px">Stock en las {{ activeBranches().length }} sedes</th>
+        <th><span class="sr-only">Acciones</span></th>
       </tr></ng-template
     >
-    <ng-template #body let-p
+    <ng-template #body let-p let-expandedRow="expanded"
       ><tr class="prod-row">
         <td>
           <span class="code-pill">{{ p.sku }}</span>
@@ -115,26 +118,37 @@
           <p-tag [value]="p.requiresSerialNumber ? 'EAN + SERIAL' : 'EAN'" severity="secondary" />
         </td>
         <td class="num"><span class="stock-chip mono" [attr.data-level]="stockLevel(p.stock)">{{ p.stock }}</span></td>
+        <td class="num mono net">{{ network().has(p.id) ? networkTotal(p.id) : networkError() ? '—' : '·' }}</td>
         <td>
-          <span class="gx-meter"><i [style.width.%]="((stock().get(p.id) || 0) / maxStock()) * 100"></i></span>
-        </td>
-        <td>
-          <p-tag
-            [value]="p.isActive ? 'Activo' : 'Inactivo'"
-            [severity]="p.isActive ? 'success' : 'secondary'"
-          />
-        </td>
-        <td>
-          <button
-            class="icon-button"
-            aria-label="Ver seriales"
-            pTooltip="Ver seriales"
-            (click)="verSeriales(p)"
-          >
-            <gx-icon name="serial" />
+          <button type="button" class="strip" (click)="toggleRow(p.id)" [attr.aria-expanded]="!!expanded()[p.id]" [attr.aria-label]="'Ver stock por sede de ' + p.name">
+            @for (c of cells(p.id); track c.id) {
+              <i [attr.data-level]="c.level" [class.here]="c.here" [style.opacity]="c.fill" [title]="c.name + ': ' + c.n"></i>
+            } @empty {
+              @for (n of [].constructor(16); track $index) { <i class="ghost"></i> }
+            }
           </button>
+        </td>
+        <td class="row-actions">
+          <button class="icon-button" aria-label="Ver seriales" pTooltip="Ver seriales" (click)="verSeriales(p)"><gx-icon name="serial" /></button
+          ><button class="icon-button chev-btn" [class.open]="!!expanded()[p.id]" [attr.aria-label]="'Desplegar sedes de ' + p.name" (click)="toggleRow(p.id)"><gx-icon name="right" /></button>
         </td></tr
     ></ng-template>
+    <ng-template #expandedrow let-p
+      ><tr class="exp-row">
+        <td colspan="8">
+          <div class="branch-grid">
+            @for (c of cells(p.id); track c.id; let i = $index) {
+              <div class="bcell" [class.here]="c.here" [style.--i]="i">
+                <span class="bname">{{ c.name }}@if (c.depot) { <small>depósito</small> }</span>
+                <b class="mono" [attr.data-level]="c.level">{{ c.n }}</b>
+              </div>
+            } @empty {
+              <p class="muted" role="status">{{ networkError() ? 'No se pudo consultar el stock de todas las sedes. Volvé a buscar.' : 'Calculando stock en la red…' }}</p>
+            }
+          </div>
+        </td>
+      </tr></ng-template
+    >
     <ng-template #emptymessage
       ><tr>
         <td colspan="8">

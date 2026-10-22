@@ -64,7 +64,7 @@ export class Movements {
             else if (fresh) {
               const item = this.q('.tl-item')[0];
               unfold(item);
-              flash(item, 'rgba(255,0,230,.12)');
+              flash(item, 'transparent');
             }
           },
           { injector: this.injector },

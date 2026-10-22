@@ -36,7 +36,7 @@
       <svg class="spark" viewBox="0 0 240 60" preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <linearGradient id="dash-spark" x1="0" x2="1">
-            <stop offset="0" stop-color="#ff00e6" /><stop offset=".45" stop-color="#9b38ee" /><stop offset="1" stop-color="#3f6ee0" />
+            <stop offset="0" stop-color="var(--k-ok)" /><stop offset=".45" stop-color="var(--k-brand)" /><stop offset="1" stop-color="var(--k-sec-mov)" />
           </linearGradient>
         </defs>
         <polyline class="spark-line" [attr.points]="spark()" fill="none" stroke="url(#dash-spark)" stroke-width="2" stroke-linejoin="round" />
@@ -108,7 +108,7 @@
     </section>
   </div>
 
-  <div class="grid-2">
+  <div class="stock-full">
     <section class="panel" data-enter>
       <div class="panel-header">
         <div>
@@ -143,41 +143,5 @@
       </div>
     </section>
 
-    <section class="panel" data-enter>
-      <div class="panel-header">
-        <div>
-          <h2 class="section-title"><gx-icon name="server" [size]="15" />Servicios y conexión</h2>
-
-        </div>
-      </div>
-      <div class="services">
-        <div class="svc">
-          <div><strong>API Gamexid</strong><span>Acceso, inventario y sesión</span></div>
-          <span class="tag-gx" [class.ok]="workspace.connection() === 'online'" [class.bad]="workspace.connection() === 'offline'"
-            ><span class="dot"></span>{{ workspace.connection() === 'online' ? 'Conectada' : workspace.connection() === 'offline' ? 'Sin conexión' : 'Comprobando' }}</span
-          >
-        </div>
-        <div class="svc">
-          <div><strong>MySQL Inventario</strong><span>{{ store.units().length }} unidades registradas</span></div>
-          <span class="tag-gx {{ serviceTag(workspace.database()) }}"
-            ><span class="dot"></span>{{ workspace.database() === 'ok' ? 'Operativa' : workspace.database() === 'checking' ? 'Comprobando' : 'No disponible' }}</span
-          >
-        </div>
-        <div class="svc">
-          <div><strong>PdfPig</strong><span>Extracción de remitos sin IA</span></div>
-          <span class="tag-gx" [class.ok]="workspace.pdfPig()"><span class="dot"></span>{{ workspace.pdfPig() ? 'Listo' : 'No disponible' }}</span>
-        </div>
-        <div class="svc">
-          <div><strong>GamingCity</strong><span>Consultas de solo lectura</span></div>
-          <span class="tag-gx {{ serviceTag(workspace.gamingCity()) }}"
-            ><span class="dot"></span>{{ workspace.gamingCity() === 'ok' ? 'Configurada' : workspace.gamingCity() === 'pending' ? 'Sin credencial' : workspace.gamingCity() === 'checking' ? 'Comprobando' : 'No disponible' }}</span
-          >
-        </div>
-        <div class="svc">
-          <div><strong>ERP CDS</strong><span>Integración empresarial</span></div>
-          <span class="tag-gx"><span class="dot"></span>Pendiente</span>
-        </div>
-      </div>
-    </section>
   </div>
 }

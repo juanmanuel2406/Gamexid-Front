@@ -188,7 +188,7 @@
               ><span
                 class="code-pill"
                 [class.status-ok]="item.serials.length === item.expected && !item.duplicate"
-                >[ {{ item.serials.length }} / {{ item.expected }} Capturados ]</span
+                >{{ item.serials.length }} / {{ item.expected }} capturados</span
               >
             </div>
             <textarea
@@ -201,9 +201,10 @@
               placeholder="Escaneá o escribí cada número de serie"
             ></textarea>
             <div class="serial-chips" [id]="'captures-' + item.product.id">
-              @for (sn of item.serials; track $index) {
+              @for (sn of item.serials; track $index; let last = $last) {
                 <span
                   class="code-pill"
+                  [class.serial-fresh]="last"
                   [class.status-ok]="!item.duplicate"
                   [class.status-error]="item.duplicate"
                   ><gx-icon [name]="item.duplicate ? 'alert' : 'check'" [size]="12" />
@@ -212,12 +213,12 @@
               }
             </div>
             @if (item.duplicate) {
-              <p role="alert" class="text-red-300 text-xs mt-3">
+              <p role="alert" class="text-[color:var(--k-bad-fg)] text-xs mt-3">
                 Hay seriales repetidos. Corregilos para continuar.
               </p>
             }
             @if (item.serials.length > item.expected) {
-              <p role="alert" class="text-red-300 text-xs mt-3">
+              <p role="alert" class="text-[color:var(--k-bad-fg)] text-xs mt-3">
                 Hay más seriales que unidades esperadas.
               </p>
             }

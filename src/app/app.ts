@@ -31,6 +31,8 @@ interface NavItem {
   name: string;
   short: string;
   key: string;
+  /** Section accent used for wayfinding in the rail and page headers. */
+  accent: string;
 }
 
 @Component({
@@ -59,19 +61,18 @@ export class App {
   });
   private introPlayed = false;
   readonly navigation: NavItem[] = [
-    { url: '/dashboard', icon: 'dashboard', name: 'Centro de operaciones', short: 'Operaciones', key: '1' },
-    { url: '/ingresos', icon: 'scan', name: 'Ingreso de mercadería', short: 'Ingresos', key: '2' },
-    { url: '/productos', icon: 'package', name: 'Catálogo de productos', short: 'Productos', key: '3' },
-    { url: '/sedes', icon: 'pin', name: 'Red de sedes', short: 'Sedes', key: '4' },
-    { url: '/movimientos', icon: 'history', name: 'Auditoría de movimientos', short: 'Movimientos', key: '5' },
-    { url: '/sucursales', icon: 'file', name: 'Pedidos e ingesta de remitos', short: 'Pedidos', key: '6' },
+    { url: '/dashboard', icon: 'dashboard', name: 'Centro de operaciones', short: 'Operaciones', key: '1', accent: 'var(--k-sec-ops)' },
+    { url: '/ingresos', icon: 'scan', name: 'Ingreso de mercadería', short: 'Ingresos', key: '2', accent: 'var(--k-sec-in)' },
+    { url: '/productos', icon: 'package', name: 'Productos por sede', short: 'Productos', key: '3', accent: 'var(--k-sec-prod)' },
+    { url: '/sedes', icon: 'pin', name: 'Red de sedes', short: 'Sedes', key: '4', accent: 'var(--k-sec-sedes)' },
+    { url: '/movimientos', icon: 'history', name: 'Auditoría de movimientos', short: 'Movimientos', key: '5', accent: 'var(--k-sec-mov)' },
+    { url: '/sucursales', icon: 'file', name: 'Pedidos a sucursal', short: 'Pedidos', key: '6', accent: 'var(--k-sec-ped)' },
     // Linaje (/auditoria) hidden: browser-only data, no backend tables (see Gamexid-Back docs/revision-linaje-20261020.md).
   ];
   readonly current = computed(() => this.navigation.find((n) => this.url().startsWith(n.url)));
   readonly title = computed(() => this.current()?.name || 'Gamexid');
 
   constructor() {
-    document.documentElement.classList.add('gamexid-dark');
     document.documentElement.lang = 'es';
     this.router.events
       .pipe(
@@ -136,7 +137,8 @@ export class App {
       pill.style.transform = `translateY(${active.offsetTop}px)`;
       return;
     }
-    animate(pill, { translateY: active.offsetTop, duration: 450, ease: 'outBack(1.4)' });
+    // Spatial consistency: the active card slides to the new section (moving on screen → ease-in-out, 220 ms).
+    animate(pill, { translateY: active.offsetTop, duration: 220, ease: 'inOutQuart' });
   }
   private playIntro() {
     this.introPlayed = true;
@@ -151,18 +153,18 @@ export class App {
         }),
     });
     if (innerWidth >= 1024)
-      tl.add(this.q('.rail'), { translateX: [-40, 0], opacity: [0, 1], duration: 600 }, 0).add(
+      tl.add(this.q('.rail'), { translateX: [-16, 0], opacity: [0, 1], duration: 360 }, 0).add(
         this.q('.rail .nav-item'),
-        { translateX: [-12, 0], opacity: [0, 1], delay: stagger(35), duration: 500 },
+        { translateX: [-8, 0], opacity: [0, 1], delay: stagger(40), duration: 300 },
         150,
       );
-    tl.add(this.q('.topbar'), { translateY: [-12, 0], opacity: [0, 1], duration: 500 }, 80);
+    tl.add(this.q('.topbar'), { translateY: [-6, 0], opacity: [0, 1], duration: 300 }, 80);
     this.enterContent(200);
   }
   private enterContent(start = 0) {
     const page = this.q('.workspace-content')[0];
     if (!page || reducedMotion()) return;
-    animate(page, { opacity: [0, 1], translateY: [10, 0], duration: 450, delay: start, ease: 'outExpo' });
+    animate(page, { opacity: [0, 1], translateY: [6, 0], duration: 260, delay: start, ease: 'outQuart' });
   }
 
   private isPublic(url: string) {

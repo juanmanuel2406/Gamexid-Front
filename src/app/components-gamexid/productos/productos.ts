@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed, effect, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Catalogo } from './catalogo';
 import { FormsModule } from '@angular/forms';
@@ -61,6 +62,9 @@ export class Productos {
     this.stockBranchId.set(Number(id) || 0);
   }
   private loadVersion = 0;
+  private networkRequest?: Subscription;
+  private stockRequest?: Subscription;
+  readonly networkError = signal(false);
   readonly loading = signal(false);
   constructor() {
     // Keep the selector in sync with a valid default once branches load.
@@ -75,7 +79,7 @@ export class Productos {
       untracked(() => { this.productos.set([]); this.units.set([]); this.detalle.set(null); ++this.loadVersion; });
       if (!visible || !branch) return;
       const timer = setTimeout(() => this.load(branch, search), 200);
-      onCleanup(() => clearTimeout(timer));
+      onCleanup(() => { clearTimeout(timer); this.networkRequest?.unsubscribe(); this.stockRequest?.unsubscribe(); });
     });
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
       const inventory = params.get('vista') === 'inventario';
@@ -87,21 +91,68 @@ export class Productos {
     if (!branch) return;
     const version = ++this.loadVersion;
     this.loading.set(true);
-    this.data.getStock(branch, search).subscribe({
+    this.network.set(new Map());
+    this.networkError.set(false);
+    this.networkRequest?.unsubscribe();
+    this.stockRequest?.unsubscribe();
+    this.stockRequest = this.data.getStock(branch, search).subscribe({
       next: (p) => {
         if (version !== this.loadVersion) return;
         this.loading.set(false);
         this.productos.set(p);
+        this.loadNetwork(version, search);
         if (!this.entered) {
           this.entered = true;
           setTimeout(() => {
             enterStagger(document.querySelectorAll('.prod-row'), 0, 25);
-            growBars(Array.from(document.querySelectorAll('.prod-row .gx-meter i')), 'x', 200, 25);
+            growBars(Array.from(document.querySelectorAll('.prod-row .strip i')), 'y', 220, 4);
           });
         }
       },
       error: () => { if (version === this.loadVersion) { this.loading.set(false); this.productos.set([]); this.workspace.notify('No se pudo cargar el stock de la sucursal.', 'error'); } },
     });
+  }
+  readonly network = signal<Map<number, number[]>>(new Map());
+  readonly expanded = signal<Record<number, boolean>>({});
+  private loadNetwork(version: number, search: string) {
+    const branches = this.activeBranches();
+    if (!branches.length || !this.productos().length) return;
+    this.networkRequest = forkJoin(branches.map(b => b.id === this.stockBranchId()
+      ? of(this.productos()) : this.data.getStock(b.id, search))).subscribe({
+      next: all => {
+        if (version !== this.loadVersion) return;
+        const map = new Map<number, number[]>();
+        all.forEach((rows, i) => rows.forEach(r => {
+          const arr = map.get(r.id) ?? branches.map(() => 0);
+          arr[i] = r.stock;
+          map.set(r.id, arr);
+        }));
+        this.network.set(map);
+      },
+      error: () => { if (version === this.loadVersion) this.networkError.set(true); },
+    });
+  }
+  cells(productId: number) {
+    const branches = this.activeBranches();
+    const values = this.network().get(productId);
+    if (!values) return [];
+    const max = Math.max(1, ...values.filter((_, i) => branches[i]?.code !== 'DEP-CENTRAL'));
+    return branches.map((b, i) => {
+      const n = values[i] ?? 0;
+      const depot = b.code === 'DEP-CENTRAL';
+      return {
+        id: b.id, name: b.name, n, depot,
+        here: b.id === this.stockBranchId(),
+        level: this.stockLevel(n),
+        fill: n <= 0 || n < 3 ? 1 : 0.45 + 0.55 * Math.min(1, n / (depot ? Math.max(...values) : max)),
+      };
+    });
+  }
+  networkTotal(productId: number) {
+    return (this.network().get(productId) ?? []).reduce((a, b) => a + Math.max(0, b), 0);
+  }
+  toggleRow(id: number) {
+    this.expanded.update((e) => ({ ...e, [id]: !e[id] }));
   }
   abrirAlta() {
     this.draft = { sku: '', name: '', ean: '', requiresSerialNumber: false };

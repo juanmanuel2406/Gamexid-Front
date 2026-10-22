@@ -24,7 +24,7 @@ test('portada original y catálogo integrado', async ({ page }) => {
   await expect(page.getByRole('button',{name:'Consultar catálogo'})).toBeVisible();
   await page.getByRole('button',{name:'Inventario',exact:true}).click();
   await page.setViewportSize({width:1440,height:900});
-  await page.getByRole('link',{name:'Catálogo de productos',exact:true}).click();
+  await page.getByRole('link',{name:'Productos por sede',exact:true}).click();
   await expect(page).toHaveURL(/\/productos$/);
   await expect(page.getByRole('button',{name:'Consultar catálogo'})).toBeVisible();
   expect(errors).toEqual([]);

@@ -32,14 +32,14 @@
       <div class="term glass" aria-label="Terminal de escaneo en vivo">
         <div class="term-head">
           <span class="dots"><i></i><i></i><i></i></span>
-          <span class="t"><gx-icon name="scanline" [size]="14" /> TERMINAL · DEPÓSITO MORÓN</span>
-          <span class="live"><i class="live-dot"></i>DEMOSTRACIÓN</span>
+          <span class="t"><gx-icon name="scanline" [size]="14" /> Morón · lector 01</span>
+          <span class="live"><i class="live-dot"></i>Demostración</span>
         </div>
         <div class="viewfinder">
           <div class="code">
             <svg class="bars" viewBox="0 0 290 96" aria-hidden="true">
               @for (b of bars; track $index) {
-                <rect [attr.x]="b.x" y="0" [attr.width]="b.w" [attr.height]="b.h" fill="#e2e8f0" />
+                <rect [attr.x]="b.x" y="0" [attr.width]="b.w" [attr.height]="b.h" fill="#e8e1d1" />
               }
             </svg>
             <span class="digits">7 798114 620015</span>
@@ -78,14 +78,33 @@
     </div>
   </section>
 
+  <section class="wrap sec" aria-labelledby="red-t">
+    <div class="sec-head">
+      <div class="eyebrow"><span class="rule"></span>Red GamingCity</div>
+      <h2 id="red-t">Dieciséis sedes, un mismo inventario.</h2>
+    </div>
+    <div class="red-legend" aria-hidden="true">
+      @for (r of regions; track r.key) { <span><i [style.background]="r.color"></i>{{ r.label }}</span> }
+    </div>
+    <ol class="red-grid">
+      @for (b of network; track b.code; let i = $index) {
+        <li class="sede" [style.--c]="b.color" [style.--i]="i">
+          <span class="sede-n mono">{{ (i + 1).toString().padStart(2, '0') }}</span>
+          <b>{{ b.name }}</b>
+          <small>{{ b.city }}</small>
+        </li>
+      }
+    </ol>
+  </section>
+
   <section class="wrap sec" aria-labelledby="bento-t">
     <div class="sec-head">
-      <div class="eyebrow"><span class="idx">01</span><span class="rule"></span>Funciones</div>
+      <div class="eyebrow"><span class="rule"></span>Funciones</div>
       <h2 id="bento-t">Lo que el equipo usa todos los días.</h2>
 
     </div>
     <div class="bento">
-      <article class="card glass span-4">
+      <article class="card glass span-4 c-prod">
         <div class="card-head"><span class="ico"><gx-icon name="warehouse" [size]="18" /></span><h3>Stock por sede · ejemplo</h3></div>
 
         <div class="mini-bars">
@@ -96,11 +115,12 @@
           }
         </div>
       </article>
-      <article class="card glass span-2">
+      <article class="card glass span-2 c-in">
         <div class="card-head"><span class="ico em"><gx-icon name="scan" [size]="18" /></span><h3>Scanner integrado</h3></div>
+        <div class="mini-vf" aria-hidden="true"><i></i><span>7 798114 620015</span></div>
 
       </article>
-      <article class="card glass span-3">
+      <article class="card glass span-3 c-mov">
         <div class="card-head"><span class="ico"><gx-icon name="history" [size]="18" /></span><h3>Auditoría de movimientos</h3></div>
 
         <div class="tl">
@@ -109,7 +129,7 @@
           <div><b>Ingreso #126</b><span>Morón · 1 u.</span></div>
         </div>
       </article>
-      <article class="card glass span-3">
+      <article class="card glass span-3 c-ped">
         <div class="card-head"><span class="ico"><gx-icon name="doc" [size]="18" /></span><h3>Remitos en PDF</h3></div>
 
         <div class="tl">
@@ -122,14 +142,14 @@
 
   <section class="wrap sec" id="arquitectura" aria-labelledby="arch-t">
     <div class="sec-head">
-      <div class="eyebrow"><span class="idx">02</span><span class="rule"></span>Arquitectura</div>
+      <div class="eyebrow"><span class="rule"></span>Arquitectura</div>
       <h2 id="arch-t">De la lectura a la base, sin pasos intermedios.</h2>
 
     </div>
     <div class="arch glass">
       <svg viewBox="0 0 960 300" role="img" aria-label="Remito PDF y scanner envían datos a Gamexid.Api, que se conecta con Aiven MySQL y Productos">
         <defs>
-          <linearGradient id="home-arch-g" x1="0" x2="1"><stop offset="0" stop-color="#8b5cf6" /><stop offset="1" stop-color="#10b981" /></linearGradient>
+          <linearGradient id="home-arch-g" x1="0" x2="1"><stop offset="0" stop-color="#5b3fd0" /><stop offset="1" stop-color="#3f7a52" /></linearGradient>
         </defs>
         <path class="architecture-path" d="M210 80 C 290 80, 300 150, 380 150" stroke="url(#home-arch-g)" />
         <path class="architecture-path" d="M210 220 C 290 220, 300 150, 380 150" stroke="url(#home-arch-g)" />

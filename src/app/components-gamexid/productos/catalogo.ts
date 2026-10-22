@@ -17,9 +17,9 @@ interface Catalog { products: CatalogProduct[]; total: number; truncated: boolea
   imports: [FormsModule, DecimalPipe],
   template: `
     <section class="space-y-6 max-w-5xl">
-      <div role="status" class="text-sm text-slate-400">{{ checking() ? 'Conectando…' : connected() ? 'Conectado' : configured() ? 'Catálogo disponible' : 'Catálogo no configurado' }}</div>
+      <div role="status" class="text-sm text-[color:var(--k-fg-3)]">{{ checking() ? 'Conectando…' : connected() ? 'Conectado' : configured() ? 'Catálogo disponible' : 'Catálogo no configurado' }}</div>
       <label class="block">Sede
-        <select aria-label="Sede de Gaming City" class="block w-full mt-2 bg-slate-900 border border-slate-700 rounded-lg p-3"
+        <select aria-label="Sede de Gaming City" class="block w-full mt-2 bg-[color:var(--k-surface)] border border-[color:var(--k-line-2)] rounded-lg p-3"
           [ngModel]="branchId()" (ngModelChange)="selectBranch($event)">
           <option [ngValue]="0" disabled>Seleccioná una sede</option>
           @for (branch of branches(); track branch.id) { <option [ngValue]="branch.id">{{ branch.name }}</option> }
@@ -31,37 +31,37 @@ interface Catalog { products: CatalogProduct[]; total: number; truncated: boolea
       </div>
       <form (ngSubmit)="query()" class="flex flex-wrap items-end gap-3">
         <label class="flex-1 min-w-48">Buscar producto o código
-          <input class="block w-full mt-2 bg-slate-900 border border-slate-700 rounded-lg p-3" name="search" [(ngModel)]="search" minlength="3" maxlength="80" placeholder="Nombre o código del producto" />
+          <input class="block w-full mt-2 bg-[color:var(--k-surface)] border border-[color:var(--k-line-2)] rounded-lg p-3" name="search" [(ngModel)]="search" minlength="3" maxlength="80" placeholder="Nombre o código del producto" />
         </label>
-        <button class="rounded-lg bg-violet-600 px-5 py-3 disabled:opacity-40" [disabled]="!configured() || !branchId() || busy() || search.trim().length < 3">Consultar catálogo</button>
+        <button class="rounded-lg bg-[color:var(--k-ink)] text-[color:var(--k-surface)] px-5 py-3 disabled:opacity-40" [disabled]="!configured() || !branchId() || busy() || search.trim().length < 3">Consultar catálogo</button>
       </form>
       @if (!inventory()) {
       <form (ngSubmit)="queryById()" class="flex flex-wrap items-end gap-3">
         <label class="flex-1 min-w-48">ID de producto
-          <input class="block w-full mt-2 bg-slate-900 border border-slate-700 rounded-lg p-3" name="productId" [(ngModel)]="productId" inputmode="numeric" pattern="[0-9]{1,20}" maxlength="20" placeholder="Ejemplo: 4715" />
+          <input class="block w-full mt-2 bg-[color:var(--k-surface)] border border-[color:var(--k-line-2)] rounded-lg p-3" name="productId" [(ngModel)]="productId" inputmode="numeric" pattern="[0-9]{1,20}" maxlength="20" placeholder="Ejemplo: 4715" />
         </label>
-        <button class="rounded-lg border border-slate-700 px-5 py-3 disabled:opacity-40" [disabled]="!configured() || !branchId() || busy() || !validId()">Consultar por ID</button>
+        <button class="rounded-lg border border-[color:var(--k-line-2)] px-5 py-3 disabled:opacity-40" [disabled]="!configured() || !branchId() || busy() || !validId()">Consultar por ID</button>
       </form>
       }
-      @if (error()) { <p role="alert" class="text-red-400">{{ error() }}</p> }
-      @if (busy()) { <p role="status" class="text-slate-400">Consultando Gaming City…</p> }
+      @if (error()) { <p role="alert" class="text-[color:var(--k-bad-fg)]">{{ error() }}</p> }
+      @if (busy()) { <p role="status" class="text-[color:var(--k-fg-3)]">Consultando Gaming City…</p> }
       @if (result(); as catalog) {
         <section aria-label="Resultados del catálogo">
           <h2 class="text-lg mb-3">{{ catalog.total }} productos encontrados</h2>
-          <p class="text-slate-400 mb-3">{{ selectedBranch()?.name }} · {{ totalStock() | number }} unidades{{ catalog.truncated ? ' en los resultados mostrados' : '' }}</p>
-          @if (catalog.truncated) { <p class="text-amber-400 mb-3">Primeros 100 resultados</p> }
+          <p class="text-[color:var(--k-fg-3)] mb-3">{{ selectedBranch()?.name }} · {{ totalStock() | number }} unidades{{ catalog.truncated ? ' en los resultados mostrados' : '' }}</p>
+          @if (catalog.truncated) { <p class="text-[color:var(--k-warn-fg)] mb-3">Primeros 100 resultados</p> }
           @if (!catalog.products.length) { <p>Sin resultados</p> }
           <div class="space-y-3">
             @for (product of catalog.products; track product.id) {
-              <article class="bg-slate-900 p-4 border border-slate-800 rounded-lg break-words">
+              <article class="bg-[color:var(--k-surface)] p-4 border border-[color:var(--k-line)] rounded-lg break-words">
                 <h3 class="font-medium">{{ product.name }}</h3>
                 <dl class="grid sm:grid-cols-2 gap-2 text-sm mt-3">
-                  <div><dt class="text-slate-400">ID</dt><dd>{{ product.id }}</dd></div>
-                  <div><dt class="text-slate-400">Código</dt><dd>{{ product.code || 'No informado' }}</dd></div>
-                  <div><dt class="text-slate-400">Código de proveedor</dt><dd>{{ product.supplierCode || 'No informado' }}</dd></div>
-                  <div><dt class="text-slate-400">SKU</dt><dd>{{ product.sku || 'No informado' }}</dd></div>
-                  <div><dt class="text-slate-400">Precio informado</dt><dd>{{ product.price === null ? 'No informado' : (product.price | number:'1.2-2') }}</dd></div>
-                  <div><dt class="text-slate-400">Stock en {{ selectedBranch()?.name }}</dt><dd>{{ product.stock === null ? 'No informado' : (product.stock | number:'1.0-2') }}</dd></div>
+                  <div><dt class="text-[color:var(--k-fg-3)]">ID</dt><dd>{{ product.id }}</dd></div>
+                  <div><dt class="text-[color:var(--k-fg-3)]">Código</dt><dd>{{ product.code || 'No informado' }}</dd></div>
+                  <div><dt class="text-[color:var(--k-fg-3)]">Código de proveedor</dt><dd>{{ product.supplierCode || 'No informado' }}</dd></div>
+                  <div><dt class="text-[color:var(--k-fg-3)]">SKU</dt><dd>{{ product.sku || 'No informado' }}</dd></div>
+                  <div><dt class="text-[color:var(--k-fg-3)]">Precio informado</dt><dd>{{ product.price === null ? 'No informado' : (product.price | number:'1.2-2') }}</dd></div>
+                  <div><dt class="text-[color:var(--k-fg-3)]">Stock en {{ selectedBranch()?.name }}</dt><dd>{{ product.stock === null ? 'No informado' : (product.stock | number:'1.0-2') }}</dd></div>
                 </dl>
               </article>
             }

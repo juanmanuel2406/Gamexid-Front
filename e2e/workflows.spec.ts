@@ -376,9 +376,9 @@ test('home pública: hero, KPIs animados, arquitectura y acceso al login', async
   await expect(page).toHaveURL(/\/$/);
 });
 
-test('sistema tipográfico: solo Archivo, IBM Plex Sans y Plex Mono, sin emojis como íconos', async ({ page }) => {
+test('sistema tipográfico: solo Bricolage Grotesque, Geist y Geist Mono, sin emojis como íconos', async ({ page }) => {
   await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
-  const allowed = /^"?(Archivo Variable|IBM Plex Sans|IBM Plex Mono)"?,/;
+  const allowed = /^"?(Bricolage Grotesque Variable|Geist Variable|Geist Mono Variable)"?,/;
   const audit = () =>
     page.evaluate(() => {
       const families = new Set<string>();
@@ -401,16 +401,16 @@ test('sistema tipográfico: solo Archivo, IBM Plex Sans y Plex Mono, sin emojis 
   }
   await page.goto('/');
   const h1 = page.locator('h1');
-  await expect(h1).toHaveCSS('font-family', /Archivo Variable/);
-  await expect(h1).toHaveCSS('font-stretch', '112%');
-  await expect(page.locator('.kpi b').first()).toHaveCSS('font-family', /IBM Plex Mono/);
+  await expect(h1).toHaveCSS('font-family', /Bricolage Grotesque Variable/);
+  await expect(page.locator('.kpi b').first()).toHaveCSS('font-family', /Bricolage Grotesque Variable/);
+  await expect(page.locator('.code-pill, .mono').first()).toHaveCSS('font-family', /Geist Mono Variable/);
 });
 
 test('textos finales: GamingCity en una palabra y sin elementos retirados', async ({ page }) => {
   await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
   await page.goto('/');
   await expect(page.locator('.kpi .top').first()).toContainText('Sedes GamingCity');
-  await expect(page.locator('.kpi .top').first()).toHaveCSS('font-family', /Archivo Variable/);
+  await expect(page.locator('.kpi .top').first()).toHaveCSS('font-family', /Geist Variable/);
   for (const text of ['Gaming City', 'Análisis de Sistemas', 'GC-API solo lectura', 'API sin conexión', 'Sistema en línea']) {
     await expect(page.getByText(text)).toHaveCount(0);
   }

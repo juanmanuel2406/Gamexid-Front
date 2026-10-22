@@ -123,7 +123,7 @@ export class Dashboard {
   private newActivity() {
     const item = this.q('.feed-item')[0];
     unfold(item);
-    flash(item, 'rgba(255,0,230,.12)');
+    flash(item, 'transparent');
   }
   quantity(m: InventoryMovement) {
     return m.items.reduce((n, i) => n + i.quantity, 0);
@@ -137,7 +137,5 @@ export class Dashboard {
     const name = (id?: number) => this.workspace.branches().find((b) => b.id === id)?.name;
     return [name(m.sourceBranchId), name(m.destinationBranchId)].filter(Boolean).join(' → ') || '—';
   }
-  serviceTag(state: string) {
-    return state === 'ok' ? 'ok' : state === 'pending' ? '' : state === 'checking' ? '' : 'bad';
-  }
+
 }

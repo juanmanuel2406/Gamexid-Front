@@ -64,102 +64,97 @@
   (visibleChange)="!busy() && !$event && draft.set(null)"
   [modal]="true"
   [draggable]="false"
-  [style]="{ width: '1100px' }"
+  [style]="{ width: '1180px' }"
+  styleClass="order-dialog"
   [closable]="!busy()"
 >
   @if (draft(); as d) {
-    <fieldset [disabled]="busy() || !!d.status">
-    <div class="order-fields">
-      <label
-        ><span class="form-label ref-label">Referencia del pedido
-          @if (d.referenceSource === 'pdf') { <span class="tag-gx ok"><gx-icon name="check" [size]="12" />Detectada en el PDF</span> }
-          @else if (d.referenceSource === 'missing') { <span class="tag-gx warn"><gx-icon name="alert" [size]="12" />Verificá el número bajo PEDIDO SUCURSAL</span> }</span
-        ><input class="form-control mono ref-input" [(ngModel)]="d.reference" (ngModelChange)="d.referenceSource = 'manual'" maxlength="100" placeholder="Ej. 0001-00012345" /></label
-      ><label
-        ><span class="form-label">Sucursal de destino</span
-        ><select class="form-control" [(ngModel)]="d.branchId">
-          <option [ngValue]="0">Seleccioná una sucursal</option>
-          @for (b of branches(); track b.id) {
-            <option [ngValue]="b.id" [title]="b.address || ''">
-              {{ b.name }}{{ b.isLegacy ? ' (histórica)' : '' }}
-            </option>
-          }
-        </select></label
-      >
-    </div>
-    @for (branch of branches(); track branch.id) {
-      @if (branch.id === d.branchId) {
-        <p class="muted text-sm mb-4">{{ branch.address }}</p>
-      }
-    }
-    @if (!d.status) { <gx-intake (parsed)="parsed($event)" /> }
-    @if (d.fileName) {
-      <div class="flex items-center gap-3 mb-5">
-        <span class="code-pill">{{ d.fileName }}</span
-        ><button class="btn-secundario" (click)="descargar()" [disabled]="!d.pdf">
-          <gx-icon name="download" />Descargar original
-        </button>
-      </div>
-    }
-    <div class="panel-header mt-6">
-      <h2 class="section-title"><gx-icon name="list" [size]="15" />Revisión de productos</h2>
-      <p-tag value="Validación humana" severity="secondary" />
-    </div>
-    @for (line of d.lines; track $index) {
-      <div class="pedido-linea">
-        <label
-          ><span class="form-label">EAN</span
-          ><input
-            class="form-control mono"
-            [(ngModel)]="line.ean"
-            (blur)="relacionar(line)"
-            maxlength="14"
-            inputmode="numeric" /></label
-        ><label><span class="form-label">SKU</span>
-          <input class="form-control mono" [(ngModel)]="line.sku" maxlength="40" placeholder="Opcional: usa EAN si es nuevo" />
-        </label><label
-          ><span class="form-label">Producto</span
-          ><input class="form-control" [(ngModel)]="line.name" maxlength="180" /></label
-        ><label
-          ><span class="form-label">Pedido</span
-          ><input
-            type="number"
-            class="form-control mono"
-            [(ngModel)]="line.expected"
-            min="1"
-            step="1" /></label
-        ><label
-          ><span class="form-label">Recibido</span
-          ><input
-            type="number"
-            class="form-control mono"
-            [ngModel]="line.received"
-            readonly
-            min="0"
-            [max]="line.expected || 0"
-            step="1" /></label
-        ><label><span class="form-label">Precio unitario</span>
-          <span class="money" [attr.data-cur]="line.currency || 'none'"
-            ><span class="cur mono">{{ line.currency === 'USD' ? 'US$' : line.currency === 'ARS' ? 'AR$' : '¿?' }}</span
-            ><input class="form-control mono" type="number" min="0" step="0.01" [(ngModel)]="line.unitPrice" /></span>
-        </label><label><span class="form-label">Importe</span>
-          <span class="money" [attr.data-cur]="line.currency || 'none'"
-            ><span class="cur mono">{{ line.currency === 'USD' ? 'US$' : line.currency === 'ARS' ? 'AR$' : '¿?' }}</span
-            ><input class="form-control mono" type="number" min="0" step="0.01" [(ngModel)]="line.total" /></span>
-        </label><div class="cur-field"><span class="form-label">Moneda</span>
-          <div class="cur-toggle" role="radiogroup" aria-label="Moneda" [attr.data-cur]="line.currency || 'none'">
-            <button type="button" role="radio" [attr.aria-checked]="line.currency === 'ARS'" (click)="line.currency = 'ARS'">ARS</button
-            ><button type="button" role="radio" [attr.aria-checked]="line.currency === 'USD'" (click)="line.currency = 'USD'">USD</button>
+    <fieldset class="order-layout" [disabled]="busy() || !!d.status">
+      <aside class="doc-col" aria-label="Documento del pedido">
+        @if (!d.status) { <gx-intake (parsed)="parsed($event)" /> }
+        @if (d.fileName) {
+          <div class="doc-file">
+            <span class="code-pill">{{ d.fileName }}</span
+            ><button class="btn-secundario" (click)="descargar()" [disabled]="!d.pdf">
+              <gx-icon name="download" />Descargar original
+            </button>
           </div>
-          @if (!line.currency && (line.unitPrice != null || line.total != null)) { <span class="cur-hint">Elegí la moneda</span> }
-        </div><button class="icon-button" aria-label="Quitar línea" (click)="d.lines.splice($index, 1)">
-          <gx-icon name="trash" />
-        </button>
-      </div>
-    }
-    <button class="btn-secundario mt-4" (click)="agregar()">
-      <gx-icon name="plus" />Agregar producto manualmente
-    </button>
+        }
+      </aside>
+      <section class="data-col" aria-label="Datos del pedido">
+        <div class="order-fields">
+          <label
+            ><span class="form-label ref-label">Referencia del pedido
+              @if (d.referenceSource === 'pdf') { <span class="tag-gx ok"><gx-icon name="check" [size]="12" />Detectada en el PDF</span> }
+              @else if (d.referenceSource === 'missing') { <span class="tag-gx warn"><gx-icon name="alert" [size]="12" />Verificá el número bajo PEDIDO SUCURSAL</span> }</span
+            ><input class="form-control mono ref-input" [class.from-pdf]="d.referenceSource === 'pdf'" [(ngModel)]="d.reference" (ngModelChange)="d.referenceSource = 'manual'" maxlength="100" placeholder="Ej. 0001-00012345" /></label
+          ><label
+            ><span class="form-label">Sucursal de destino</span
+            ><select class="form-control" [(ngModel)]="d.branchId">
+              <option [ngValue]="0">Seleccioná una sucursal</option>
+              @for (b of branches(); track b.id) {
+                <option [ngValue]="b.id" [title]="b.address || ''">
+                  {{ b.name }}{{ b.isLegacy ? ' (histórica)' : '' }}
+                </option>
+              }
+            </select>
+            @for (branch of branches(); track branch.id) {
+              @if (branch.id === d.branchId) { <small class="branch-address">{{ branch.address }}</small> }
+            }</label
+          >
+        </div>
+
+        <div class="lines-panel">
+          <div class="lines-head">
+            <h2 class="section-title"><gx-icon name="list" [size]="15" />Revisión de productos</h2>
+            <span class="muted text-xs">Revisá cada línea contra el PDF</span>
+          </div>
+          <div class="lines-scroll">
+            <div class="line-grid line-th" aria-hidden="true">
+              <span>EAN-13 · SKU</span><span>Producto</span><span class="num">Pedido</span><span class="num">Recibido</span><span>Moneda</span><span class="num">Precio unitario</span><span class="num">Importe</span><span></span>
+            </div>
+            @for (line of d.lines; track $index) {
+              <div class="line-grid pedido-linea">
+                <span class="codes">
+                  <input class="form-control mono" aria-label="EAN" [(ngModel)]="line.ean" (blur)="relacionar(line)" maxlength="14" inputmode="numeric" />
+                  <input class="form-control mono sku" aria-label="SKU" [(ngModel)]="line.sku" maxlength="40" placeholder="SKU opcional" />
+                </span>
+                <input class="form-control" aria-label="Producto" [(ngModel)]="line.name" maxlength="180" />
+                <input type="number" class="form-control mono num" aria-label="Pedido" [(ngModel)]="line.expected" min="1" step="1" />
+                <input type="number" class="form-control mono num" aria-label="Recibido" [ngModel]="line.received" readonly min="0" [max]="line.expected || 0" step="1" />
+                <div class="cur-toggle" role="radiogroup" aria-label="Moneda" [attr.data-cur]="line.currency || 'none'">
+                  <i class="cur-pill" aria-hidden="true"></i>
+                  <button type="button" role="radio" [attr.aria-checked]="line.currency === 'ARS'" (click)="line.currency = 'ARS'">ARS</button
+                  ><button type="button" role="radio" [attr.aria-checked]="line.currency === 'USD'" (click)="line.currency = 'USD'">USD</button>
+                </div>
+                <span class="money" [attr.data-cur]="line.currency || 'none'"
+                  ><span class="cur mono">{{ line.currency === 'USD' ? 'US$' : line.currency === 'ARS' ? 'AR$' : '¿?' }}</span
+                  ><input class="form-control mono" aria-label="Precio unitario" type="number" min="0" step="0.01" [(ngModel)]="line.unitPrice" /></span>
+                <span class="money" [attr.data-cur]="line.currency || 'none'"
+                  ><span class="cur mono">{{ line.currency === 'USD' ? 'US$' : line.currency === 'ARS' ? 'AR$' : '¿?' }}</span
+                  ><input class="form-control mono" aria-label="Importe" type="number" min="0" step="0.01" [(ngModel)]="line.total" /></span>
+                <button class="icon-button" aria-label="Quitar línea" (click)="d.lines.splice($index, 1)">
+                  <gx-icon name="trash" />
+                </button>
+                @if (!line.currency && (line.unitPrice != null || line.total != null)) { <span class="cur-hint">Elegí la moneda de esta línea</span> }
+              </div>
+            } @empty {
+              <p class="lines-empty">Cargá el PDF para leer los productos, o agregalos a mano.</p>
+            }
+          </div>
+          <div class="lines-foot">
+            <button class="btn-secundario" (click)="agregar()">
+              <gx-icon name="plus" />Agregar producto manualmente
+            </button>
+            @if (totales(d); as t) {
+              <div class="totals">
+                <span>Total en pesos <b class="mono ars">AR$ {{ t.ars }}</b></span>
+                <span>Total en dólares <b class="mono usd">US$ {{ t.usd }}</b></span>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
     </fieldset>
     @if (d.status) {
       <section class="panel p-4 mt-4">

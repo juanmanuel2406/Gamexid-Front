@@ -35,9 +35,9 @@ export function shake(el?: Element | null) {
   });
 }
 
-export function flash(el?: Element | null, color = 'rgba(155,56,238,.22)') {
+export function flash(el?: Element | null, color = 'var(--k-brand-bg)') {
   if (!el || reducedMotion()) return;
-  animate(el, { backgroundColor: [color, 'rgba(0,0,0,0)'], duration: 1200, ease: 'outQuad' });
+  animate(el, { backgroundColor: [color, 'rgba(70, 52, 20, 0.0)'], duration: 1200, ease: 'outQuad' });
 }
 
 export function unfold(el?: HTMLElement | null) {

@@ -1,64 +1,98 @@
+:host {
+  display: block;
+}
 .dropzone {
   position: relative;
   overflow: hidden;
-  border: 1px dashed #475569;
-  border-radius: 8px;
-  padding: 28px;
   display: flex;
-  align-items: center;
   flex-direction: column;
-  gap: 10px;
-  background: #07090f;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 20px;
+  border: 1.5px dashed var(--k-line-2);
+  border-radius: 12px;
+  background: var(--k-label);
+  text-align: center;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
 }
-.dropzone > gx-icon {
-  color: #b77cf5;
+.dropzone > .gx-icon {
+  color: var(--k-sec-ped);
 }
-.dropzone strong {
+.dz-text {
+  display: grid;
+  gap: 2px;
+}
+.dz-text strong {
   font-size: 14px;
+  font-weight: 600;
 }
-.dropzone p {
-  font-size: 11px;
-  color: #8b91ab;
+.dz-text small {
+  font-size: 12px;
+  color: var(--k-fg-3);
 }
 .dropzone.dragging {
-  border-color: #b77cf5;
-  background: #9b38ee15;
+  border-color: var(--k-sec-ped);
+  background: var(--k-warn-bg);
+}
+/* Once a PDF is loaded the dropzone becomes a slim bar so the document takes the space. */
+.dropzone.compact {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  border-style: solid;
+  border-width: 1px;
+}
+.dropzone.compact label {
+  margin-left: auto;
+  min-height: 34px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+.dropzone.compact .dz-text small {
+  display: none;
 }
 .dropzone label {
-  cursor: pointer;
   z-index: 1;
+  cursor: pointer;
 }
 .scan-laser {
   position: absolute;
   top: 10px;
-  height: 1px;
   left: 0;
   right: 0;
-  background: #b77cf5;
-  box-shadow: 0 0 10px #9b38ee;
+  height: 2px;
+  background: var(--k-ok);
+  box-shadow: 0 0 10px var(--k-ok);
   opacity: 0;
   pointer-events: none;
 }
 .scan-laser.active {
-  opacity: 0.6;
+  opacity: 0.7;
 }
 .intake-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  margin: 16px 0;
+  gap: 12px;
+  margin: 14px 0;
+}
+.intake-toolbar .code-pill {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
 }
 .document-split {
-  display: grid;
-  grid-template-columns: 1fr;
-  border: 1px solid #1a2034;
-  border-radius: 8px;
+  border: 1px solid var(--k-line);
+  border-radius: 12px;
   overflow: hidden;
-  margin-bottom: 24px;
+  background: var(--k-sunken);
 }
 .document-pane {
-  background: #172031;
   min-width: 0;
 }
 .pane-header {
@@ -66,33 +100,56 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  font: 500 10px var(--font-data);
-  letter-spacing: 0.12em;
-  padding: 12px;
-  background: #0a0d18;
-  border-bottom: 1px solid #1a2034;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--k-line);
+  font-size: 12.5px;
+  color: var(--k-fg-3);
 }
 .pane-header select {
-  background: #0e1220;
-  border: 1px solid #2a3150;
-  padding: 8px;
-  border-radius: 4px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--k-line-2);
+  border-radius: 6px;
+  background: var(--k-label);
+  color: var(--k-fg);
+}
+/* The PDF page lies on the kraft like a sheet of paper. */
+.sheet {
+  margin: 14px;
+  border-radius: 3px;
+  background: #fffdf8;
+  box-shadow:
+    0 1px 0 rgba(70, 52, 20, 0.08),
+    0 14px 30px -20px rgba(70, 52, 20, 0.55);
+  overflow: hidden;
+  animation: sheet-in 320ms var(--ease-out) both;
+}
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) rotate(-0.4deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .pdf-preview {
   display: block;
-  max-height: 480px;
   width: 100%;
+  max-height: 560px;
   object-fit: contain;
-  padding: 14px;
 }
 @media (max-width: 700px) {
-  .document-split {
-    grid-template-columns: 1fr;
-  }
-    .intake-toolbar {
+  .intake-toolbar {
     flex-wrap: wrap;
   }
   .intake-toolbar .code-pill {
-    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    animation: none;
   }
 }
