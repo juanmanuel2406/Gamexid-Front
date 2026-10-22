@@ -35,7 +35,10 @@ export class Sucursales implements OnInit {
   readonly selectedLine = signal<number | null>(null);
   private loadVersion = 0;
   constructor() {
-    effect(() => { const branch = this.workspace.branchId(); void this.load(1, branch); });
+    effect(() => {
+      const branch = this.workspace.branchId();
+      void this.load(1, branch);
+    });
   }
   async load(page = 1, branch = this.workspace.branchId()) {
     const version = ++this.loadVersion;
@@ -49,7 +52,9 @@ export class Sucursales implements OnInit {
       this.total.set(result.total);
     } catch (e) {
       if (version === this.loadVersion) this.listError.set(this.orders.message(e));
-    } finally { if (version === this.loadVersion) this.loading.set(false); }
+    } finally {
+      if (version === this.loadVersion) this.loading.set(false);
+    }
   }
   readonly branches = computed(() =>
     this.workspace
@@ -65,8 +70,12 @@ export class Sucursales implements OnInit {
     this.pedidos().filter((p) => p.branchId === this.workspace.branchId()),
   );
   async ngOnInit() {
-    this.data.getProductos().subscribe({ next: p => this.products.set(p),
-      error: () => this.workspace.notify('No se pudo cargar el catálogo.', 'error') });
+    this.data
+      .getProductos()
+      .subscribe({
+        next: (p) => this.products.set(p),
+        error: () => this.workspace.notify('No se pudo cargar el catálogo.', 'error'),
+      });
   }
   nuevo() {
     this.error.set('');
@@ -100,8 +109,11 @@ export class Sucursales implements OnInit {
     this.draft.update((d) => {
       if (!d) return null;
       const lines = d.lines.map((line) => {
-        const extracted = result.lines.find((candidate) =>
-          (candidate.ean && candidate.ean === line.ean) || (candidate.sku && candidate.sku === line.sku));
+        const extracted = result.lines.find(
+          (candidate) =>
+            (candidate.ean && candidate.ean === line.ean) ||
+            (candidate.sku && candidate.sku === line.sku),
+        );
         return extracted
           ? {
               ...line,
@@ -116,7 +128,11 @@ export class Sucursales implements OnInit {
       });
       const existing = new Set(lines.map((line) => line.ean || line.sku));
       for (const line of result.lines) {
-        const product = this.products().find(p => (line.ean && p.ean === line.ean) || (line.sku && p.sku.toUpperCase() === line.sku.toUpperCase()));
+        const product = this.products().find(
+          (p) =>
+            (line.ean && p.ean === line.ean) ||
+            (line.sku && p.sku.toUpperCase() === line.sku.toUpperCase()),
+        );
         const ean = line.ean || product?.ean || '';
         const key = ean || line.sku;
         if (!existing.has(key)) {
@@ -133,32 +149,76 @@ export class Sucursales implements OnInit {
           existing.add(key);
         }
       }
-      const detected = result.source === 'pdfpig' ? result.reference?.trim() || '' : '';
-      const sameFile = d.pdf === result.file;
-      const manual = d.referenceSource === 'manual' || (!d.referenceSource && !!d.reference.trim());
-      const reference = detected || (manual || (sameFile && result.source !== 'pdfpig') ? d.reference : '');
-      const referenceSource: BranchOrder['referenceSource'] = detected ? 'pdf' : reference.trim() ? (manual ? 'manual' : d.referenceSource) : 'missing';
-      return { ...d, reference, referenceSource, pdf: result.file, fileName: result.file.name, lines };
+      const referencia = this.obtenerReferencia(d, result);
+      return { ...d, ...referencia, pdf: result.file, fileName: result.file.name, lines };
     });
   }
-  /** Totals per currency; ARS and USD are never added together. */
-  totales(order: BranchOrder) {
-    const fmt = (n: number) => n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    let ars = 0, usd = 0;
-    for (const l of order.lines) {
-      const amount = l.total ?? (l.unitPrice != null && l.expected ? l.unitPrice * l.expected : 0);
-      if (l.currency === 'ARS') ars += amount || 0;
-      else if (l.currency === 'USD') usd += amount || 0;
+
+  private obtenerReferencia(pedido: BranchOrder, resultado: Extraction) {
+    let numeroDetectado = '';
+    if (resultado.source === 'pdfpig') {
+      numeroDetectado = resultado.reference?.trim() || '';
     }
-    return { ars: fmt(ars), usd: fmt(usd) };
+    const mismoArchivo = pedido.pdf === resultado.file;
+    const referenciaManual =
+      pedido.referenceSource === 'manual' || (!pedido.referenceSource && !!pedido.reference.trim());
+
+    let reference = numeroDetectado;
+    if (!reference && (referenciaManual || (mismoArchivo && resultado.source !== 'pdfpig'))) {
+      reference = pedido.reference;
+    }
+
+    let referenceSource: BranchOrder['referenceSource'] = 'missing';
+    if (numeroDetectado) {
+      referenceSource = 'pdf';
+    } else if (reference.trim()) {
+      referenceSource = pedido.referenceSource;
+      if (referenciaManual) {
+        referenceSource = 'manual';
+      }
+    }
+    return { reference, referenceSource };
+  }
+
+  totales(pedido: BranchOrder) {
+    let totalPesos = 0;
+    let totalDolares = 0;
+    for (const linea of pedido.lines) {
+      let importe = linea.total;
+      if (importe == null) {
+        importe = 0;
+        if (linea.unitPrice != null && linea.expected) {
+          importe = linea.unitPrice * linea.expected;
+        }
+      }
+      if (linea.currency === 'ARS') {
+        totalPesos += importe || 0;
+      } else if (linea.currency === 'USD') {
+        totalDolares += importe || 0;
+      }
+    }
+    return {
+      ars: this.formatearImporte(totalPesos),
+      usd: this.formatearImporte(totalDolares),
+    };
+  }
+
+  private formatearImporte(importe: number): string {
+    return importe.toLocaleString('es-AR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   }
   relacionar(line: OrderLine) {
     const p = this.products().find((p) => p.ean === line.ean.trim());
-    if (p) { line.name = p.name; line.sku = p.sku; }
+    if (p) {
+      line.name = p.name;
+      line.sku = p.sku;
+    }
   }
   selectProduct() {
     const code = this.scanCode.trim().toUpperCase();
-    const line = this.draft()?.lines.find(l => l.ean === code || l.sku?.toUpperCase() === code);
+    const line = this.draft()?.lines.find((l) => l.ean === code || l.sku?.toUpperCase() === code);
     this.selectedLine.set(line?.id ?? null);
     this.error.set(line ? '' : 'Ese EAN/SKU no pertenece al pedido.');
   }
@@ -169,15 +229,24 @@ export class Sucursales implements OnInit {
     this.busy.set(true);
     this.error.set('');
     try {
-      const saved = await this.orders.saveSerial(order.id, { orderItemId: id, serial: this.serialCode });
+      const saved = await this.orders.saveSerial(order.id, {
+        orderItemId: id,
+        serial: this.serialCode,
+      });
       this.draft.set(saved);
-      this.pedidos.update(all => all.map(p => p.id === saved.id ? saved : p));
+      this.pedidos.update((all) => all.map((p) => (p.id === saved.id ? saved : p)));
       this.serialCode = '';
       this.workspace.notify('Serial y recepción guardados en Aiven.');
     } catch (e) {
       this.error.set(this.orders.message(e));
-      this.workspace.notify('No se confirmó la recepción. Conservamos el serial para reintentar.', 'error');
-    } finally { this.busy.set(false); setTimeout(() => input.focus()); }
+      this.workspace.notify(
+        'No se confirmó la recepción. Conservamos el serial para reintentar.',
+        'error',
+      );
+    } finally {
+      this.busy.set(false);
+      setTimeout(() => input.focus());
+    }
   }
   faltantes(p: BranchOrder) {
     return p.lines.reduce((n, l) => n + Math.max(0, (l.expected || 0) - l.received), 0);
@@ -195,7 +264,9 @@ export class Sucursales implements OnInit {
       const saved = await this.orders.save(d);
       this.draft.set(saved);
       this.workspace.select(d.branchId);
-      this.workspace.notify('Pedido guardado en Aiven. Ya podés escanear sus productos y seriales.');
+      this.workspace.notify(
+        'Pedido guardado en Aiven. Ya podés escanear sus productos y seriales.',
+      );
       await this.load(1, d.branchId);
     } catch (e) {
       this.error.set(this.orders.message(e));

@@ -94,16 +94,22 @@ export class Login {
       error: (e) => {
         this.busy.set(false);
         shake(this.el('.login-card')[0]);
-        this.error.set(
-          e.status === 429
-            ? 'Demasiados intentos. Esperá un minuto.'
-            : e.status === 503
-              ? e.error?.mensaje || 'La base de datos no está disponible. Revisá la conexión de la API con MySQL.'
-              : e.status === 0
-                ? 'No hay conexión con la API. Verificá que Gamexid.Api esté en ejecución.'
-                : e.error?.mensaje || 'No se pudo iniciar sesión.',
-        );
+        this.error.set(this.mensajeDeError(e.status, e.error?.mensaje));
       },
     });
   }
+
+  private mensajeDeError(estado: number, mensaje?: string): string {
+    if (estado === 429) {
+      return 'Demasiados intentos. Esperá un minuto.';
+    }
+    if (estado === 503) {
+      return mensaje || 'La base de datos no está disponible. Revisá la conexión de la API con MySQL.';
+    }
+    if (estado === 0) {
+      return 'No hay conexión con la API. Verificá que Gamexid.Api esté en ejecución.';
+    }
+    return mensaje || 'No se pudo iniciar sesión.';
+  }
+
 }

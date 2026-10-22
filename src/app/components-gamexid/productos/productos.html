@@ -8,8 +8,8 @@
 </div>
 <div class="catalog-tabs" role="group" aria-label="Vista de productos" [attr.data-at]="inventory() ? 1 : 0">
   <i class="tab-pill" aria-hidden="true"></i>
-  <button type="button" [attr.aria-pressed]="!inventory()" (click)="selectInventory(false)">Catálogo</button>
-  <button type="button" [attr.aria-pressed]="inventory()" (click)="selectInventory(true)">Inventario</button>
+  <button type="button" [attr.aria-pressed]="!inventory()" (click)="seleccionarInventario(false)">Catálogo</button>
+  <button type="button" [attr.aria-pressed]="inventory()" (click)="seleccionarInventario(true)">Inventario</button>
 </div>
 @if (!inventory()) { <gx-catalogo /> } @else {
 <div class="catalog-tabs sub" role="group" aria-label="Origen del inventario" [attr.data-at]="localInventory() ? 1 : 0">
@@ -28,7 +28,7 @@
           aria-label="Sede del inventario"
           required
           [ngModel]="stockBranchId()"
-          (ngModelChange)="selectBranch($event)"
+          (ngModelChange)="seleccionarSucursal($event)"
         >
           <option [ngValue]="0" disabled>Seleccioná una sede</option>
           @for (b of activeBranches(); track b.id) {
@@ -69,7 +69,7 @@
   @if (spotlight().length) {
     <div class="spotlight">
       @for (p of spotlight(); track p.id; let i = $index) {
-        <article class="spot" [attr.data-level]="stockLevel(p.stock)" [style.--i]="i">
+        <article class="spot" [attr.data-level]="nivelStock(p.stock)" [style.--i]="i">
           <div class="spot-main">
             <span class="eyebrow">{{ p.requiresSerialNumber ? 'EAN + serial' : 'EAN' }}</span>
             <h3>{{ p.name }}</h3>
@@ -117,11 +117,11 @@
         <td>
           <p-tag [value]="p.requiresSerialNumber ? 'EAN + SERIAL' : 'EAN'" severity="secondary" />
         </td>
-        <td class="num"><span class="stock-chip mono" [attr.data-level]="stockLevel(p.stock)">{{ p.stock }}</span></td>
-        <td class="num mono net">{{ network().has(p.id) ? networkTotal(p.id) : networkError() ? '—' : '·' }}</td>
+        <td class="num"><span class="stock-chip mono" [attr.data-level]="nivelStock(p.stock)">{{ p.stock }}</span></td>
+        <td class="num mono net">{{ network().has(p.id) ? totalEnSedes(p.id) : networkError() ? '—' : '·' }}</td>
         <td>
-          <button type="button" class="strip" (click)="toggleRow(p.id)" [attr.aria-expanded]="!!expanded()[p.id]" [attr.aria-label]="'Ver stock por sede de ' + p.name">
-            @for (c of cells(p.id); track c.id) {
+          <button type="button" class="strip" (click)="alternarFila(p.id)" [attr.aria-expanded]="!!expanded()[p.id]" [attr.aria-label]="'Ver stock por sede de ' + p.name">
+            @for (c of celdasDeStock(p.id); track c.id) {
               <i [attr.data-level]="c.level" [class.here]="c.here" [style.opacity]="c.fill" [title]="c.name + ': ' + c.n"></i>
             } @empty {
               @for (n of [].constructor(16); track $index) { <i class="ghost"></i> }
@@ -130,14 +130,14 @@
         </td>
         <td class="row-actions">
           <button class="icon-button" aria-label="Ver seriales" pTooltip="Ver seriales" (click)="verSeriales(p)"><gx-icon name="serial" /></button
-          ><button class="icon-button chev-btn" [class.open]="!!expanded()[p.id]" [attr.aria-label]="'Desplegar sedes de ' + p.name" (click)="toggleRow(p.id)"><gx-icon name="right" /></button>
+          ><button class="icon-button chev-btn" [class.open]="!!expanded()[p.id]" [attr.aria-label]="'Desplegar sedes de ' + p.name" (click)="alternarFila(p.id)"><gx-icon name="right" /></button>
         </td></tr
     ></ng-template>
     <ng-template #expandedrow let-p
       ><tr class="exp-row">
         <td colspan="8">
           <div class="branch-grid">
-            @for (c of cells(p.id); track c.id; let i = $index) {
+            @for (c of celdasDeStock(p.id); track c.id; let i = $index) {
               <div class="bcell" [class.here]="c.here" [style.--i]="i">
                 <span class="bname">{{ c.name }}@if (c.depot) { <small>depósito</small> }</span>
                 <b class="mono" [attr.data-level]="c.level">{{ c.n }}</b>
@@ -178,7 +178,7 @@
       ><input
         class="form-control"
         name="sku"
-        [(ngModel)]="draft.sku"
+        [(ngModel)]="nuevoProducto.sku"
         maxlength="80"
         placeholder="Ej: NOTE-002"
     /></label>
@@ -187,7 +187,7 @@
       ><input
         class="form-control"
         name="name"
-        [(ngModel)]="draft.name"
+        [(ngModel)]="nuevoProducto.name"
         maxlength="180"
         placeholder='Ej: Notebook 15"'
     /></label>
@@ -196,19 +196,19 @@
       ><input
         class="form-control mono"
         name="ean"
-        [(ngModel)]="draft.ean"
+        [(ngModel)]="nuevoProducto.ean"
         maxlength="14"
         inputmode="numeric"
         placeholder="Ej: 7790000000066"
     /></label>
     <label class="form-check"
-      ><input type="checkbox" name="serial" [(ngModel)]="draft.requiresSerialNumber" />Requiere
+      ><input type="checkbox" name="serial" [(ngModel)]="nuevoProducto.requiresSerialNumber" />Requiere
       número de serie</label
     >
     <div class="modal-foot mt-6">
       <button type="button" class="btn-secundario" (click)="mostrarAlta.set(false)">Cancelar</button
-      ><button class="btn-primario" type="submit" [disabled]="saving()">
-        {{ saving() ? 'Guardando…' : 'Guardar' }}
+      ><button class="btn-primario" type="submit" [disabled]="guardando()">
+        {{ guardando() ? 'Guardando…' : 'Guardar' }}
       </button>
     </div>
   </form>
@@ -221,7 +221,7 @@
   [style]="{ width: '760px' }"
   [draggable]="false"
 >
-  <p-table [value]="units()" [scrollable]="true"
+  <p-table [value]="unidades()" [scrollable]="true"
     ><ng-template #header
       ><tr>
         <th>Número de serie</th>
