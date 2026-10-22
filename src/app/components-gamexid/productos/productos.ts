@@ -23,6 +23,7 @@ export class Productos {
   private data = inject(GamexidService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  readonly localInventory = signal(false);
   readonly inventory = signal(this.route.snapshot.queryParamMap.get('vista') === 'inventario');
   selectInventory(value: boolean) {
     void this.router.navigate([], { relativeTo: this.route, queryParams: { vista: value ? 'inventario' : null }, replaceUrl: true });
@@ -70,7 +71,7 @@ export class Productos {
     effect(onCleanup => {
       const branch = this.stockBranchId();
       const search = this.filtro();
-      const visible = this.inventory();
+      const visible = this.inventory() && this.localInventory();
       untracked(() => { this.productos.set([]); this.units.set([]); this.detalle.set(null); ++this.loadVersion; });
       if (!visible || !branch) return;
       const timer = setTimeout(() => this.load(branch, search), 200);

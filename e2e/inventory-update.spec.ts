@@ -52,6 +52,7 @@ test('rechazar la sugerencia no agrega el producto', async ({ page }) => {
 
 test('inventario consulta la sede y busca serial sin distinguir mayúsculas', async ({ page }) => {
   await page.goto('/productos?vista=inventario');
+  await page.getByRole('button', { name: 'Registros Gamexid', exact: true }).click();
   const request = page.waitForRequest(r => r.url().includes('/api/inventory/stock?') && r.url().includes('nb-10001'));
   await expect(page.getByLabel('Sede del inventario')).toBeVisible();
   await page.getByRole('textbox', { name: 'Buscar por nombre, EAN o serial' }).fill('nb-10001');
@@ -87,6 +88,7 @@ test('jerarquía de botones: Nuevo pedido usa el acento propio', async ({ page }
   const bg = await order.evaluate(e => getComputedStyle(e).backgroundImage);
   expect(bg).toContain('252, 193, 74');
   await page.goto('/productos?vista=inventario');
+  await page.getByRole('button', { name: 'Registros Gamexid', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Nuevo producto' })).toHaveClass(/btn-cta/);
 });
 
@@ -99,6 +101,7 @@ test('Nueva sede solo visible para administradores', async ({ page }) => {
 
 test('cambiar la sede actualiza el stock y el inventario se adapta a móvil', async ({ page }) => {
   await page.goto('/productos?vista=inventario');
+  await page.getByRole('button', { name: 'Registros Gamexid', exact: true }).click();
   await page.getByRole('textbox', { name: 'Buscar por nombre, EAN o serial' }).fill('Notebook');
   await expect(page.locator('.spot-stock b')).toHaveText('1');
   await page.getByLabel('Sede del inventario').selectOption({ label: 'Belgrano' });

@@ -4,13 +4,18 @@
     <h1 class="page-title">Productos</h1>
 
   </div>
-  @if (inventory()) { <button class="btn-primario btn-cta" (click)="abrirAlta()"><gx-icon name="plus" />Nuevo producto</button> }
+  @if (inventory() && localInventory()) { <button class="btn-primario btn-cta" (click)="abrirAlta()"><gx-icon name="plus" />Nuevo producto</button> }
 </div>
 <div class="catalog-tabs" role="group" aria-label="Vista de productos">
   <button class="btn-secundario" [attr.aria-pressed]="!inventory()" (click)="selectInventory(false)">Catálogo</button>
   <button class="btn-secundario" [attr.aria-pressed]="inventory()" (click)="selectInventory(true)">Inventario</button>
 </div>
 @if (!inventory()) { <gx-catalogo /> } @else {
+<div class="catalog-tabs" role="group" aria-label="Origen del inventario">
+  <button class="btn-secundario" [attr.aria-pressed]="!localInventory()" (click)="localInventory.set(false)">Gaming City</button>
+  <button class="btn-secundario" [attr.aria-pressed]="localInventory()" (click)="localInventory.set(true)">Registros Gamexid</button>
+</div>
+@if (!localInventory()) { <gx-catalogo [inventory]="true" /> } @else {
 <section class="panel">
   <div class="inv-toolbar">
     <label class="branch-field" [class.missing]="!stockBranch()">
@@ -143,6 +148,7 @@
   </p-table>
   }
 </section>
+}
 }
 <p-dialog
   header="Nuevo producto"

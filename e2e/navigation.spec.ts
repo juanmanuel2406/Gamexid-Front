@@ -17,6 +17,8 @@ test('portada original y catálogo integrado', async ({ page }) => {
   await expect(page.getByRole('link',{name:'Integración GamingCity'})).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Consultar catálogo'})).toBeVisible();
   await page.getByRole('button',{name:'Inventario',exact:true}).click();
+  await expect(page.getByLabel('Sede de Gaming City')).toBeVisible();
+  await page.getByRole('button', { name: 'Registros Gamexid', exact: true }).click();
   await expect(page.getByRole('button',{name:'Nuevo producto'})).toBeVisible();
   await page.getByRole('button',{name:'Catálogo',exact:true}).click();
   await expect(page.getByRole('button',{name:'Consultar catálogo'})).toBeVisible();

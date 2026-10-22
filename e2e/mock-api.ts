@@ -3,6 +3,7 @@ import { OFFICIAL_BRANCHES } from './fixtures/branches';
 
 export async function mockInventory(page: Page) {
   await page.route('**/api/access/gc/status', r => r.fulfill({ json: { configured: false, connected: false } }));
+  await page.route('**/api/access/gc/branches', r => r.fulfill({ json: [{ id: 6, name: 'Depósito', depotId: 1 }, { id: 3, name: 'Caballito', depotId: 1 }] }));
   const products = [
     { id: 1, sku: 'NOTE-001', name: 'Notebook 14" 8GB', ean: '7790000000011', requiresSerialNumber: true, isActive: true },
     { id: 2, sku: 'MOUSE-01', name: 'Mouse inalámbrico', ean: '7790000000028', requiresSerialNumber: false, isActive: true },

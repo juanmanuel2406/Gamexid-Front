@@ -68,6 +68,7 @@ test.beforeEach(async ({ page }) => {
 });
 test('productos: formulario visible, validación, guardar y Escape', async ({ page }) => {
   await page.goto('/productos?vista=inventario');
+  await page.getByRole('button', {name:'Registros Gamexid',exact:true}).click();
   await page.getByRole('button', { name: 'Nuevo producto' }).click();
   await expect(page.locator('.p-dialog')).toBeVisible();
   await page.getByRole('button', { name: 'Guardar', exact: true }).click();
@@ -191,6 +192,7 @@ test('menú hover, logo visible y vista móvil sin desborde', async ({ page }) =
   await expect(page).toHaveURL(/sedes/);
   await expect(page.locator('.shell')).not.toHaveClass(/menu-abierto/);
   await page.goto('/productos?vista=inventario');
+  await page.getByRole('button', {name:'Registros Gamexid',exact:true}).click();
   await page.getByRole('button', { name: 'Nuevo producto' }).click();
   await expect(page.locator('.p-dialog')).toBeVisible();
   expect(
@@ -300,6 +302,7 @@ test('conserva los datos locales sin importarlos silenciosamente a MySQL', async
     localStorage.setItem('fs_units', JSON.stringify([{ id: 999, serialNumber: 'LEGACY-99' }]));
   });
   await page.goto('/productos?vista=inventario');
+  await page.getByRole('button', {name:'Registros Gamexid',exact:true}).click();
   await expect(page.getByRole('cell', { name: 'Notebook 14" 8GB', exact: true })).toBeVisible();
   await expect(page.getByText('Legacy-only', { exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('fs_units')!)[0].serialNumber)).toBe('LEGACY-99');
