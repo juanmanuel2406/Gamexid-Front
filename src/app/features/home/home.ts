@@ -56,7 +56,6 @@ export class Home implements AfterViewInit, OnDestroy {
     { name: 'La Plata', value: 18 },
     { name: 'Mendoza', value: 4 },
   ];
-  /** Real GamingCity branches (Gamexid-Back BranchCatalog), colored by region. */
   readonly regions = [
     { key: 'dep', label: 'Depósito central', color: 'var(--k-brand)' },
     { key: 'caba', label: 'CABA', color: 'var(--k-sec-prod)' },
@@ -238,10 +237,6 @@ export class Home implements AfterViewInit, OnDestroy {
     });
   }
 
-  /**
-   * Hero lockup: the isotype draws itself (GxIsotype); the wordmark is revealed left to right right after,
-   * and the tagline fades in. Runs once on load (rare → delight is allowed).
-   */
   private brandReveal() {
     if (this.reduced) return;
     const word = this.q('.hero-brand .gx-word b');
@@ -251,7 +246,6 @@ export class Home implements AfterViewInit, OnDestroy {
       animate(tag, { opacity: [0, 1], translateY: [4, 0], duration: 400, delay: 1400, ease: 'outQuart' }),
     );
   }
-  /** Network grid: branches appear in order with a short stagger when the section scrolls in. */
   private networkReveal() {
     const items = this.q('.red-grid .sede');
     if (this.reduced || !items.length) return;

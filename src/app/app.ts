@@ -31,7 +31,6 @@ interface NavItem {
   name: string;
   short: string;
   key: string;
-  /** Section accent used for wayfinding in the rail and page headers. */
   accent: string;
 }
 
@@ -67,7 +66,6 @@ export class App {
     { url: '/sedes', icon: 'pin', name: 'Red de sedes', short: 'Sedes', key: '4', accent: 'var(--k-sec-sedes)' },
     { url: '/movimientos', icon: 'history', name: 'Auditoría de movimientos', short: 'Movimientos', key: '5', accent: 'var(--k-sec-mov)' },
     { url: '/sucursales', icon: 'file', name: 'Pedidos a sucursal', short: 'Pedidos', key: '6', accent: 'var(--k-sec-ped)' },
-    // Linaje (/auditoria) hidden: browser-only data, no backend tables (see Gamexid-Back docs/revision-linaje-20261020.md).
   ];
   readonly current = computed(() => this.navigation.find((n) => this.url().startsWith(n.url)));
   readonly title = computed(() => this.current()?.name || 'Gamexid');
@@ -137,7 +135,6 @@ export class App {
       pill.style.transform = `translateY(${active.offsetTop}px)`;
       return;
     }
-    // Spatial consistency: the active card slides to the new section (moving on screen → ease-in-out, 220 ms).
     animate(pill, { translateY: active.offsetTop, duration: 220, ease: 'inOutQuart' });
   }
   private playIntro() {

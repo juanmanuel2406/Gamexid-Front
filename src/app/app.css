@@ -10,7 +10,6 @@
   background: var(--k-bg);
 }
 
-/* ---------- Rail ---------- */
 .rail {
   position: relative;
   z-index: 40;
@@ -59,7 +58,6 @@
   display: grid;
   gap: 2px;
 }
-/* The active section is a paper card lying on the kraft rail; it slides between items. */
 .nav-pill {
   position: absolute;
   left: 0;
@@ -183,7 +181,6 @@
   font-size: 12px;
 }
 
-/* ---------- Workspace ---------- */
 .workspace {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -204,7 +201,6 @@
   backdrop-filter: blur(10px);
   min-width: 0;
 }
-/* Thin section-colored rule under the top bar: tells you where you are without a label. */
 .topbar::before {
   content: '';
   position: absolute;

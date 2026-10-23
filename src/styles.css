@@ -1,13 +1,3 @@
-/*
- * Gamexid · sistema visual "kraft"
- * Papel y cartón de depósito: fondos cálidos y suaves, tinta para el texto,
- * colores apagados con significado (verde = verificado, ocre = pendiente, ladrillo = faltante)
- * y un acento por sección para orientarse.
- * Tipografía en tres capas:
- *   Display  Bricolage Grotesque: títulos de página, home y cifras grandes.
- *   Interfaz Geist: texto, formularios, tablas y navegación.
- *   Datos    Geist Mono: seriales, EAN-13, SKU, referencias e importes.
- */
 @import '@fontsource-variable/bricolage-grotesque/index.css';
 @import '@fontsource-variable/geist/index.css';
 @import '@fontsource-variable/geist-mono/index.css';
@@ -23,7 +13,6 @@
 @layer base {
   :root {
     color-scheme: light;
-    /* Kraft palette */
     --k-bg: #f3efe7;
     --k-rail: #ece6da;
     --k-surface: #fbf9f4;
@@ -55,7 +44,6 @@
     --k-ars-bg: #dcecee;
     --k-usd: #4a43a6;
     --k-usd-bg: #e4e2f4;
-    /* Section accents (wayfinding) */
     --k-sec-ops: #3d382e;
     --k-sec-in: #3f7a52;
     --k-sec-prod: #1f6b78;
@@ -65,7 +53,6 @@
     --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 
-    /* Legacy names used across components, now pointing at the kraft palette */
     --bg: var(--k-bg);
     --bg-card: var(--k-surface);
     --bg-soft: var(--k-sunken);
@@ -909,7 +896,6 @@
     }
   }
 }
-/* ================= Kraft layer: final look of shared components ================= */
 @layer components {
   body {
     color: var(--k-fg);
@@ -941,7 +927,6 @@
     letter-spacing: -0.01em;
   }
 
-  /* Page header: display title, accent rule from the current section */
   .page-head {
     margin-bottom: 24px;
   }
@@ -983,7 +968,6 @@
     color: var(--acc, var(--k-brand));
   }
 
-  /* Surfaces */
   .panel,
   .card-gamexid {
     background: var(--k-surface);
@@ -1028,7 +1012,6 @@
     background: var(--k-sunken);
   }
 
-  /* Data reads like printed warehouse labels */
   .mono,
   .code-pill,
   .chip-sku,
@@ -1097,7 +1080,6 @@
     color: var(--k-ok);
   }
 
-  /* Forms */
   .form-label,
   .form-label-chico {
     color: var(--k-fg-2);
@@ -1130,7 +1112,6 @@
     color: var(--k-fg);
   }
 
-  /* Tables */
   .tabla th,
   .p-datatable-thead > tr > th {
     font-family: var(--font-ui);
@@ -1155,7 +1136,6 @@
     background: var(--k-hover);
   }
 
-  /* Buttons: ink is the primary action; ochre marks purchasing (Nuevo pedido) */
   .btn-primario,
   .btn-nuevo-page,
   .btn-agregar,
@@ -1263,7 +1243,6 @@
     background: rgba(36, 22, 3, 0.1);
   }
 
-  /* Overlays */
   .modal-overlay {
     background: rgba(31, 28, 22, 0.35);
     backdrop-filter: blur(3px);
@@ -1282,7 +1261,6 @@
     color: var(--k-fg);
   }
 
-  /* PrimeNG on kraft */
   .p-component {
     font-family: var(--font-ui);
   }

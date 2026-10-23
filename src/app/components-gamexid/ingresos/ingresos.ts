@@ -57,7 +57,6 @@ export class Ingresos implements OnDestroy {
   readonly identified = signal<ProductLookup | null>(null);
   readonly confirm = signal(false);
   readonly newProduct = signal(false);
-/** Fuzzy matches returned by /api/products/lookup (404 unknown_code). Nothing is added until the user accepts one. */
   readonly suggestions = signal<{ product: Product; score: number }[]>([]);
   readonly suggestedFor = signal('');
   readonly rejectedAll = signal(false);
@@ -177,7 +176,6 @@ export class Ingresos implements OnDestroy {
       },
     });
   }
-  /** User explicitly accepts a suggestion: only then is the product added to the receipt. */
   acceptSuggestion(p: Product) {
     if (!this.suggestions().some((s) => s.product.id === p.id)) return;
     const code = this.suggestedFor().trim();
@@ -191,7 +189,6 @@ export class Ingresos implements OnDestroy {
     if (!this.items().some((i) => i.product.id === p.id)) this.add(p);
     this.activeProduct.set(p.id);
     this.scanMode.set(p.requiresSerialNumber ? 'serial' : 'ean');
-    // A scanned code that is not the product's EAN/SKU is a new serial for that product.
     if (p.requiresSerialNumber && code && !isProductCode) {
       const item = this.items().find((i) => i.product.id === p.id);
       if (item && !item.serials.some((s) => s.toUpperCase() === code.toUpperCase())) {

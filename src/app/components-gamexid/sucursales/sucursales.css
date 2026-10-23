@@ -1,7 +1,6 @@
 :host {
   --acc: var(--k-sec-ped);
 }
-/* ---------- Order list: each order is a document card ---------- */
 .order-row {
   position: relative;
   display: flex;
@@ -37,7 +36,6 @@
   gap: 16px;
 }
 
-/* ---------- Order dialog: PDF on the left, what was read on the right ---------- */
 .order-layout {
   display: grid;
   grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
@@ -197,7 +195,6 @@
   color: var(--k-usd);
 }
 
-/* Currency: segmented control whose pill slides between ARS and USD */
 .cur-toggle {
   position: relative;
   display: grid;

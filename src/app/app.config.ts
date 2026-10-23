@@ -8,7 +8,6 @@ import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 import { routes } from './app.routes';
 import { netActivityInterceptor } from './core/net-activity';
-/** Kraft palette for PrimeNG: warm paper surfaces, ink text, muted violet as brand. */
 const GamexidTheme = definePreset(Aura, {
   semantic: {
     primary: {

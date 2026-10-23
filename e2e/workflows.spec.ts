@@ -249,7 +249,6 @@ test('PdfPig requiere botón explícito y completa cantidades sin duplicar líne
   await page.getByRole('button', { name: 'Extraer con PdfPig' }).click();
   await expect(page.getByLabel('Pedido', { exact: true })).toHaveValue('3');
   await expect(page.getByLabel('EAN', { exact: true })).toHaveCount(1);
-  // No reference/currency detected: the form flags both instead of guessing.
   await expect(page.getByText('Verificá el número bajo PEDIDO SUCURSAL')).toBeVisible();
   await expect(page.locator('.money').first()).toHaveAttribute('data-cur', 'none');
   await expect(page.getByText('Elegí la moneda')).toBeVisible();

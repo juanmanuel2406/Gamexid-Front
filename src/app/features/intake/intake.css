@@ -38,7 +38,6 @@
   border-color: var(--k-sec-ped);
   background: var(--k-warn-bg);
 }
-/* Once a PDF is loaded the dropzone becomes a slim bar so the document takes the space. */
 .dropzone.compact {
   flex-wrap: wrap;
   flex-direction: row;
@@ -119,7 +118,6 @@
   background: var(--k-label);
   color: var(--k-fg);
 }
-/* The PDF page lies on the kraft like a sheet of paper. */
 .sheet {
   margin: 14px;
   border-radius: 3px;

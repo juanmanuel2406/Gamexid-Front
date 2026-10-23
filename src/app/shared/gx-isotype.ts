@@ -40,7 +40,6 @@ let sequence = 0;
   styles: `
     :host {
       display: inline-block; flex-shrink: 0; width: var(--gx-iso-size, 36px); height: var(--gx-iso-size, 36px);
-      /* Kraft (light) tones by default; [tone]="'dark'" for use on dark device screens. */
       --iso-corner: #5b3fd0; --iso-g1: #1f1c16; --iso-g2: #4a32ad; --iso-laser: #3f7a52; --iso-glow: rgba(63, 122, 82, 0.45);
     }
     :host([data-tone='dark']) { --iso-corner: #a594f0; --iso-g1: #fbf9f4; --iso-g2: #d9d1f7; --iso-laser: #5fd08f; --iso-glow: rgba(95, 208, 143, 0.7); }
@@ -53,7 +52,6 @@ export class GxIsotype implements AfterViewInit, OnDestroy {
   readonly loop = input(false);
   readonly compact = input(false);
   readonly label = input('');
-  /** 'light' for kraft/paper backgrounds (default), 'dark' for device screens. */
   readonly tone = input<'light' | 'dark'>('light');
   readonly gradId = 'gx-iso-' + sequence++;
   private svg = viewChild.required<ElementRef<SVGSVGElement>>('svg');
