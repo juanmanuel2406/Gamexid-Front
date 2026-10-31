@@ -1,0 +1,54 @@
+@if (abierto()) {
+  <section class="chat" role="dialog" aria-labelledby="titulo-asistente" (keydown.escape)="cerrar()">
+    <header>
+      <div><strong id="titulo-asistente">Asistente Gamexid</strong><small>{{ contexto() }} · {{ workspace.branch()?.name }}</small></div>
+      <button type="button" class="icono" (click)="cerrar()" aria-label="Cerrar asistente"><gx-icon name="x" /></button>
+    </header>
+    <div class="conversacion" #historial role="log" aria-live="polite" aria-relevant="additions" [attr.aria-busy]="enviando()">
+      @if (!mensajes().length) {
+        <p class="bienvenida">Consultá productos y pedidos. Las respuestas se basan en los datos disponibles.</p>
+        <div class="sugerencias">
+          <button type="button" (click)="sugerir('¿Qué gabinete tiene 3 coolers?')">Gabinetes con 3 coolers</button>
+          <button type="button" (click)="sugerir('¿Cuál es el último pedido de esta sucursal?')">Último pedido</button>
+        </div>
+      }
+      @for (mensaje of mensajes(); track $index) {
+        <article class="mensaje" [class.usuario]="mensaje.rol === 'usuario'">
+          <small class="autor">{{ mensaje.rol === 'usuario' ? 'Vos' : 'Gamexid' }}</small>
+          <app-ai-markdown [texto]="mensaje.texto" [imagenes]="mensaje.imagenes" />
+          @for (producto of mensaje.productos; track producto.id) {
+            <div class="producto">
+              <strong>{{ producto.name }}</strong><small>{{ producto.code }}</small>
+              <app-ai-markdown [texto]="foto(producto)" [imagenes]="mensaje.imagenes" />
+              @if (enlaceSeguro(producto); as enlace) {
+                <a [href]="enlace" target="_blank" rel="noopener noreferrer">Ver ficha en Gaming City</a>
+              }
+            </div>
+          }
+          @if (mensaje.fuentes.length) {
+            <small class="fuentes">{{ mensaje.fuentes.join(' · ') }}<br />{{ mensaje.fecha | date:'dd/MM/yyyy HH:mm' }}</small>
+          }
+        </article>
+      }
+      @if (enviando()) { <p class="espera" role="status">Consultando…</p> }
+    </div>
+    <footer>
+      @if (comprobando()) { <p role="status">Conectando con el asistente…</p> }
+      @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+      @if (!disponible() && !comprobando()) {
+        <button type="button" class="reintentar" (click)="comprobar()">Volver a comprobar</button>
+      }
+      <form (ngSubmit)="enviar()">
+        <label class="sr-only" for="pregunta-asistente">Mensaje al asistente</label>
+        <textarea #entrada id="pregunta-asistente" name="mensaje" [(ngModel)]="texto" rows="2" maxlength="1500"
+          placeholder="Escribí tu consulta…" [disabled]="!disponible()" (keydown.control.enter)="enviar()"></textarea>
+        <button type="submit" class="enviar" [disabled]="!disponible() || enviando() || !texto.trim() || !workspace.branchId()" aria-label="Enviar consulta"><gx-icon name="arrow" /></button>
+      </form>
+      <div class="pie"><span>Solo consultas · Revisá los datos antes de operar.</span>
+        <button type="button" (click)="limpiar()" [disabled]="enviando() || !mensajes().length">Limpiar chat</button></div>
+    </footer>
+  </section>
+}
+<button #boton class="abrir" type="button" (click)="alternar()" [attr.aria-expanded]="abierto()" aria-label="Abrir asistente de productos y pedidos">
+  <gx-icon name="search" [size]="18" /><span>Asistente</span>
+</button>

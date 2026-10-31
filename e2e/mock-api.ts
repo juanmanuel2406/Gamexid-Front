@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import { OFFICIAL_BRANCHES } from './fixtures/branches';
 
 export async function mockInventory(page: Page) {
+  await page.route('**/api/chat/status', r => r.fulfill({ json: { configured: false } }));
   await page.route('**/api/access/gc/status', r => r.fulfill({ json: { configured: false, connected: false } }));
   await page.route('**/api/access/gc/branches', r => r.fulfill({ json: [{ id: 6, name: 'Depósito', depotId: 1 }, { id: 3, name: 'Caballito', depotId: 1 }] }));
   const products = [

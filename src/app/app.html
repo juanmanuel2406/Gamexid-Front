@@ -82,6 +82,9 @@
           <span>Gamexid · Control de inventario serializado</span>
         </footer>
       </main>
+      @if (contextoAsistente(); as contexto) {
+        <app-ai-bot [contexto]="contexto" />
+      }
     </div>
   </div>
 }

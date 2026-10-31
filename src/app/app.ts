@@ -24,6 +24,7 @@ import { NetActivity } from './core/net-activity';
 import { InventoryStore } from './core/inventory-store';
 import { GamexidService } from './services-gamexid/gamexid-service';
 import { reducedMotion } from './shared/anim';
+import { AiBot } from './features/ai-bot/ai-bot';
 
 interface NavItem {
   url: string;
@@ -37,7 +38,7 @@ interface NavItem {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, ToastModule, TooltipModule, Icon, GxIsotype],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, ToastModule, TooltipModule, Icon, GxIsotype, AiBot],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -52,6 +53,12 @@ export class App {
   private pill = viewChild<ElementRef<HTMLElement>>('pill');
   private loadbar = viewChild<ElementRef<HTMLElement>>('loadbar');
   readonly url = signal(this.router.url);
+  readonly contextoAsistente = computed<'Productos' | 'Pedidos' | null>(() => {
+    const path = this.url().split(/[?#]/)[0];
+    if (path === '/productos') return 'Productos';
+    if (path === '/sucursales') return 'Pedidos';
+    return null;
+  });
   readonly open = signal(false);
 
   readonly login = computed(() => {
