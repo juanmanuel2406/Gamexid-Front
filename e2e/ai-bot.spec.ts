@@ -74,3 +74,21 @@ test('un límite de consultas conserva el mensaje para reintentar', async ({ pag
   await expect(page.getByLabel('Mensaje al asistente')).toHaveValue('Último pedido');
   await expect(page.getByLabel('Enviar consulta')).toBeEnabled();
 });
+
+test('avisa la demora y deja de mostrarla al recibir la respuesta', async ({ page }) => {
+  let responder: () => void = () => {};
+  const espera = new Promise<void>(resolve => { responder = resolve; });
+  await page.route('**/api/chat/ask', async route => {
+    await espera;
+    await route.fulfill({ json: { respuesta: 'No hay pedidos.', productos: [], fuentes: [], consultadoUtc: new Date().toISOString() } });
+  });
+  await page.goto('/sucursales');
+  await page.getByLabel('Abrir asistente de productos y pedidos').click();
+  await page.getByLabel('Mensaje al asistente').fill('Último pedido');
+  await page.getByLabel('Enviar consulta').click();
+  await expect(page.getByText('Consultando los pedidos…', { exact: true })).toBeVisible();
+  await expect(page.getByText('Sigue buscando… puede tardar hasta un minuto.', { exact: true })).toBeVisible({ timeout: 12000 });
+  responder();
+  await expect(page.getByText('No hay pedidos.', { exact: true })).toBeVisible();
+  await expect(page.locator('.espera')).toHaveCount(0);
+});

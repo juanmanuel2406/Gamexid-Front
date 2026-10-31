@@ -6,13 +6,6 @@
   </div>
   <button class="btn-primario btn-cta btn-order" (click)="nuevo()"><gx-icon name="doc" />Nuevo pedido</button>
 </div>
-<div class="notice">
-  <gx-icon name="lock" />
-  <p>
-    Pedidos y seriales se guardan en MySQL mediante la API. Conservá el PDF original:
-    se almacena su información revisada, no el archivo. Los pedidos antiguos del navegador no se importan automáticamente.
-  </p>
-</div>
 <div class="flex flex-wrap gap-3 my-4">
   <input class="form-control" aria-label="Buscar pedidos" placeholder="Referencia del pedido" maxlength="100" [(ngModel)]="search" (keydown.enter)="load()" />
   <select class="form-control" aria-label="Estado del pedido" [(ngModel)]="statusFilter" (change)="load()">

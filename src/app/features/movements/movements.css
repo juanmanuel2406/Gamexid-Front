@@ -33,18 +33,25 @@
   padding: 0 12px;
   border-radius: 8px;
   border: 1px solid var(--gx-line-2);
-  background: none;
-  color: var(--gx-muted);
+  background: var(--k-surface);
+  color: var(--k-fg-3);
   font-size: 12px;
-  transition: color 0.2s, background 0.2s;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
 }
-.filter:hover {
-  color: var(--gx-text);
+@media (hover: hover) and (pointer: fine) {
+  .filter:hover:not(.on) {
+    color: var(--k-fg);
+    border-color: var(--k-line-2);
+    background: var(--k-sel);
+  }
 }
 .filter.on {
-  color: #fff;
-  border-color: transparent;
-  background: var(--gx-grad);
+  color: var(--k-on-ink);
+  border-color: var(--acc);
+  background: var(--acc);
 }
 .count {
   font: 10px var(--gx-mono);
@@ -63,7 +70,7 @@
   bottom: 8px;
   width: 2px;
   border-radius: 2px;
-  background: linear-gradient(180deg, var(--gx-vio), var(--gx-line-2) 40%);
+  background: linear-gradient(180deg, var(--acc), var(--k-line-2) 40%);
 }
 .tl-item {
   padding: 0;

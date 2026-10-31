@@ -6,6 +6,7 @@ import { Subscription, timeout } from 'rxjs';
 import { Workspace } from '../../core/workspace';
 import { AiMarkdown } from './ai-markdown';
 import { Icon } from '../../shared/icon';
+import { GxIsotype } from '../../shared/gx-isotype';
 
 interface ProductoChat {
   id: string;
@@ -33,7 +34,7 @@ interface MensajeChat {
 @Component({
   selector: 'app-ai-bot',
   standalone: true,
-  imports: [FormsModule, DatePipe, Icon, AiMarkdown],
+  imports: [FormsModule, DatePipe, Icon, AiMarkdown, GxIsotype],
   templateUrl: './ai-bot.html',
   styleUrl: './ai-bot.css',
 })
@@ -54,6 +55,8 @@ export class AiBot {
   readonly enviando = signal(false);
   readonly error = signal('');
   readonly mensajes = signal<MensajeChat[]>([]);
+  readonly demora = signal(false);
+  private aviso?: ReturnType<typeof setTimeout>;
   texto = '';
 
   constructor() {
@@ -64,7 +67,12 @@ export class AiBot {
       this.limpiar();
       this.comprobar();
     });
-    this.destroy.onDestroy(() => { this.consulta?.unsubscribe(); this.estado?.unsubscribe(); });
+    this.destroy.onDestroy(() => { this.consulta?.unsubscribe(); this.estado?.unsubscribe(); clearTimeout(this.aviso); });
+    effect(() => {
+      clearTimeout(this.aviso);
+      this.demora.set(false);
+      if (this.enviando()) this.aviso = setTimeout(() => this.demora.set(true), 8000);
+    });
   }
 
   comprobar(): void {
