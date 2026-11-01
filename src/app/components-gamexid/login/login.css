@@ -199,7 +199,7 @@
   height: 14px;
   border-radius: 50%;
   border: 2px solid var(--k-line-2);
-  border-top-color: #fff;
+  border-top-color: #050506;
   animation: login-spin 0.7s linear infinite;
 }
 @keyframes login-spin {

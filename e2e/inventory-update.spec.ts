@@ -86,7 +86,7 @@ test('jerarquía de botones: Nuevo pedido usa el acento propio', async ({ page }
   const order = page.getByRole('button', { name: 'Nuevo pedido' });
   await expect(order).toHaveClass(/btn-order/);
   const bg = await order.evaluate(e => getComputedStyle(e).backgroundColor);
-  expect(bg).toContain('212, 150, 46');
+  expect(bg).toContain('224, 164, 67');
   await page.goto('/productos?vista=inventario');
   await page.getByRole('button', { name: 'Registros Gamexid', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Nuevo producto' })).toHaveClass(/btn-cta/);

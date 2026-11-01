@@ -18,7 +18,7 @@
   gap: 18px;
   min-height: 0;
   padding: 18px 12px calc(14px + env(safe-area-inset-bottom, 0px));
-  background: var(--k-rail);
+  background: rgba(9, 9, 11, 0.82);
   border-right: 1px solid var(--k-line);
   overflow-y: auto;
   scrollbar-width: none;
@@ -64,11 +64,11 @@
   right: 0;
   top: 0;
   height: 38px;
-  border-radius: 8px;
-  background: var(--k-surface);
+  border-radius: 12px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--acc, #8b7bff) 12%, #0d0d11), #0b0b0e);
   box-shadow:
-    0 0 0 1px var(--k-line),
-    0 1px 0 var(--k-line-2);
+    0 0 0 1px color-mix(in srgb, var(--acc, #8b7bff) 30%, transparent),
+    0 0 24px -8px color-mix(in srgb, var(--acc, #8b7bff) 70%, transparent);
   pointer-events: none;
   opacity: 0;
 }
@@ -82,9 +82,9 @@
   height: 38px;
   padding: 0 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   background: none;
-  color: var(--k-fg-3);
+  color: var(--k-fg-4);
   font-size: 13.5px;
   font-weight: 500;
   text-align: left;
@@ -145,9 +145,9 @@
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  border-radius: 8px;
-  background: var(--k-ink);
-  color: var(--k-on-ink);
+  border-radius: 10px;
+  background: #5b3fd0;
+  color: #ffffff;
   font: 600 11.5px var(--font-data);
 }
 .me-text {
@@ -197,7 +197,7 @@
   padding: 0 32px;
   padding-top: env(safe-area-inset-top, 0px);
   border-bottom: 1px solid var(--k-line);
-  background: rgba(243, 239, 231, 0.88);
+  background: rgba(5, 5, 6, 0.78);
   backdrop-filter: blur(10px);
   min-width: 0;
 }
@@ -229,8 +229,8 @@
   height: 40px;
   place-items: center;
   border: 1px solid var(--k-line-2);
-  border-radius: 8px;
-  background: var(--k-surface);
+  border-radius: 12px;
+  background: #0d0d10;
   color: var(--k-fg);
 }
 .crumb {
@@ -262,8 +262,8 @@
   height: 36px;
   padding: 0 10px;
   border: 1px solid var(--k-line-2);
-  border-radius: 8px;
-  background: var(--k-surface);
+  border-radius: 12px;
+  background: #0d0d10;
   color: var(--k-fg-3);
   transition: border-color 140ms ease;
 }
@@ -335,7 +335,7 @@
     inset: 0;
     z-index: 35;
     border: 0;
-    background: rgba(31, 28, 22, 0.3);
+    background: rgba(0, 0, 0, 0.6);
   }
   .topbar {
     padding: 0 16px;

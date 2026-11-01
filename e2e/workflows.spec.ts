@@ -282,7 +282,10 @@ test('todas las pantallas se adaptan a móvil y no tienen errores de ejecución'
   }
   await page.getByRole('button', { name: 'Alternar menú' }).click();
   await expect(page.locator('.shell')).toHaveClass(/menu-abierto/);
-  await page.getByRole('button', { name: 'Cerrar menú', exact: true }).click();
+  const fondoMenu = page.getByRole('button', { name: 'Cerrar menú', exact: true });
+  const limites = await fondoMenu.boundingBox();
+  await fondoMenu.click({ position: { x: limites!.width - 8, y: limites!.height / 2 } });
+  await expect(page.locator('.shell')).not.toHaveClass(/menu-abierto/);
   expect(errors).toEqual([]);
 });
 
@@ -375,9 +378,9 @@ test('home pública: hero, KPIs animados, arquitectura y acceso al login', async
   await expect(page).toHaveURL(/\/$/);
 });
 
-test('sistema tipográfico: solo Bricolage Grotesque, Geist y Geist Mono, sin emojis como íconos', async ({ page }) => {
+test('sistema tipográfico: solo Outfit e IBM Plex Mono, sin emojis como íconos', async ({ page }) => {
   await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
-  const allowed = /^"?(Bricolage Grotesque Variable|Geist Variable|Geist Mono Variable)"?,/;
+  const allowed = /^"?(Outfit Variable|IBM Plex Mono)"?,/;
   const audit = () =>
     page.evaluate(() => {
       const families = new Set<string>();
@@ -400,16 +403,16 @@ test('sistema tipográfico: solo Bricolage Grotesque, Geist y Geist Mono, sin em
   }
   await page.goto('/');
   const h1 = page.locator('h1');
-  await expect(h1).toHaveCSS('font-family', /Bricolage Grotesque Variable/);
-  await expect(page.locator('.kpi b').first()).toHaveCSS('font-family', /Bricolage Grotesque Variable/);
-  await expect(page.locator('.code-pill, .mono').first()).toHaveCSS('font-family', /Geist Mono Variable/);
+  await expect(h1).toHaveCSS('font-family', /Outfit Variable/);
+  await expect(page.locator('.kpi b').first()).toHaveCSS('font-family', /Outfit Variable/);
+  await expect(page.locator('.code-pill, .mono').first()).toHaveCSS('font-family', /IBM Plex Mono/);
 });
 
 test('textos finales: GamingCity en una palabra y sin elementos retirados', async ({ page }) => {
   await page.route('**/api/access/me', (route) => route.fulfill({ status: 401 }));
   await page.goto('/');
   await expect(page.locator('.kpi .top').first()).toContainText('Sedes GamingCity');
-  await expect(page.locator('.kpi .top').first()).toHaveCSS('font-family', /Geist Variable/);
+  await expect(page.locator('.kpi .top').first()).toHaveCSS('font-family', /Outfit Variable/);
   for (const text of ['Gaming City', 'Análisis de Sistemas', 'GC-API solo lectura', 'API sin conexión', 'Sistema en línea']) {
     await expect(page.getByText(text)).toHaveCount(0);
   }

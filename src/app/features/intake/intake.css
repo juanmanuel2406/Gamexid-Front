@@ -123,8 +123,8 @@
   border-radius: 3px;
   background: #fffdf8;
   box-shadow:
-    0 1px 0 rgba(70, 52, 20, 0.08),
-    0 14px 30px -20px rgba(70, 52, 20, 0.55);
+    0 1px 0 rgba(0, 0, 0, 0.4),
+    0 14px 30px -20px rgba(0, 0, 0, 0.9);
   overflow: hidden;
   animation: sheet-in 320ms var(--ease-out) both;
 }

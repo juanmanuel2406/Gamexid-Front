@@ -125,21 +125,21 @@
   margin-bottom: 16px;
   border-radius: 12px;
   overflow: hidden;
-  background: #1a1712;
+  background: #030303;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 240, 210, 0.06),
-    0 1px 0 rgba(70, 52, 20, 0.12);
+    inset 0 0 0 1px #16241b,
+    0 20px 50px -24px rgba(0, 0, 0, 0.9);
   transition: box-shadow 200ms ease;
 }
 .scanner.good {
   box-shadow:
     inset 0 0 0 2px #5fd08f,
-    0 1px 0 rgba(70, 52, 20, 0.12);
+    0 20px 50px -24px rgba(0, 0, 0, 0.9);
 }
 .scanner.bad {
   box-shadow:
     inset 0 0 0 2px #e0705f,
-    0 1px 0 rgba(70, 52, 20, 0.12);
+    0 20px 50px -24px rgba(0, 0, 0, 0.9);
 }
 .scanner .barcode {
   position: absolute;
@@ -170,7 +170,7 @@
   justify-content: space-between;
   gap: 10px;
   font: 11px var(--gx-mono);
-  color: #aaa08d;
+  color: #8a8a96;
   white-space: nowrap;
   overflow: hidden;
 }

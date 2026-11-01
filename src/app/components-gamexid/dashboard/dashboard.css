@@ -37,10 +37,14 @@
   color: var(--gx-dim);
 }
 .metric strong {
-  font: 500 30px var(--gx-mono);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font: 800 48px var(--font-display);
+  letter-spacing: -0.05em;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, #ffffff, #7b6fb5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 .metric-note {
   display: flex;

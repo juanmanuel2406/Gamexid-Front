@@ -217,7 +217,7 @@
   transition: color 160ms ease;
 }
 .cur-toggle button[aria-checked='true'] {
-  color: #fff;
+  color: #050506;
 }
 .cur-pill {
   position: absolute;
