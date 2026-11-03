@@ -9,6 +9,31 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/chat/status', r => r.fulfill({ json: { configured: true } }));
 });
 
+test('conserva referencias de productos para preguntas de seguimiento y las borra al limpiar', async ({ page }) => {
+  let calls = 0;
+  await page.route('**/api/chat/ask', route => {
+    const body = route.request().postDataJSON();
+    expect(body.productosAnteriores).toEqual(calls === 1 ? ['5658', '7000'] : []);
+    if (calls === 1) expect(body.mensaje).toBe('¿Y el segundo?');
+    calls++;
+    return route.fulfill({ json: { respuesta: 'Productos consultados', productos: [
+      { id: '5658', name: 'Primero', code: '', imageUrl: null },
+      { id: '7000', name: 'Segundo', code: '', imageUrl: null },
+    ], fuentes: [], consultadoUtc: new Date().toISOString() } });
+  });
+  await page.goto('/productos');
+  await page.getByLabel('Abrir asistente de productos y pedidos').click();
+  for (const question of ['mostrame gabos', '¿Y el segundo?']) {
+    await page.getByLabel('Mensaje al asistente').fill(question);
+    await page.getByLabel('Enviar consulta').click();
+    await expect(page.getByRole('button', { name: 'Limpiar chat', exact: true })).toBeEnabled();
+  }
+  await page.getByRole('button', { name: 'Limpiar chat', exact: true }).click();
+  await page.getByLabel('Mensaje al asistente').fill('mostrame gabos');
+  await page.getByLabel('Enviar consulta').click();
+  await expect.poll(() => calls).toBe(3);
+});
+
 test('asistente limitado a Productos y Pedidos', async ({ page }) => {
   for (const path of ['/productos', '/sucursales']) {
     await page.goto(path);

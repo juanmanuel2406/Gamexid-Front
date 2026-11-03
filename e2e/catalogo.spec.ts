@@ -1,6 +1,38 @@
 import { test, expect } from '@playwright/test';
 import { mockInventory } from './mock-api';
 test.beforeEach(async ({ page }) => { await mockInventory(page); });
+
+test('fotos del catálogo, ausencia de imagen y diseño móvil', async ({ page }) => {
+  await page.route('**/api/access/me', r => r.fulfill({ json: { id: 1, fullName: 'QA', role: 'Administrator' } }));
+  await page.route('**/api/access/gc/status', r => r.fulfill({ json: { configured: true } }));
+  const base = { code: 'ABC', supplierCode: '', sku: '', price: null, stock: 1 };
+  await page.route('**/api/access/gc/products?*', r => r.fulfill({ json: { data: {
+    products: [
+      { ...base, id: '1', name: 'Gabinete con foto', webUrl: 'https://www.gamingcity.com.ar/gabinete--det--1' },
+      { ...base, id: '2', name: 'Producto sin ficha' },
+      { ...base, id: '3', name: 'Producto con imagen rota', webUrl: 'https://www.gamingcity.com.ar/gabinete--det--3' },
+    ], total: 3, truncated: false,
+  } } }));
+  await page.route(/\/api\/catalog\/photos\/\d+\?/, r => r.fulfill({ json: {
+    imageUrl: r.request().url().includes('/1?') ? 'https://www.gamingcity.com.ar/images/test.jpg' : 'https://www.gamingcity.com.ar/images/missing.jpg',
+  } }));
+  await page.route('https://www.gamingcity.com.ar/images/test.jpg', r => r.fulfill({ contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jFz0AAAAASUVORK5CYII=', 'base64') }));
+  await page.route('https://www.gamingcity.com.ar/images/missing.jpg', r => r.abort());
+  await page.goto('/productos');
+  await page.getByLabel('Sede de Gaming City').selectOption({ label: 'Depósito' });
+  await page.getByPlaceholder('Nombre o código del producto').fill('gabinete');
+  await page.getByRole('button', { name: 'Consultar catálogo' }).click();
+  const photo = page.getByRole('img', { name: 'Gabinete con foto', exact: true });
+  await expect(photo).toBeVisible();
+  await expect.poll(() => photo.evaluate(el => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  const last = page.getByRole('article').filter({ hasText: 'Producto con imagen rota' });
+  await last.scrollIntoViewIfNeeded();
+  await expect(last.getByText('Foto no disponible')).toBeVisible();
+  await expect(page.getByRole('article').filter({ hasText: 'Producto sin ficha' }).getByText('Foto no disponible')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  await page.screenshot({ path: 'test-results/catalogo-fotos-movil.png', fullPage: true });
+});
 test('Catálogo sin credenciales no realiza consultas ni muestra conexión ficticia', async ({ page }) => {
   await page.route('**/api/access/me', r => r.fulfill({json: {id: 1, fullName: 'Demostración', role: 'Administrator'}}));
   await page.route('**/api/access/health', r => r.fulfill({json: {status: 'ok'}}));

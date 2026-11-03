@@ -36,7 +36,10 @@
           <div class="space-y-3">
             @for (product of catalog.products; track product.id) {
               <article class="bg-[color:var(--k-surface)] p-4 border border-[color:var(--k-line)] rounded-lg break-words">
-                <h3 class="font-medium">{{ product.name }}</h3>
+                <div class="flex flex-wrap items-center gap-4">
+                  <gx-product-photo [id]="product.id" [name]="product.name" [webUrl]="product.webUrl ?? null" />
+                  <h3 class="font-medium flex-1 min-w-40">{{ product.name }}</h3>
+                </div>
                 <dl class="grid sm:grid-cols-2 gap-2 text-sm mt-3">
                   <div><dt class="text-[color:var(--k-fg-3)]">ID</dt><dd>{{ product.id }}</dd></div>
                   <div><dt class="text-[color:var(--k-fg-3)]">Código</dt><dd>{{ product.code || 'No informado' }}</dd></div>

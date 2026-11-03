@@ -121,6 +121,7 @@ export class AiBot {
     if (!mensaje || mensaje.length > 1500 || this.enviando() || !this.disponible() || !this.workspace.branchId()) return;
     const anteriores = this.mensajes();
     const preguntas = anteriores.filter(m => m.rol === 'usuario').slice(-6).map(m => m.texto);
+    const productosAnteriores = [...anteriores].reverse().find(m => m.rol === 'asistente')?.productos.map(p => p.id) ?? [];
     this.mensajes.set([...anteriores, { rol: 'usuario', texto: mensaje, productos: [], imagenes: [], fuentes: [] }]);
     this.texto = '';
     this.enviando.set(true);
@@ -129,6 +130,7 @@ export class AiBot {
     const version = ++this.version;
     this.consulta = this.http.post<RespuestaChat>('/api/chat/ask', {
       mensaje, contextoPantalla: this.contexto(), sucursalId: this.workspace.branchId(), preguntasAnteriores: preguntas,
+      productosAnteriores,
     }).pipe(timeout(70000)).subscribe({
       next: respuesta => {
         if (version !== this.version) return;

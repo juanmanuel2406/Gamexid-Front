@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { finalize, timeout, Subscription } from 'rxjs';
+import { ProductPhoto } from './product-photo';
 
 interface CatalogProduct {
   id: string;
@@ -12,6 +13,7 @@ interface CatalogProduct {
   sku: string;
   price: number | null;
   stock: number | null;
+  webUrl?: string | null;
 }
 interface PortalBranch {
   id: number;
@@ -27,7 +29,7 @@ interface Catalog {
 @Component({
   selector: 'gx-catalogo',
   standalone: true,
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormsModule, DecimalPipe, ProductPhoto],
   templateUrl: './catalogo.html',
 })
 export class Catalogo implements OnDestroy {
