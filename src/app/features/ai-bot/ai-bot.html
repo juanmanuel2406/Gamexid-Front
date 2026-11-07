@@ -13,10 +13,13 @@
       @if (!mensajes().length) {
         <div class="bienvenida">
           <p class="hola">¿Qué necesitás encontrar?</p>
-          <p>Consultá el catálogo de Gaming City y los pedidos de {{ workspace.branch()?.name || 'tu sucursal' }}. Las respuestas se basan en los datos disponibles.</p>
+          <p>Encontrá productos, compará características y entendé para qué sirven. Si hace falta ampliar una ficha, consulto la web y te muestro las fuentes.</p>
+          <div class="capacidades"><span>Catálogo y fotos</span><span>Fichas con fuentes</span><span>Pedidos de tu sede</span></div>
           <div class="sugerencias">
             <button type="button" (click)="sugerir('¿Qué gabinete tiene 3 coolers?')"><gx-icon name="package" [size]="15" />Gabinetes con 3 coolers</button>
             <button type="button" (click)="sugerir('¿Cuál es el último pedido de esta sucursal?')"><gx-icon name="doc" [size]="15" />Último pedido</button>
+            <button type="button" (click)="sugerir('Buscá un SSD NVMe del catálogo y explicame sus especificaciones con fuentes.')"><gx-icon name="search" [size]="15" />Entender un SSD</button>
+            <button type="button" (click)="sugerir('Busco memoria RAM para mi PC, ¿qué datos necesitás para elegir una compatible?')"><gx-icon name="cpu" [size]="15" />Elegir memoria RAM</button>
           </div>
         </div>
       }
@@ -37,6 +40,10 @@
               }
             </div>
           }
+          @for (investigacion of mensaje.investigaciones || []; track $index) {
+            <app-ai-web-research [investigacion]="investigacion" />
+          }
+          @for (aviso of mensaje.avisos || []; track $index) { <p class="aviso-fuente">{{ aviso }}</p> }
           @if (mensaje.fuentes.length) {
             <small class="fuentes">{{ mensaje.fuentes.join(' · ') }}<br />{{ mensaje.fecha | date:'dd/MM/yyyy HH:mm' }}</small>
           }
@@ -45,7 +52,7 @@
       @if (enviando()) {
         <div class="espera" role="status" animate.enter="espera-entra">
           <span class="puntos" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="espera-texto">{{ demora() ? 'Sigue buscando… puede tardar hasta un minuto.' : 'Consultando ' + (contexto() === 'Productos' ? 'el catálogo' : 'los pedidos') + '…' }}</span>
+          <span class="espera-texto">{{ demora() ? 'Revisando las fuentes… puede tardar hasta 90 segundos.' : 'Consultando ' + (contexto() === 'Productos' ? 'el catálogo' : 'los pedidos') + '…' }}</span>
           <span class="barra" aria-hidden="true"></span>
         </div>
       }

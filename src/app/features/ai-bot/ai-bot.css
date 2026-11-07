@@ -116,6 +116,10 @@ header small { display: flex; align-items: center; gap: 8px; margin-top: 3px; co
 .bienvenida p { margin: 0; }
 .hola { font-family: var(--font-display, inherit); font-size: 22px; font-weight: 700; color: var(--k-fg, #1f1c16); }
 .sugerencias { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.capacidades { display: flex; flex-wrap: wrap; gap: 6px; }
+.capacidades span { padding: 4px 9px; border: 1px solid #514077; border-radius: 20px; color: #ded2ff; background: #241b38; font-size: 11px; }
+.capacidades span:nth-child(2) { background: #142b34; border-color: #2c6475; color: #a8e4ee; }
+.capacidades span:nth-child(3) { background: #192e24; border-color: #3a624b; color: #b4e6c5; }
 .sugerencias button,
 .reintentar {
   display: inline-flex;
@@ -163,6 +167,7 @@ header small { display: flex; align-items: center; gap: 8px; margin-top: 3px; co
 .codigo { display: block; font: 500 11px var(--font-data, monospace); color: var(--k-fg-3, #655d4e); margin-top: 2px; }
 .producto a { display: inline-flex; align-items: center; gap: 4px; color: var(--bot-acc); text-decoration: underline; font-size: 12px; }
 .fuentes { display: block; font-size: 10.5px; margin-top: 12px; color: var(--k-fg-3, #655d4e); }
+.aviso-fuente { border-left: 3px solid #d9ad60; padding: 8px 10px; color: #f4dba7; background: #30271a; font-size: 12px; border-radius: 4px; }
 
 .espera {
   position: relative;

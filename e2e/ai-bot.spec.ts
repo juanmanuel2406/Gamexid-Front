@@ -1,6 +1,30 @@
 import { test, expect } from '@playwright/test';
 import { mockInventory } from './mock-api';
 
+test('muestra investigación con fuentes y aísla las sugerencias web', async ({ page }) => {
+  await page.route('**/api/chat/ask', r => r.fulfill({ json: {
+    respuesta: 'Encontré este SSD en el catálogo.', productos: [], fuentes: ['Web · Google Search'],
+    consultadoUtc: new Date().toISOString(), investigaciones: [{ productoId: '123', nombre: 'SSD de prueba',
+      texto: 'Usa conexión NVMe. [1]', fuentes: [
+        { numero: 1, titulo: 'Ficha del fabricante', url: 'https://www.kingston.com/ssd' },
+        { numero: 2, titulo: 'Enlace inválido', url: 'javascript:alert(1)' },
+      ], sugerenciasHtml: '<style>body{background:white}</style><a href="https://www.google.com/search?q=SSD" target="_blank">Buscar SSD</a><script>parent.document.body.innerHTML="INTRUSION"</script>'
+    }],
+  } }));
+  await page.goto('/productos');
+  await page.getByLabel('Abrir asistente de productos y pedidos').click();
+  await page.getByLabel('Mensaje al asistente').fill('explicame ese SSD');
+  await page.getByLabel('Enviar consulta').click();
+  await expect(page.getByRole('link', { name: 'Ficha del fabricante' })).toHaveAttribute('href', 'https://www.kingston.com/ssd');
+  await expect(page.getByRole('link', { name: 'Enlace inválido' })).toHaveCount(0);
+  await expect(page.locator('iframe')).toHaveAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
+  await expect(page.frameLocator('iframe').getByRole('link', { name: 'Buscar SSD' })).toBeVisible();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.getByRole('dialog').evaluate(el => el.scrollWidth <= el.clientWidth)).toBeTruthy();
+  await page.screenshot({ path: 'test-results/asistente-web-movil.png' });
+});
+
 test.beforeEach(async ({ page }) => {
   await mockInventory(page);
   await page.route('**/api/access/me', r => r.fulfill({ json: { id: 1, fullName: 'QA', role: 'Administrator' } }));
@@ -112,7 +136,7 @@ test('avisa la demora y deja de mostrarla al recibir la respuesta', async ({ pag
   await page.getByLabel('Mensaje al asistente').fill('Último pedido');
   await page.getByLabel('Enviar consulta').click();
   await expect(page.getByText('Consultando los pedidos…', { exact: true })).toBeVisible();
-  await expect(page.getByText('Sigue buscando… puede tardar hasta un minuto.', { exact: true })).toBeVisible({ timeout: 12000 });
+  await expect(page.getByText('Revisando las fuentes… puede tardar hasta 90 segundos.', { exact: true })).toBeVisible({ timeout: 12000 });
   responder();
   await expect(page.getByText('No hay pedidos.', { exact: true })).toBeVisible();
   await expect(page.locator('.espera')).toHaveCount(0);

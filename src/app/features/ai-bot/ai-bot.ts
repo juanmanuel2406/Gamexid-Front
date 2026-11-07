@@ -7,6 +7,7 @@ import { Workspace } from '../../core/workspace';
 import { AiMarkdown } from './ai-markdown';
 import { Icon } from '../../shared/icon';
 import { GxIsotype } from '../../shared/gx-isotype';
+import { AiWebResearch, InvestigacionWeb } from './ai-web-research';
 
 interface ProductoChat {
   id: string;
@@ -21,6 +22,8 @@ interface RespuestaChat {
   productos: ProductoChat[];
   fuentes: string[];
   consultadoUtc: string;
+  investigaciones?: InvestigacionWeb[];
+  avisos?: string[];
 }
 interface MensajeChat {
   rol: 'usuario' | 'asistente';
@@ -29,12 +32,14 @@ interface MensajeChat {
   imagenes: string[];
   fuentes: string[];
   fecha?: string;
+  investigaciones?: InvestigacionWeb[];
+  avisos?: string[];
 }
 
 @Component({
   selector: 'app-ai-bot',
   standalone: true,
-  imports: [FormsModule, DatePipe, Icon, AiMarkdown, GxIsotype],
+  imports: [FormsModule, DatePipe, Icon, AiMarkdown, GxIsotype, AiWebResearch],
   templateUrl: './ai-bot.html',
   styleUrl: './ai-bot.css',
 })
@@ -121,7 +126,7 @@ export class AiBot {
     if (!mensaje || mensaje.length > 1500 || this.enviando() || !this.disponible() || !this.workspace.branchId()) return;
     const anteriores = this.mensajes();
     const preguntas = anteriores.filter(m => m.rol === 'usuario').slice(-6).map(m => m.texto);
-    const productosAnteriores = [...anteriores].reverse().find(m => m.rol === 'asistente')?.productos.map(p => p.id) ?? [];
+    const productosAnteriores = [...anteriores].reverse().find(m => m.rol === 'asistente' && m.productos.length)?.productos.map(p => p.id) ?? [];
     this.mensajes.set([...anteriores, { rol: 'usuario', texto: mensaje, productos: [], imagenes: [], fuentes: [] }]);
     this.texto = '';
     this.enviando.set(true);
@@ -131,7 +136,7 @@ export class AiBot {
     this.consulta = this.http.post<RespuestaChat>('/api/chat/ask', {
       mensaje, contextoPantalla: this.contexto(), sucursalId: this.workspace.branchId(), preguntasAnteriores: preguntas,
       productosAnteriores,
-    }).pipe(timeout(70000)).subscribe({
+    }).pipe(timeout(95000)).subscribe({
       next: respuesta => {
         if (version !== this.version) return;
         const productos = (respuesta.productos || []).slice(0, 4);
@@ -139,6 +144,8 @@ export class AiBot {
           rol: 'asistente', texto: respuesta.respuesta, productos,
           imagenes: productos.map(p => p.imageUrl).filter((url): url is string => !!url),
           fuentes: respuesta.fuentes || [], fecha: respuesta.consultadoUtc,
+          investigaciones: (respuesta.investigaciones || []).slice(0, 2),
+          avisos: respuesta.avisos || [],
         }]);
         this.enviando.set(false);
         this.bajar();
