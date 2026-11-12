@@ -1610,3 +1610,10 @@
     }
   }
 }
+
+@media print {
+  body:has(app-pc-builder) .rail, body:has(app-pc-builder) .topbar, body:has(app-pc-builder) app-ai-bot,
+  body:has(app-pc-builder) .workspace-footer { display: none !important; }
+  body:has(app-pc-builder) .workspace { margin: 0 !important; padding: 0 !important; }
+  body:has(app-pc-builder) { --k-fg: #111; --k-fg-2: #222; --k-fg-3: #444; --k-surface: white; --k-sunken: white; --k-bg: white; --k-brand: #5639a0; --k-ok: #176534; }
+}

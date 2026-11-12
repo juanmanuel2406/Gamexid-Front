@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { Subscription, timeout } from 'rxjs';
+import { PcBuilderStore } from '../pc-builder/pc-builder-store';
 import { Workspace } from '../../core/workspace';
 import { AiMarkdown } from './ai-markdown';
 import { Icon } from '../../shared/icon';
@@ -44,9 +45,10 @@ interface MensajeChat {
   styleUrl: './ai-bot.css',
 })
 export class AiBot {
-  readonly contexto = input.required<'Productos' | 'Pedidos'>();
+  readonly contexto = input.required<'Productos' | 'Pedidos' | 'Armado'>();
   readonly workspace = inject(Workspace);
   private http = inject(HttpClient);
+  private pc = inject(PcBuilderStore);
   private destroy = inject(DestroyRef);
   private consulta?: Subscription;
   private estado?: Subscription;
@@ -135,7 +137,7 @@ export class AiBot {
     const version = ++this.version;
     this.consulta = this.http.post<RespuestaChat>('/api/chat/ask', {
       mensaje, contextoPantalla: this.contexto(), sucursalId: this.workspace.branchId(), preguntasAnteriores: preguntas,
-      productosAnteriores,
+      productosAnteriores, armado: this.pc.context(),
     }).pipe(timeout(95000)).subscribe({
       next: respuesta => {
         if (version !== this.version) return;

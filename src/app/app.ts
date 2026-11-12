@@ -24,6 +24,7 @@ import { NetActivity } from './core/net-activity';
 import { InventoryStore } from './core/inventory-store';
 import { GamexidService } from './services-gamexid/gamexid-service';
 import { reducedMotion } from './shared/anim';
+import { PcBuilderStore } from './features/pc-builder/pc-builder-store';
 import { AiBot } from './features/ai-bot/ai-bot';
 
 interface NavItem {
@@ -46,6 +47,7 @@ export class App {
   readonly workspace = inject(Workspace);
   readonly net = inject(NetActivity);
   private store = inject(InventoryStore);
+  private pc = inject(PcBuilderStore);
   private router = inject(Router);
   private data = inject(GamexidService);
   private host = inject(ElementRef<HTMLElement>);
@@ -53,8 +55,9 @@ export class App {
   private pill = viewChild<ElementRef<HTMLElement>>('pill');
   private loadbar = viewChild<ElementRef<HTMLElement>>('loadbar');
   readonly url = signal(this.router.url);
-  readonly contextoAsistente = computed<'Productos' | 'Pedidos' | null>(() => {
+  readonly contextoAsistente = computed<'Productos' | 'Pedidos' | 'Armado' | null>(() => {
     const path = this.url().split(/[?#]/)[0];
+    if (path === '/arma-tu-pc') return 'Armado';
     if (path === '/productos') return 'Productos';
     if (path === '/sucursales') return 'Pedidos';
     return null;
@@ -67,6 +70,7 @@ export class App {
   });
   private introPlayed = false;
   readonly navigation: NavItem[] = [
+    { url: '/arma-tu-pc', icon: 'cpu', name: 'Armá tu PC', short: 'Armá tu PC', key: '7', accent: 'var(--k-brand)' },
     { url: '/dashboard', icon: 'dashboard', name: 'Centro de operaciones', short: 'Operaciones', key: '1', accent: 'var(--k-sec-ops)' },
     { url: '/ingresos', icon: 'scan', name: 'Ingreso de mercadería', short: 'Ingresos', key: '2', accent: 'var(--k-sec-in)' },
     { url: '/productos', icon: 'package', name: 'Productos por sede', short: 'Productos', key: '3', accent: 'var(--k-sec-prod)' },
@@ -89,6 +93,7 @@ export class App {
         this.url.set(e.urlAfterRedirects);
         if (this.login()) {
           this.store.reset();
+          this.pc.clear();
           return;
         }
         this.workspace.refreshStatus();

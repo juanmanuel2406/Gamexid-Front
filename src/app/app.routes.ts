@@ -15,6 +15,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     canActivateChild: [AuthGuard],
     children: [
+      { path: 'arma-tu-pc', loadComponent: () => import('./features/pc-builder/pc-builder').then(m => m.PcBuilder) },
       { path: 'integracion', pathMatch: 'full', redirectTo: 'productos' },
       {
         path: 'dashboard',
