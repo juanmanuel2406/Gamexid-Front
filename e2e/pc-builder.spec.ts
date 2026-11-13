@@ -20,6 +20,8 @@ test('presupuesto exige moneda, se invalida al cambiar el armado y funciona en m
   await page.goto('/arma-tu-pc');
   await page.getByRole('button', { name: 'Buscar', exact: true }).click();
   await page.getByRole('button', { name: 'Elegir para Procesador' }).click();
+  await expect(page.getByText('Confirmá la moneda del portal.', { exact: true })).toBeVisible();
+  await expect(page.locator('nav.steps pc-icon')).toHaveCount(9);
   await page.getByRole('radio').check();
   await page.getByLabel('Confirmá la moneda del portal').selectOption('ARS');
   await page.getByRole('button', { name: 'Revisar armado y presupuesto' }).click();

@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { Subscription, timeout } from 'rxjs';
 import { Icon } from '../../shared/icon';
+import { PcIcon } from './pc-icon';
 import { ProductPhoto } from '../../components-gamexid/productos/product-photo';
 import { PcBuilderStore, PcItem, PcProduct, PcOffer, PcQuote } from './pc-builder-store';
 
 @Component({ selector: 'app-pc-builder', standalone: true,
-  imports: [FormsModule, DatePipe, Icon, ProductPhoto],
+  imports: [FormsModule, DatePipe, Icon, PcIcon, ProductPhoto],
   templateUrl: './pc-builder.html', styleUrl: './pc-builder.css' })
 export class PcBuilder {
   readonly store = inject(PcBuilderStore);
@@ -17,13 +18,13 @@ export class PcBuilder {
   private searchRequest?: Subscription;
   readonly slots = [
     { id: 'cpu', name: 'Procesador', query: 'PROCESADOR', icon: 'cpu' },
-    { id: 'mother', name: 'Motherboard', query: 'MOTHER', icon: 'cpu' },
-    { id: 'ram', name: 'Memoria RAM', query: 'MEMORIA DDR', icon: 'server' },
-    { id: 'storage', name: 'Almacenamiento', query: 'SSD', icon: 'database' },
-    { id: 'gpu', name: 'Placa de video', query: 'PLACA VIDEO', icon: 'cpu' },
-    { id: 'psu', name: 'Fuente', query: 'FUENTE', icon: 'plug' },
-    { id: 'case', name: 'Gabinete', query: 'GABINETE', icon: 'server' },
-    { id: 'cooler', name: 'Refrigeración', query: 'COOLER', icon: 'activity' },
+    { id: 'mother', name: 'Motherboard', query: 'MOTHER', icon: 'board' },
+    { id: 'ram', name: 'Memoria RAM', query: 'MEMORIA DDR', icon: 'ram' },
+    { id: 'storage', name: 'Almacenamiento', query: 'SSD', icon: 'drive' },
+    { id: 'gpu', name: 'Placa de video', query: 'PLACA VIDEO', icon: 'gpu' },
+    { id: 'psu', name: 'Fuente', query: 'FUENTE', icon: 'bolt' },
+    { id: 'case', name: 'Gabinete', query: 'GABINETE', icon: 'case' },
+    { id: 'cooler', name: 'Refrigeración', query: 'COOLER', icon: 'fan' },
   ];
   readonly slot = signal('cpu');
   readonly products = signal<PcProduct[] | null>(null);
@@ -37,6 +38,7 @@ export class PcBuilder {
   readonly listingNotice = signal('');
   search = 'PROCESADOR';
   constructor() { inject(DestroyRef).onDestroy(() => { this.request?.unsubscribe(); this.searchRequest?.unsubscribe(); }); }
+  icon(slot: string) { return this.slots.find(s => s.id === slot)?.icon || 'package'; }
   label(slot: string) { return this.slots.find(s => s.id === slot)?.name || slot; }
   chosen(slot: string) { return this.store.items().find(i => i.slot === slot); }
   changeSlot(id: string) {

@@ -1,15 +1,15 @@
 <section class="pc-page">
   <header class="hero"><div><span class="eyebrow">GAMEXID / CONFIGURADOR</span><h1>Armá tu <em>próxima PC.</em></h1>
     <p>Elegí componentes del catálogo y compará precios para preparar tu presupuesto.</p></div>
-    <div class="progress"><gx-icon name="cpu" [size]="30" /><strong>{{ store.items().length }}<small>/ 8 componentes</small></strong><span>Tu equipo, pieza por pieza</span></div>
+    <div class="progress" [style.--p]="store.items().length / 8"><span class="ring"><pc-icon name="cpu" [size]="26" /></span><strong>{{ store.items().length }}<small>/ 8 componentes</small></strong><span>Tu equipo, pieza por pieza</span></div>
   </header>
   <div class="builder-layout">
     <section class="catalog-panel no-print" aria-label="Elegir componentes">
       <nav class="steps" aria-label="Tipo de componente">@for (step of slots; track step.id) {
-        <button type="button" [class.active]="slot() === step.id" [attr.aria-pressed]="slot() === step.id" (click)="changeSlot(step.id)">
-          <gx-icon [name]="chosen(step.id) ? 'check' : step.icon" [size]="17" />{{ step.name }}</button>
+        <button type="button" [style.--i]="$index" [attr.data-slot]="step.id" [class.active]="slot() === step.id" [class.done]="!!chosen(step.id)" [attr.aria-pressed]="slot() === step.id" (click)="changeSlot(step.id)">
+          <span class="ico"><pc-icon [name]="step.icon" [size]="20" />@if (chosen(step.id)) { <span class="tick"><pc-icon name="check" [size]="11" /></span> }</span>{{ step.name }}</button>
       }</nav>
-      <div class="search-box"><h2>{{ label(slot()) }}</h2><p>Disponibilidad del depósito del portal · no reserva stock</p>
+      <div class="search-box" [attr.data-slot]="slot()"><h2><span class="ico"><pc-icon [name]="icon(slot())" [size]="22" /></span>{{ label(slot()) }}</h2><p>Disponibilidad del depósito del portal · no reserva stock</p>
         <form (ngSubmit)="find()"><input aria-label="Buscar componente" name="search" [(ngModel)]="search" maxlength="80" placeholder="Nombre, modelo o código" />
           <button class="primary" type="submit" [disabled]="searching() || search.trim().length < 3">{{ searching() ? 'Buscando…' : 'Buscar' }}</button></form>
       </div>
@@ -18,17 +18,17 @@
         @if (!results.length) { <div class="empty">No hay coincidencias disponibles. Probá otra búsqueda.</div> }
         @if (partial()) { <p class="notice">Resultados parciales. Afiná el modelo para encontrar más opciones.</p> }
         <div class="product-grid">@for (product of results; track product.id) {
-          <article class="product-card"><gx-product-photo [id]="product.id" [name]="product.name" [webUrl]="product.webUrl || null" />
+          <article class="product-card" [style.--i]="$index"><gx-product-photo [id]="product.id" [name]="product.name" [webUrl]="product.webUrl || null" />
             <small>{{ product.code }}</small><h3>{{ product.name }}</h3><span class="stock">Stock portal: {{ product.stock ?? 'Sin informar' }}</span>
             <button type="button" (click)="add(product)" [disabled]="busy()">{{ chosen(slot())?.product?.id === product.id ? 'Volver a consultar' : 'Elegir para ' + label(slot()) }}</button>
           </article>
         }</div>
-      } @else { <div class="empty"><gx-icon name="cpu" [size]="40" /><h3>Todo empieza con una pieza.</h3><p>Buscá {{ label(slot()).toLowerCase() }} para ver las opciones del catálogo.</p></div> }
+      } @else { <div class="empty" [attr.data-slot]="slot()"><span class="ico float"><pc-icon [name]="icon(slot())" [size]="40" /></span><h3>Todo empieza con una pieza.</h3><p>Buscá {{ label(slot()).toLowerCase() }} para ver las opciones del catálogo.</p></div> }
     </section>
     <aside class="build-panel" aria-label="Tu armado"><div class="section-heading"><h2>Tu armado</h2><span>{{ store.items().length }} piezas</span></div>
       @if (!store.items().length) { <p class="empty-small">Elegí el primer componente para empezar.</p> }
       @for (item of store.items(); track item.slot) {
-        <article class="chosen"><div class="chosen-head"><small>{{ label(item.slot) }}</small><button class="no-print" type="button" [disabled]="busy()" (click)="remove(item.slot)" [attr.aria-label]="'Quitar ' + label(item.slot)"><gx-icon name="x" [size]="16" /></button></div>
+        <article class="chosen" [attr.data-slot]="item.slot"><div class="chosen-head"><small><span class="ico"><pc-icon [name]="icon(item.slot)" [size]="14" /></span>{{ label(item.slot) }}</small><button class="no-print" type="button" [disabled]="busy()" (click)="remove(item.slot)" [attr.aria-label]="'Quitar ' + label(item.slot)"><gx-icon name="x" [size]="16" /></button></div>
           <h3>{{ item.product.name }}</h3>
           @if (item.slot === 'ram' || item.slot === 'storage') { <label class="quantity">Unidades / kits <select [ngModel]="item.quantity" (ngModelChange)="quantity(item.slot, $event)" [disabled]="busy()">@for (n of [1,2,3,4]; track n) { <option [value]="n">{{ n }}</option> }</select></label> }
           <div class="offers">@for (offer of item.offers; track offer.id) {
@@ -47,7 +47,7 @@
         </article>
       }
       @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-      <button class="primary calculate no-print" type="button" (click)="calculate()" [disabled]="busy() || !store.items().length">{{ busy() ? 'Consultando fuentes…' : 'Revisar armado y presupuesto' }}</button>
+      <button class="primary calculate no-print" [class.loading]="busy()" type="button" (click)="calculate()" [disabled]="busy() || !store.items().length">{{ busy() ? 'Consultando fuentes…' : 'Revisar armado y presupuesto' }}</button>
       @if (store.quote(); as quote) {
         <section class="quote" aria-label="Presupuesto"><div class="section-heading"><h2>Presupuesto orientativo</h2><button class="no-print" type="button" (click)="print()">Imprimir</button></div>
           @for (total of quote.totals; track total.currency) { <div class="total"><span>{{ total.currency }}</span><strong>{{ money(total.amount) }}</strong></div> }
