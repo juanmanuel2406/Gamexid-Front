@@ -60,3 +60,12 @@ test('el asistente recibe la selección actual y quitarla elimina el contexto', 
   await page.getByLabel('Mensaje al asistente').fill('¿Y ahora?'); await page.getByLabel('Enviar consulta').click();
   await expect(page.getByText('Falta verificar BIOS.')).toHaveCount(2);
 });
+
+test('el chat se puede cerrar con movimiento reducido', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/arma-tu-pc');
+  await page.getByLabel('Abrir asistente de productos y pedidos').click();
+  await expect(page.getByRole('dialog', { name: 'Asistente Gamexid' })).toBeVisible();
+  await page.getByLabel('Cerrar asistente').click();
+  await expect(page.getByRole('dialog', { name: 'Asistente Gamexid' })).toHaveCount(0);
+});

@@ -68,13 +68,10 @@ textarea:focus-visible { outline: 2px solid var(--bot-acc); outline-offset: 2px;
   transform-origin: bottom right;
 }
 .chat-entra { animation: chat-entra 260ms var(--bot-out); }
-.chat-sale { animation: chat-sale 160ms var(--bot-out) forwards; }
 @keyframes chat-entra {
   from { opacity: 0; transform: translateY(12px) scale(0.96); }
 }
-@keyframes chat-sale {
-  to { opacity: 0; transform: translateY(8px) scale(0.97); }
-}
+
 header {
   display: flex;
   align-items: center;
@@ -259,7 +256,6 @@ textarea:focus { border-color: var(--bot-acc); box-shadow: 0 0 0 3px var(--k-ars
 
 @media (prefers-reduced-motion: reduce) {
   .chat-entra { animation: bot-fade 160ms ease; }
-  .chat-sale { animation: bot-fade 120ms ease reverse forwards; }
   .mensaje,
   .espera-entra { animation: bot-fade 160ms ease; }
   .puntos i { animation: led 1s ease-in-out infinite alternate; transform: none; }
