@@ -1,4 +1,5 @@
-import { Component, inject, signal, computed, effect, OnInit } from '@angular/core';
+import { BranchCatalog } from '../../shared/branch-catalog';
+import { Component, inject, signal, computed, effect, OnInit, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
@@ -11,7 +12,7 @@ import { Intake, Extraction } from '../../features/intake/intake';
 @Component({
   selector: 'app-sucursales',
   standalone: true,
-  imports: [FormsModule, DialogModule, TagModule, SkeletonModule, Icon, Intake],
+  imports: [BranchCatalog, FormsModule, DialogModule, TagModule, SkeletonModule, Icon, Intake],
   templateUrl: './sucursales.html',
   styleUrl: './sucursales.css',
 })
@@ -37,7 +38,8 @@ export class Sucursales implements OnInit {
   constructor() {
     effect(() => {
       const branch = this.workspace.branchId();
-      void this.load(1, branch);
+      untracked(() => { this.pedidos.set([]); this.total.set(0); if (this.draft()?.branchId !== branch) this.draft.set(null); this.selectedLine.set(null);
+        this.error.set(''); if (branch) void this.load(1, branch); });
     });
   }
   async load(page = 1, branch = this.workspace.branchId()) {

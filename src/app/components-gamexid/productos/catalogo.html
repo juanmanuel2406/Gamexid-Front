@@ -8,14 +8,14 @@
         </select>
       </label>
       <div class="flex flex-wrap gap-5">
-        <label><input type="checkbox" [(ngModel)]="onlyInStock" (ngModelChange)="limpiarResultados()" /> Solo con stock</label>
-        <label><input type="checkbox" [(ngModel)]="hideCombos" (ngModelChange)="limpiarResultados()" /> Ocultar combos</label>
+        <label><input type="checkbox" [(ngModel)]="onlyInStock" (ngModelChange)="actualizarFiltros()" /> Solo con stock</label>
+        <label><input type="checkbox" [(ngModel)]="hideCombos" (ngModelChange)="actualizarFiltros()" /> Ocultar combos</label>
       </div>
       <form (ngSubmit)="buscar()" class="flex flex-wrap items-end gap-3">
         <label class="flex-1 min-w-48">Buscar producto o código
-          <input class="block w-full mt-2 bg-[color:var(--k-surface)] border border-[color:var(--k-line-2)] rounded-lg p-3" name="search" [(ngModel)]="search" minlength="3" maxlength="80" placeholder="Nombre o código del producto" />
+          <input class="block w-full mt-2 bg-[color:var(--k-surface)] border border-[color:var(--k-line-2)] rounded-lg p-3" name="search" [(ngModel)]="search" maxlength="80" placeholder="Nombre o código del producto" />
         </label>
-        <button class="rounded-lg bg-[color:var(--k-ink)] text-[color:var(--k-surface)] px-5 py-3 disabled:opacity-40" [disabled]="!configured() || !branchId() || busy() || search.trim().length < 3">Consultar catálogo</button>
+        <button class="rounded-lg bg-[color:var(--k-ink)] text-[color:var(--k-surface)] px-5 py-3 disabled:opacity-40" [disabled]="!configured() || !branchId() || busy() || (search.trim().length > 0 && search.trim().length < 3)">Consultar catálogo</button>
       </form>
       @if (!inventory()) {
       <form (ngSubmit)="buscarPorId()" class="flex flex-wrap items-end gap-3">
@@ -31,8 +31,14 @@
         <section aria-label="Resultados del catálogo">
           <h2 class="text-lg mb-3">{{ catalog.total }} productos encontrados</h2>
           <p class="text-[color:var(--k-fg-3)] mb-3">{{ selectedBranch()?.name }} · {{ totalStock() | number }} unidades{{ catalog.truncated ? ' en los resultados mostrados' : '' }}</p>
-          @if (catalog.truncated) { <p class="text-[color:var(--k-warn-fg)] mb-3">Primeros 100 resultados</p> }
+          @if (catalog.truncated) { <p class="text-[color:var(--k-warn-fg)] mb-3">Página {{ page() }} · hasta 50 productos por página</p> }
           @if (!catalog.products.length) { <p>Sin resultados</p> }
+          @if (!detail()) {
+            <div class="flex gap-3 mb-3">
+              <button class="btn-secundario" (click)="pagina(-1)" [disabled]="busy() || page() <= 1">Página anterior</button>
+              <button class="btn-secundario" (click)="pagina(1)" [disabled]="busy() || page() * 50 >= catalog.total">Página siguiente</button>
+            </div>
+          }
           <div class="space-y-3">
             @for (product of catalog.products; track product.id) {
               <article class="bg-[color:var(--k-surface)] p-4 border border-[color:var(--k-line)] rounded-lg break-words">

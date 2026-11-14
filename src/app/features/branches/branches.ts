@@ -1,3 +1,4 @@
+import { BranchCatalog } from '../../shared/branch-catalog';
 import { Component, ElementRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { animate } from 'animejs';
@@ -11,7 +12,7 @@ import { CountUp, enterStagger, growBars, reducedMotion, shake } from '../../sha
 @Component({
   selector: 'gx-branches',
   standalone: true,
-  imports: [FormsModule, DialogModule, Icon, CountUp],
+  imports: [BranchCatalog, FormsModule, DialogModule, Icon, CountUp],
   templateUrl: './branches.html',
   styleUrl: './branches.css',
 })
@@ -117,6 +118,7 @@ export class Branches {
     });
   }
   useBranch(b: Branch) {
+    if (!this.workspace.selectableBranches().some(branch => branch.id === b.id)) return;
     this.workspace.select(b.id);
     this.workspace.notify('Ahora trabajás en ' + b.name + '.', 'info');
     this.close();

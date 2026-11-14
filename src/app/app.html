@@ -66,7 +66,7 @@
               [ngModel]="workspace.branchId()"
               (ngModelChange)="workspace.select(+$event)"
             >
-              @for (b of workspace.branches(); track b.id) {
+              @for (b of workspace.selectableBranches(); track b.id) {
                 <option [value]="b.id" [title]="b.address || ''">
                   {{ b.name }}{{ b.isLegacy ? ' (histórica)' : '' }}
                 </option>

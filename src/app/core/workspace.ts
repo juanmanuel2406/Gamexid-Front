@@ -29,6 +29,7 @@ export class Workspace {
       .toUpperCase(),
   );
   readonly branch = computed(() => this.branches().find((b) => b.id === this.branchId()));
+  readonly selectableBranches = computed(() => this.branches().filter(b => b.isActive && (this.isAdmin() || b.id === this.user()?.branchId)));
   readonly depot = computed(() => this.branches().find((b) => b.code === 'DEP-CENTRAL'));
 
   constructor() {
@@ -49,6 +50,9 @@ export class Workspace {
     } else {
       sessionStorage.removeItem('usuario');
       sessionStorage.removeItem('userData');
+      sessionStorage.removeItem('gx_branch');
+      this.branchId.set(0);
+      this.branches.set([]);
     }
   }
   refreshBranches() {
@@ -57,19 +61,16 @@ export class Workspace {
         this.branches.set(items.filter((b) => b.isActive || b.isLegacy));
         const saved = Number(sessionStorage.getItem('gx_branch'));
         const preferred = this.user()?.branchId;
-        this.branchId.set(
-          this.branches().some((b) => b.id === saved)
-            ? saved
-            : this.branches().some((b) => b.id === preferred)
-              ? preferred!
-              : this.data.getDeposito().id,
-        );
+        const available = this.selectableBranches();
+        const selected = available.find(b => b.id === saved) ?? available.find(b => b.id === preferred) ?? available.find(b => b.code === "DEP-CENTRAL") ?? available[0];
+        this.branchId.set(selected?.id ?? 0);
+        if (selected) sessionStorage.setItem('gx_branch', String(selected.id));
       },
       error: () => this.connection.set('offline'),
     });
   }
   select(id: number) {
-    if (this.branches().some((b) => b.id === id)) {
+    if (this.selectableBranches().some((b) => b.id === id)) {
       this.branchId.set(id);
       sessionStorage.setItem('gx_branch', String(id));
     }

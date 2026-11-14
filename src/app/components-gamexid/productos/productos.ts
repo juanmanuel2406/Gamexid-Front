@@ -55,7 +55,7 @@ export class Productos {
   nuevoProducto = { sku: '', name: '', ean: '', requiresSerialNumber: false };
   readonly filtered = computed(() => this.productos());
   readonly stockBranchId = signal(this.workspace.branchId());
-  readonly activeBranches = computed(() => this.workspace.branches().filter((b) => b.isActive));
+  readonly activeBranches = computed(() => this.workspace.selectableBranches());
   readonly stockBranch = computed(() =>
     this.activeBranches().find((b) => b.id === this.stockBranchId()),
   );
@@ -72,7 +72,7 @@ export class Productos {
     return 'ok';
   }
   seleccionarSucursal(id: number) {
-    this.stockBranchId.set(Number(id) || 0);
+    this.workspace.select(Number(id) || 0);
   }
   private versionCarga = 0;
   private consultaSedes?: Subscription;
@@ -82,7 +82,7 @@ export class Productos {
   constructor() {
     effect(() => {
       const ws = this.workspace.branchId();
-      if (!untracked(() => this.stockBranch()) && this.activeBranches().some((b) => b.id === ws))
+      if (this.stockBranchId() !== ws)
         untracked(() => this.stockBranchId.set(ws));
     });
     effect((onCleanup) => {

@@ -1,8 +1,9 @@
-import { Component, inject, signal, computed, input, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, input, OnDestroy, effect, untracked } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { finalize, timeout, Subscription } from 'rxjs';
+import { Workspace } from '../../core/workspace';
 import { ProductPhoto } from './product-photo';
 
 interface CatalogProduct {
@@ -14,11 +15,6 @@ interface CatalogProduct {
   price: number | null;
   stock: number | null;
   webUrl?: string | null;
-}
-interface PortalBranch {
-  id: number;
-  name: string;
-  depotId: number;
 }
 interface Catalog {
   products: CatalogProduct[];
@@ -34,19 +30,20 @@ interface Catalog {
 })
 export class Catalogo implements OnDestroy {
   readonly inventory = input(false);
-  readonly branches = signal<PortalBranch[]>([]);
-  readonly branchId = signal(0);
-  readonly selectedBranch = computed(() => this.branches().find((b) => b.id === this.branchId()));
+  readonly workspace = inject(Workspace);
+  readonly branches = this.workspace.selectableBranches;
+  readonly branchId = this.workspace.branchId;
+  readonly selectedBranch = this.workspace.branch;
+  readonly page = signal(1);
   readonly totalStock = computed(() =>
     (this.result()?.products ?? []).reduce((total, p) => total + Math.max(0, p.stock ?? 0), 0),
   );
   onlyInStock = true;
   hideCombos = true;
   private request?: Subscription;
-  private branchRequest?: Subscription;
   seleccionarSede(id: number) {
     this.limpiarResultados();
-    this.branchId.set(Number(id));
+    this.workspace.select(Number(id));
   }
   limpiarResultados() {
     this.request?.unsubscribe();
@@ -56,7 +53,6 @@ export class Catalogo implements OnDestroy {
   }
   ngOnDestroy() {
     this.request?.unsubscribe();
-    this.branchRequest?.unsubscribe();
   }
 
   private http = inject(HttpClient);
@@ -70,9 +66,9 @@ export class Catalogo implements OnDestroy {
   search = '';
   productId = '';
   constructor() {
-    this.branchRequest = this.http.get<PortalBranch[]>('/api/access/gc/branches').subscribe({
-      next: (branches) => this.branches.set(branches),
-      error: () => this.error.set('No se pudieron cargar las sedes de Gaming City.'),
+    effect(() => {
+      const branch = this.branchId();
+      untracked(() => { this.limpiarResultados(); this.page.set(1); if (branch) this.consultarCatalogo(false); });
     });
     this.http
       .get<{ configured: boolean }>('/api/access/gc/status')
@@ -89,25 +85,30 @@ export class Catalogo implements OnDestroy {
     return /^[0-9]{1,20}$/.test(this.productId.trim());
   }
   buscar() {
-    if (this.search.trim().length < 3 || this.search.trim().length > 80) return;
+    if (this.search.trim().length > 0 && this.search.trim().length < 3 || this.search.trim().length > 80) return;
+    this.page.set(1);
     this.consultarCatalogo(false);
   }
   buscarPorId() {
     if (!this.idValido()) return;
     this.consultarCatalogo(true);
   }
+  pagina(delta: number) { this.page.update(p => p + delta); this.consultarCatalogo(false); }
+  actualizarFiltros() { this.page.set(1); this.limpiarResultados(); this.consultarCatalogo(false); }
   private consultarCatalogo(byId: boolean) {
-    if (!this.configured() || !this.branchId() || this.busy()) return;
+    if (!this.branchId() || this.busy()) return;
     this.busy.set(true);
     this.error.set('');
     this.result.set(null);
     this.connected.set(false);
     this.detail.set(byId);
     const url =
-      '/api/access/gc/products' + (byId ? '/' + encodeURIComponent(this.productId.trim()) : '');
+      '/api/catalog/products' + (byId ? '/' + encodeURIComponent(this.productId.trim()) : '');
     const params: Record<string, string> = { branchId: String(this.branchId()) };
     if (!byId) {
       params['search'] = this.search.trim();
+      params['page'] = String(this.page());
+      params['pageSize'] = '50';
       params['onlyInStock'] = String(this.onlyInStock);
       params['hideCombos'] = String(this.hideCombos);
     }

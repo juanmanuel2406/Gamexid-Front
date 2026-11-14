@@ -1,3 +1,4 @@
+<gx-branch-catalog />
 <div class="page-head">
   <div>
     <p class="eyebrow">Red / {{ workspace.branches().length }} ubicaciones</p>
@@ -84,7 +85,7 @@
           <div class="empty"><gx-icon name="package" [size]="26" /><p>Esta sede no tiene unidades disponibles registradas.</p></div>
         }
       </div>
-      <button class="btn-secundario" [disabled]="b.id === workspace.branchId()" (click)="useBranch(b)">
+      <button class="btn-secundario" [disabled]="b.id === workspace.branchId() || (!workspace.isAdmin() && b.id !== workspace.user()?.branchId) || !b.isActive" (click)="useBranch(b)">
         {{ b.id === workspace.branchId() ? 'Ya es tu sede de trabajo' : 'Trabajar en esta sede' }}
       </button>
     </div>

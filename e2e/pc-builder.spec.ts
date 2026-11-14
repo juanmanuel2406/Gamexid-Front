@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { mockInventory } from './mock-api';
-const product = { id: '1', name: 'PROCESADOR AMD RYZEN 5 AM4', code: 'CPU-1', stock: 3 };
+const product = { id: '1', name: 'PROCESADOR AMD RYZEN 5 AM4', code: 'CPU-1', stock: 3, price: 158400 };
+const start = async (page: import('@playwright/test').Page) => { await page.goto('/arma-tu-pc'); await page.getByRole('button', { name: 'Comenzar con AMD' }).click(); };
+const pickCpu = async (page: import('@playwright/test').Page) => { await page.locator('.product-card').first().getByRole('button', { name: 'Elegir' }).click(); await expect(page.getByRole('heading', { name: 'Elegí tu motherboard' })).toBeVisible(); await page.getByRole('button', { name: /Resumen y presupuesto/ }).click(); };
 const offer = { id: 'offer', source: 'Portal', title: 'Lista del portal', amount: 100000, currency: null, checkedUtc: new Date().toISOString(), url: null };
 test.beforeEach(async ({ page }) => {
   await mockInventory(page);
@@ -8,7 +10,7 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/access/health', r => r.fulfill({ json: { status: 'ok' } }));
   await page.route('**/api/access/integrations', r => r.fulfill({ json: { pdfPig: true } }));
   await page.route('**/api/chat/status', r => r.fulfill({ json: { configured: true } }));
-  await page.route('**/api/access/gc/products?*', r => r.fulfill({ json: { data: { products: [product], truncated: false } } }));
+  await page.route('**/api/pc-builder/options', r => r.fulfill({ json: { products: [{ product, checks: [] }], truncated: false, missingSteps: [] } }));
   await page.route('**/api/pc-builder/prices/*', r => r.fulfill({ json: { offers: [offer], notices: ['Confirmá la moneda del portal.'] } }));
 });
 test('presupuesto exige moneda, se invalida al cambiar el armado y funciona en móvil', async ({ page }) => {
@@ -17,16 +19,17 @@ test('presupuesto exige moneda, se invalida al cambiar el armado y funciona en m
     expect(item.productId).toBe('1'); expect(item.confirmedCurrency).toBe('ARS');
     return r.fulfill({ json: { lines: [], checks: [{ status: 'pending', title: 'BIOS', detail: 'Verificar soporte.' }], totals: [{ currency: 'ARS', amount: 100000 }], missingPrices: 0, checkedUtc: new Date().toISOString() } });
   });
-  await page.goto('/arma-tu-pc');
-  await page.getByRole('button', { name: 'Buscar', exact: true }).click();
-  await page.getByRole('button', { name: 'Elegir para Procesador' }).click();
+  await start(page);
+  await expect(page.getByRole('heading', { name: 'Elegí tu procesador' })).toBeVisible();
+  await expect(page.locator('nav.steps .step')).toHaveCount(9);
+  await pickCpu(page);
   await expect(page.getByText('Confirmá la moneda del portal.', { exact: true })).toBeVisible();
-  await expect(page.locator('nav.steps pc-icon')).toHaveCount(9);
   await page.getByRole('radio').check();
   await page.getByLabel('Confirmá la moneda del portal').selectOption('ARS');
-  await page.getByRole('button', { name: 'Revisar armado y presupuesto' }).click();
+  await expect(page.locator('.running')).toContainText('100.000,00');
+  await page.getByRole('button', { name: 'Calcular presupuesto' }).click();
   await expect(page.getByRole('heading', { name: 'Presupuesto orientativo' })).toBeVisible();
-  await expect(page.getByText('Por revisar · BIOS')).toBeVisible();
+  await expect(page.getByText('Por revisar · BIOS: Verificar soporte.')).toBeVisible();
   await page.screenshot({ path: 'test-results/pc-builder-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
@@ -37,8 +40,7 @@ test('presupuesto exige moneda, se invalida al cambiar el armado y funciona en m
 });
 test('Mercado Libre no inventa resultados cuando falta autorización', async ({ page }) => {
   await page.route('**/api/pc-builder/mercadolibre/*', r => r.fulfill({ json: { offers: [], notices: ['Falta conectar Mercado Libre.'] } }));
-  await page.goto('/arma-tu-pc'); await page.getByRole('button', { name: 'Buscar', exact: true }).click();
-  await page.getByRole('button', { name: 'Elegir para Procesador' }).click();
+  await start(page); await pickCpu(page);
   await page.getByRole('button', { name: 'Buscar en Mercado Libre' }).click();
   await expect(page.getByText('Falta conectar Mercado Libre.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Confirmar esta publicación' })).toHaveCount(0);
@@ -50,8 +52,7 @@ test('el asistente recibe la selección actual y quitarla elimina el contexto', 
     expect(r.request().postDataJSON().contextoPantalla).toBe('Armado');
     return r.fulfill({ json: { respuesta: 'Falta verificar BIOS.', productos: [], fuentes: [], consultadoUtc: new Date().toISOString() } });
   });
-  await page.goto('/arma-tu-pc'); await page.getByRole('button', { name: 'Buscar', exact: true }).click();
-  await page.getByRole('button', { name: 'Elegir para Procesador' }).click();
+  await start(page); await pickCpu(page);
   await page.getByLabel('Abrir asistente de productos y pedidos').click();
   await page.getByLabel('Mensaje al asistente').fill('¿Sirve mi armado?'); await page.getByLabel('Enviar consulta').click();
   await expect(page.getByText('Falta verificar BIOS.')).toBeVisible();
@@ -68,4 +69,47 @@ test('el chat se puede cerrar con movimiento reducido', async ({ page }) => {
   await expect(page.getByRole('dialog', { name: 'Asistente Gamexid' })).toBeVisible();
   await page.getByLabel('Cerrar asistente').click();
   await expect(page.getByRole('dialog', { name: 'Asistente Gamexid' })).toHaveCount(0);
+});
+
+test('elegir plataforma filtra procesadores y se puede reiniciar con movimiento reducido', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const searches: string[] = [];
+  await page.route('**/api/pc-builder/options', r => { searches.push(r.request().postDataJSON().search); return r.fulfill({ json: { products: [{product,checks:[]}], missingSteps:[], truncated:false } }); });
+  await page.goto('/arma-tu-pc');
+  await page.getByRole('button', { name: 'Comenzar con Intel' }).click();
+  await expect(page.locator('.chip')).toHaveText('Intel');
+  await expect.poll(() => searches[0]).toBe('PROCESADOR INTEL');
+  await expect(page.getByRole('button', { name: 'Siguiente paso' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Reiniciar' }).click();
+  await expect(page.getByRole('button', { name: 'Comenzar con AMD' })).toBeVisible();
+});
+
+test('cambiar sucursal descarta armado y envía la sede nueva al buscar y cotizar', async ({ page }) => {
+  const branches: number[] = [];
+  await page.route('**/api/pc-builder/options', r => {
+    const body = r.request().postDataJSON(); branches.push(body.branchId);
+    return r.fulfill({json:{products:[{product:{...product,name:'CPU sede '+body.branchId},checks:[]}],missingSteps:[],truncated:false}});
+  });
+  await start(page);
+  await page.locator('.product-card').getByRole('button',{name:'Elegir',exact:true}).click();
+  await page.getByRole('button',{name:/Resumen y presupuesto/}).click();
+  await expect(page.locator('.chosen')).toHaveCount(1);
+  await page.getByLabel('Sucursal de trabajo').selectOption('10');
+  await expect(page.getByRole('heading',{name:'Armá tu PC paso a paso'})).toBeVisible();
+  await expect(page.locator('.chosen')).toHaveCount(0);
+  await page.getByRole('button',{name:'Comenzar con AMD',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'CPU sede 10'})).toBeVisible();
+  expect(branches.at(-1)).toBe(10);
+  await page.route('**/api/pc-builder/prices/*',r=>{
+    expect(new URL(r.request().url()).searchParams.get('branchId')).toBe('10');
+    return r.fulfill({json:{offers:[{...offer,currency:'ARS'}],notices:[]}});
+  });
+  await page.locator('.product-card').getByRole('button',{name:'Elegir',exact:true}).click();
+  await page.getByRole('button',{name:/Resumen y presupuesto/}).click();
+  await page.route('**/api/pc-builder/quote',r=>{
+    expect(r.request().postDataJSON().branchId).toBe(10);
+    return r.fulfill({json:{lines:[],checks:[],totals:[],missingPrices:0,checkedUtc:new Date().toISOString()}});
+  });
+  await page.getByRole('button',{name:'Calcular presupuesto'}).click();
+  await expect(page.getByRole('heading',{name:'Presupuesto orientativo'})).toBeVisible();
 });

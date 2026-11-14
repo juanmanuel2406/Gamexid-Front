@@ -1,3 +1,4 @@
+import { BranchCatalog } from '../../shared/branch-catalog';
 import { Component, ElementRef, Injector, afterNextRender, computed, effect, inject, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -21,7 +22,7 @@ export const LOW_STOCK = 5;
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe, Icon, CountUp],
+  imports: [BranchCatalog, RouterLink, DatePipe, Icon, CountUp],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
