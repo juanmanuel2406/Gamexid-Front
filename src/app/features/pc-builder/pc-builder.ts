@@ -8,7 +8,7 @@ import { Workspace } from '../../core/workspace';
 import { Icon } from '../../shared/icon';
 import { PcIcon } from './pc-icon';
 import { ProductPhoto } from '../../components-gamexid/productos/product-photo';
-import { PcBuilderStore, PcItem, PcPlatform, PcProduct, PcOffer, PcQuote } from './pc-builder-store';
+import { PcBuilderStore, PcItem, PcCooling, PcPlatform, PcProduct, PcOffer, PcQuote } from './pc-builder-store';
 
 interface Step { id: string; name: string; query: string; icon: string; amd?: string; intel?: string; }
 interface Platform { id: PcPlatform; name: string; lines: string; }
@@ -67,6 +67,17 @@ export class PcBuilder {
   readonly listingNotice = signal('');
   readonly confirmReset = signal(false);
   search = '';
+  confirmedCooler = false;
+  includedCooler() { return !!this.chosen('cpu')?.useIncludedCooler; }
+  cooling() { return this.chosen('cpu')?.cooling; }
+  complete(slot: string) { return !!this.chosen(slot) || slot === 'cooler' && this.includedCooler(); }
+  useIncludedCooler() {
+    const info = this.cooling();
+    if (this.busy() || !info || info.status === 'excluded' || info.status === 'unknown' && !this.confirmedCooler) return;
+    this.store.items.update(items => items.filter(i => i.slot !== 'cooler').map(i => i.slot === 'cpu' ? { ...i, useIncludedCooler: true, coolerConfirmed: info.status === 'unknown' } : i));
+    this.invalidate();
+  }
+  clearIncludedCooler() { this.update('cpu', { useIncludedCooler: false, coolerConfirmed: false }); this.confirmedCooler = false; this.invalidate(); }
 
   readonly step = computed(() => this.steps[this.index()]);
   readonly platformName = computed(() => this.platforms.find(p => p.id === this.store.platform())?.name ?? '');
@@ -84,7 +95,7 @@ export class PcBuilder {
     effect(() => {
       this.workspace.branchId();
       untracked(() => { this.request?.unsubscribe(); this.searchRequest?.unsubscribe(); clearTimeout(this.advanceTimer);
-        this.busy.set(false); this.searching.set(false); this.products.set(null); this.checks.set({}); this.missing.set([]);
+        this.confirmedCooler = false; this.busy.set(false); this.searching.set(false); this.products.set(null); this.checks.set({}); this.missing.set([]);
         this.summary.set(false); this.index.set(0); this.leaving.set(null); this.invalidate(); });
     });
     inject(DestroyRef).onDestroy(() => { clearTimeout(this.advanceTimer); this.request?.unsubscribe(); this.searchRequest?.unsubscribe(); clearTimeout(this.resetTimer); });
@@ -159,16 +170,18 @@ export class PcBuilder {
       error: error => { this.searchError.set(error.error?.mensaje || 'No se pudo consultar el catálogo de esta sucursal. Reintentá.'); this.searching.set(false); }
     });
   }
-  canAdvance() { return !!this.chosen(this.step().id) || ['gpu', 'cooler'].includes(this.step().id); }
+  canAdvance() { return this.complete(this.step().id) || this.step().id === 'gpu'; }
   add(product: PcProduct) {
     if (this.busy() || !product.stock || product.stock < 1) return;
     const slot = this.step().id;
+    if (slot === 'cooler') this.clearIncludedCooler();
+    if (slot === 'cpu') this.confirmedCooler = false;
     this.store.items.update(items => [...items.filter(i => i.slot !== slot), { slot, product, quantity: 1, offers: [], notices: [] }]);
     this.invalidate(); this.prices(slot); this.pulse(slot);
     clearTimeout(this.advanceTimer);
     this.advanceTimer = setTimeout(() => this.next(), reduced() ? 0 : 320);
   }
-  remove(slot: string) { if (!this.busy()) { this.store.items.update(items => items.filter(i => i.slot !== slot)); this.invalidate(); } }
+  remove(slot: string) { if (!this.busy()) { this.store.items.update(items => items.filter(i => i.slot !== slot)); if (slot === 'cpu') this.confirmedCooler = false; this.invalidate(); } }
   reset() {
     if (!this.confirmReset() && this.store.items().length) { this.confirmReset.set(true); this.resetTimer = setTimeout(() => this.confirmReset.set(false), 3500); return; }
     clearTimeout(this.resetTimer); this.confirmReset.set(false); this.request?.unsubscribe(); this.busy.set(false);
@@ -187,8 +200,8 @@ export class PcBuilder {
   prices(slot: string) {
     const item = this.chosen(slot); if (!item || this.busy()) return;
     this.busy.set(true); this.error.set(''); this.store.quote.set(null);
-    this.request = this.http.get<{ offers: PcOffer[]; notices: string[] }>('/api/pc-builder/prices/' + item.product.id, { params: { branchId: this.workspace.branchId() } }).pipe(timeout(35000)).subscribe({
-      next: result => { this.update(slot, { offers: result.offers, notices: result.notices, selected: result.offers.find(o => !!o.currency), confirmedCurrency: undefined }); this.busy.set(false); },
+    this.request = this.http.get<{ offers: PcOffer[]; notices: string[]; cooling?: PcCooling }>('/api/pc-builder/prices/' + item.product.id, { params: { branchId: this.workspace.branchId() } }).pipe(timeout(35000)).subscribe({
+      next: result => { this.update(slot, { cooling: result.cooling, useIncludedCooler: !!item.useIncludedCooler && (result.cooling?.status === 'included' || result.cooling?.status === 'unknown' && !!item.coolerConfirmed), coolerConfirmed: !!item.coolerConfirmed && result.cooling?.status === 'unknown', offers: result.offers, notices: result.notices, selected: result.offers.find(o => !!o.currency), confirmedCurrency: undefined }); this.busy.set(false); },
       error: e => this.failed(e)
     });
   }
@@ -212,7 +225,7 @@ export class PcBuilder {
     if (this.busy() || !this.store.items().length) return;
     this.busy.set(true); this.error.set(''); this.store.quote.set(null);
     const items = this.store.items().map(i => ({ slot: i.slot, productId: i.product.id, quantity: i.quantity,
-      offerId: i.selected?.id, confirmedCurrency: i.confirmedCurrency }));
+      offerId: i.selected?.id, confirmedCurrency: i.confirmedCurrency, useIncludedCooler: !!i.useIncludedCooler, coolerConfirmed: !!i.coolerConfirmed }));
     this.request = this.http.post<PcQuote>('/api/pc-builder/quote', { branchId: this.workspace.branchId(), items }).pipe(timeout(90000)).subscribe({
       next: quote => { this.store.quote.set(quote); this.busy.set(false); }, error: e => this.failed(e)
     });

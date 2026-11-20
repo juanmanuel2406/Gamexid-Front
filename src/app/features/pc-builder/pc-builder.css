@@ -188,3 +188,8 @@ select { background: var(--surface); color: var(--k-fg); border: 1px solid var(-
   .no-print, .steps, .topbar .ghost, .meter, .stage-head .nav { display: none !important; }
   .layout { display: block; }
 }
+
+.included-cooler { padding: 18px; margin: 16px 0; border: 1px solid var(--k-line); border-radius: 14px; background: var(--k-surface); }
+.included-cooler h3 { margin: 0 0 8px; }
+.included-cooler p { margin: 8px 0 14px; }
+.included-cooler label { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }

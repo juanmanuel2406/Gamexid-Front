@@ -113,3 +113,40 @@ test('cambiar sucursal descarta armado y envía la sede nueva al buscar y cotiza
   await page.getByRole('button',{name:'Calcular presupuesto'}).click();
   await expect(page.getByRole('heading',{name:'Presupuesto orientativo'})).toBeVisible();
 });
+
+
+test('cooler incluido se cotiza sin otro componente y se limpia al cambiar CPU o sede', async ({ page }) => {
+  await page.route('**/api/pc-builder/prices/*', r => r.fulfill({json:{offers:[{...offer,currency:'ARS'}],notices:[],cooling:{status:'included',detail:'Incluye cooler.'}}}));
+  await page.route('**/api/pc-builder/quote', r => {
+    const items = r.request().postDataJSON().items;
+    expect(items).toHaveLength(1); expect(items[0].useIncludedCooler).toBe(true);
+    return r.fulfill({json:{lines:[],checks:[],totals:[{currency:'ARS',amount:100000}],missingPrices:0,checkedUtc:new Date().toISOString()}});
+  });
+  await start(page); await pickCpu(page);
+  await page.locator('.step[data-slot="cooler"]').click();
+  await page.getByRole('button',{name:'Usar cooler incluido',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Ver resumen',exact:true})).toBeEnabled();
+  await page.getByRole('button',{name:'Ver resumen',exact:true}).click();
+  await expect(page.getByText('Refrigeración: cooler incluido con el procesador',{exact:false})).toBeVisible();
+  await page.getByRole('button',{name:'Calcular presupuesto'}).click();
+  await expect(page.getByRole('heading',{name:'Presupuesto orientativo'})).toBeVisible();
+  await page.getByLabel('Quitar Procesador',{exact:true}).click();
+  await expect(page.getByText('Refrigeración: cooler incluido con el procesador',{exact:false})).toHaveCount(0);
+  await page.getByLabel('Sucursal de trabajo').selectOption('10');
+  await expect(page.getByRole('heading',{name:'Armá tu PC paso a paso'})).toBeVisible();
+});
+
+test('cooler desconocido requiere confirmación y bulk no ofrece usar incluido', async ({ page }) => {
+  let status='unknown';
+  await page.route('**/api/pc-builder/prices/*', r => r.fulfill({json:{offers:[],notices:[],cooling:{status,detail:'Revisá la presentación.'}}}));
+  await start(page); await pickCpu(page); await page.locator('.step[data-slot="cooler"]').click();
+  const button=page.getByRole('button',{name:'Usar cooler incluido',exact:true});
+  await expect(button).toBeDisabled();
+  await page.getByLabel('Confirmé que esta unidad incluye cooler').check(); await button.click();
+  await expect(page.getByText('Seleccionado: cooler incluido · sin costo adicional')).toBeVisible();
+  status='excluded'; await page.getByRole('button',{name:/Resumen y presupuesto/}).click();
+  await page.getByRole('button',{name:'Actualizar precios'}).click();
+  await page.locator('.step[data-slot="cooler"]').click();
+  await expect(button).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'Ver resumen',exact:true})).toBeDisabled();
+});

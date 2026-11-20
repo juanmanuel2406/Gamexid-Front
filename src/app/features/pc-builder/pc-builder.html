@@ -41,28 +41,50 @@
     <div class="layout">
       <nav class="steps" aria-label="Pasos del armado">
         @for (s of steps; track s.id) {
-          <button type="button" class="step" [attr.data-slot]="s.id" [class.active]="!summary() && index() === $index" [class.done]="!!chosen(s.id)"
+          <button type="button" class="step" [attr.data-slot]="s.id" [class.active]="!summary() && index() === $index" [class.done]="complete(s.id)"
             [attr.aria-current]="!summary() && index() === $index ? 'step' : null" (click)="open($index)">
-            <span class="ico"><pc-icon [name]="s.icon" [size]="22" />@if (chosen(s.id)) { <span class="tick"><pc-icon name="check" [size]="10" /></span> }</span>
+            <span class="ico"><pc-icon [name]="s.icon" [size]="22" />@if (complete(s.id)) { <span class="tick"><pc-icon name="check" [size]="10" /></span> }</span>
             <span class="txt"><b>{{ s.name }}</b>
-              @if (chosen(s.id); as item) { <span class="pick">{{ item.product.name }}</span> } @else { <span class="none">Todavía sin elegir</span> }
+              @if (s.id === 'cooler' && includedCooler()) { <span class="pick">Cooler incluido con el procesador</span> } @else if (chosen(s.id); as item) { <span class="pick">{{ item.product.name }}</span> } @else { <span class="none">Todavía sin elegir</span> }
             </span>
             @if (chosen(s.id)?.selected; as offer) { <span class="price">{{ offer.currency || chosen(s.id)?.confirmedCurrency || '' }} {{ money(offer.amount) }}</span> }
           </button>
         }
         <button type="button" class="step final" [class.active]="summary()" (click)="openSummary()">
-          <span class="ico"><gx-icon name="doc" [size]="20" /></span><span class="txt"><b>Resumen y presupuesto</b><span class="none">{{ store.items().length }} de {{ steps.length }} componentes</span></span>
+          <span class="ico"><gx-icon name="doc" [size]="20" /></span><span class="txt"><b>Resumen y presupuesto</b><span class="none">{{ store.items().length + (includedCooler() ? 1 : 0) }} de {{ steps.length }} componentes</span></span>
         </button>
       </nav>
 
       <section class="stage" aria-live="polite">
-        <div class="meter" aria-hidden="true">@for (s of steps; track s.id) { <i [class.on]="!!chosen(s.id)" [class.here]="!summary() && index() === $index"></i> }</div>
+        <div class="meter" aria-hidden="true">@for (s of steps; track s.id) { <i [class.on]="complete(s.id)" [class.here]="!summary() && index() === $index"></i> }</div>
         @if (!summary()) {
           <header class="stage-head">
             <div><small>Paso {{ index() + 1 }} de {{ steps.length }}</small><h2>Elegí tu {{ step().name.toLowerCase() }}</h2></div>
             <div class="nav"><button type="button" class="ghost" (click)="previous()" [disabled]="index() === 0">Anterior</button>
               <button type="button" class="primary" (click)="next()" [disabled]="!canAdvance()">{{ index() === steps.length - 1 ? 'Ver resumen' : 'Siguiente paso' }}</button></div>
           </header>
+          @if (step().id === 'cooler' && chosen('cpu')) {
+            <section class="included-cooler" aria-label="Cooler del procesador">
+              <h3>Cooler del procesador</h3>
+              @if (cooling(); as info) {
+                <p>{{ info.detail }}</p>
+                @if (info.status !== 'excluded') {
+                  @if (info.status === 'unknown' && !includedCooler()) {
+                    <label><input type="checkbox" [(ngModel)]="confirmedCooler" [ngModelOptions]="{standalone: true}" /> Confirmé que esta unidad incluye cooler</label>
+                  }
+                  @if (includedCooler()) {
+                    <p role="status">Seleccionado: cooler incluido · sin costo adicional</p>
+                    <button type="button" class="ghost" (click)="clearIncludedCooler()" [disabled]="busy()">Cambiar refrigeración</button>
+                  } @else {
+                    <button type="button" class="primary" (click)="useIncludedCooler()" [disabled]="busy() || info.status === 'unknown' && !confirmedCooler">Usar cooler incluido</button>
+                  }
+                }
+              } @else {
+                <p>Consultando la presentación del procesador.</p>
+                <button type="button" class="ghost" (click)="prices('cpu')" [disabled]="busy()">Verificar cooler del procesador</button>
+              }
+            </section>
+          }
           <form class="search" (ngSubmit)="find()"><pc-icon [name]="step().icon" [size]="18" />
             <input aria-label="Buscar componente" name="search" [(ngModel)]="search" maxlength="80" placeholder="Nombre, modelo o código" />
             <button class="primary" type="submit" [disabled]="searching() || search.trim().length < 3">{{ searching() ? 'Buscando…' : 'Buscar' }}</button></form>
@@ -98,6 +120,7 @@
               @for (check of quote.checks; track $index) { <p [class.error]="check.status === 'incompatible'">{{ check.status === 'checked' ? 'Comprobado' : check.status === 'incompatible' ? 'Incompatible' : 'Por revisar' }} · {{ check.title }}: {{ check.detail }}</p> }
             </section>
           }
+          @if (includedCooler()) { <p class="included-cooler" role="status">Refrigeración: cooler incluido con el procesador · sin costo adicional. @if (chosen('cpu')?.coolerConfirmed) { Confirmado por el vendedor. }</p> }
           <div class="summary">@for (item of store.items(); track item.slot) {
             <article class="chosen" [attr.data-slot]="item.slot">
               <div class="chosen-head"><span class="ico"><pc-icon [name]="icon(item.slot)" [size]="18" /></span><div><small>{{ label(item.slot) }}</small><h3>{{ item.product.name }}</h3></div>
